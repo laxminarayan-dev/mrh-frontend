@@ -77,11 +77,10 @@ function App() {
           {/* banner */}
           <div className="relative w-full h-64 sm:h-76 md:h-96 lg:h-112 xl:h-128 flex justify-start items-center px-10 overflow-hidden">
             <img
-              src="/compBanner.jpg"
+              src="/banner.jpg"
               alt="Mr Halwai banner"
               className="absolute inset-0 w-full h-full object-cover object-center"
-              loading="eager"
-              fetchPriority="high"
+              loading="lazy"
               decoding="async"
             />
             <div className="relative md:pl-20 ">
