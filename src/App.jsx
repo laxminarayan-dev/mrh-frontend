@@ -74,7 +74,7 @@ function App() {
               src="/compBanner.jpg"
               alt="Mr Halwai banner"
               className="absolute inset-0 w-full h-full object-cover object-center"
-              loading="lazy"
+              fetchPriority="high"
               decoding="async"
             />
 
