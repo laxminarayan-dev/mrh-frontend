@@ -23,7 +23,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen }) {
       <div>
         <img
           className="w-46 h-12 object-cover"
-          src="/cover.png"
+          src="/logo.webp"
           alt="Brand Logo"
           loading="lazy"
           decoding="async"
@@ -34,7 +34,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen }) {
           {links.map((link) => (
             <li
               key={link.name}
-              className="hover:text-[#FF7407] cursor-pointer transition-colors flex items-center gap-2"
+              className="text-black cursor-pointer transition-colors flex items-center gap-2"
             >
               {link.name}
             </li>

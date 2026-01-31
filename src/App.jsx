@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import { Handbag, ShoppingBag } from "lucide-react";
+import { Handbag } from "lucide-react";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -75,18 +75,24 @@ function App() {
         />
         <main className=" min-h-screen">
           {/* banner */}
-          <div
-            style={{
-              background: "url('/banner.jpg') no-repeat center center",
-            }}
-            className="w-full h-64 sm:h-76 md:h-96 lg:h-112 xl:h-128 !bg-cover !bg-center flex justify-start items-center px-10"
-          >
-            <div className="md:pl-20 ">
+          <div className="relative w-full h-64 sm:h-76 md:h-96 lg:h-112 xl:h-128 flex justify-start items-center px-10 overflow-hidden">
+            <img
+              src="/compBanner.jpg"
+              alt="Mr Halwai banner"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+            <div className="relative md:pl-20 ">
               <h1 className="text-4xl md:text-6xl font-semibold">Mr Halwai</h1>
               <h2 className="text-lg md:text-xl ">
                 Authentic Indian & Fast Food
               </h2>
-              <button className="text-md md:text-xl mt-4 px-6 py-2 bg-[#FF7407] text-white font-semibold rounded hover:bg-[#F67401] transition-colors mt-2 md:mt-8">
+              <button
+                aria-label="order-now-btn"
+                className="text-md md:text-xl mt-4 px-6 py-2 bg-[#FF7407] text-white font-semibold rounded hover:bg-[#F67401] transition-colors mt-2 md:mt-8"
+              >
                 Order Now
               </button>
             </div>
@@ -138,7 +144,10 @@ function App() {
                     <p className="font-semibold text-lg">₹40</p>
                   </span>
 
-                  <button className="absolute bottom-2 right-2 bg-red-500 text-white p-2 rounded-xl hover:bg-[#F67401] transition-colors">
+                  <button
+                    aria-label="add-to-cart-btn"
+                    className="absolute bottom-2 right-2 bg-red-500 text-white p-2 rounded-xl hover:bg-[#F67401] transition-colors"
+                  >
                     <Handbag color="#fff" />
                   </button>
                 </div>

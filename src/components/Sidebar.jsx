@@ -26,12 +26,12 @@ function Sidebar({
     <Fragment>
       <div
         onClick={() => {
-          setIsSidebarOpen((prev) => !prev);
+          setIsSidebarOpen(false);
         }}
         className={`fixed inset-0 bg-gray-900/80 z-10 md:hidden ${isSidebarOpen ? "block" : "hidden"}`}
       ></div>
       <div
-        className={`bg-[#FFFBE9] text-[#F67401] px-4 py-8 h-screen w-52 flex flex-col gap-8 justify-start fixed z-20 md:hidden ${isSidebarOpen ? "left-0" : "-left-60"} top-16 transition-left duration-300 ease-in-out shadow-lg border-t border-[#F67401]/50 md:static md:top-0 md:left-0 md:h-full md:shadow-none md:border-none`}
+        className={`bg-[#FFFBE9] text-[#F67401] px-4 py-8 h-screen w-52 flex flex-col gap-8 justify-start fixed z-20 md:hidden top-16 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} shadow-lg border-t border-[#F67401]/50 md:static md:top-0 md:translate-x-0 md:h-full md:shadow-none md:border-none`}
       >
         <nav>
           <ul className="flex flex-col gap-2">
