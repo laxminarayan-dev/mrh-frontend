@@ -17,25 +17,19 @@ function App() {
   const mostSellers = [
     {
       name: "Paper Dosa",
-      image: "/dosa.png",
+      image: "/dosa-comp.png",
       originalPrice: 60,
       discountedPrice: 40,
     },
     {
       name: "Pav Bhaji",
-      image: "/pavbhaji.png",
+      image: "/pavbhaji-comp.png",
       originalPrice: 100,
       discountedPrice: 70,
     },
     {
       name: "uttapam",
-      image: "/uttapam.png",
-      originalPrice: 80,
-      discountedPrice: 50,
-    },
-    {
-      name: "uttapam",
-      image: "/uttapam.png",
+      image: "/uttapam-comp.png",
       originalPrice: 80,
       discountedPrice: 50,
     },
@@ -79,17 +73,11 @@ function App() {
             <img
               src="/compBanner.jpg"
               alt="Mr Halwai banner"
-              className="flex md:hidden absolute inset-0 w-full h-full object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-center"
               loading="lazy"
               decoding="async"
             />
-            <img
-              src="/banner.jpg"
-              alt="Mr Halwai banner"
-              className="hidden md:flex absolute inset-0 w-full h-full object-cover object-center"
-              loading="lazy"
-              decoding="async"
-            />
+
             <div className="relative md:pl-20 ">
               <h1 className="text-4xl md:text-6xl font-semibold">Mr Halwai</h1>
               <h2 className="text-lg md:text-xl ">
