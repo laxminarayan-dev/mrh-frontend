@@ -77,9 +77,16 @@ function App() {
           {/* banner */}
           <div className="relative w-full h-64 sm:h-76 md:h-96 lg:h-112 xl:h-128 flex justify-start items-center px-10 overflow-hidden">
             <img
+              src="/compBanner.jpg"
+              alt="Mr Halwai banner"
+              className="flex md:hidden absolute inset-0 w-full h-full object-cover object-center"
+              loading="lazy"
+              decoding="async"
+            />
+            <img
               src="/banner.jpg"
               alt="Mr Halwai banner"
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="hidden md:flex absolute inset-0 w-full h-full object-cover object-center"
               loading="lazy"
               decoding="async"
             />
@@ -288,7 +295,10 @@ function App() {
                 <li>Authentic recipes passed down through generations</li>
                 <li>Fast & reliable delivery service</li>
                 <li>Affordable prices with premium quality</li>
-                <li>Vegetarian & non-vegetarian options available</li>
+                <li>Pure vegetarian food served</li>
+                <li>No preservatives or artificial additives</li>
+                <li>Eco-friendly packaging</li>
+                <li>Hygienic preparation and handling</li>
               </ul>
             </div>
           </section>
