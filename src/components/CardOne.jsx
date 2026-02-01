@@ -22,6 +22,8 @@ function CardOne({ item, sale }) {
       <div className="relative w-30 h-30 mb-3 z-10">
         <img
           className="w-full h-full object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
+          loading="lazy"
+          decoding="async"
           src={item.image}
           alt={item.name}
         />

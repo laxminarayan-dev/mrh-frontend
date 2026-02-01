@@ -1,17 +1,8 @@
-import {
-  Clock2,
-  Landmark,
-  Locate,
-  Mail,
-  MapPin,
-  Phone,
-  Timer,
-} from "lucide-react";
-import React from "react";
+import { Clock2, Mail, MapPin, Phone } from "lucide-react";
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 mt-16">
+    <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
