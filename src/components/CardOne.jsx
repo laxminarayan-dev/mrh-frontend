@@ -2,43 +2,66 @@ import { Bike, ShoppingBasket, Star } from "lucide-react";
 
 function CardOne({ item, sale }) {
   return (
-    <div className="relative border-3 border-[#FF7407] rounded-2xl p-4 flex flex-col items-center text-left w-48 md:w-52 bg-linear-to-b from-orange-100 to-orange-300 my-1 transition-all hover:-translate-y-1 hover:shadow-xl">
+    <div className="group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-48 md:w-52 shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+      {/* Background Gradient on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+      {/* Badge */}
       {sale ? (
-        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+        <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-semibold z-10 shadow-md z-20">
           Sale
         </span>
       ) : (
-        <>
-          <Star fill="#fff" className="absolute top-2 left-2 text-red-400" />
-          <p className="absolute top-2 left-8 text-red-400 text-xs font-semibold pl-1">
-            3.4
-          </p>
-        </>
+        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full shadow-sm z-20 border border-gray-200">
+          <Star fill="#FFB800" className="text-yellow-400 w-3 h-3" />
+          <p className="text-xs font-bold text-gray-700">4.5</p>
+        </div>
       )}
-      {/* image */}
-      <img className="w-30 h-30" src={item.image} alt={item.name} />
-      {/* Name */}
-      <h1 className="self-start font-semibold text-md mt-2">{item.name}</h1>
-      {/* price */}
-      <span className="flex justify-start items-center gap-2 self-start">
-        {sale ? (
-          <>
-            <p className="line-through text-sm text-red-500">
-              ₹{item.originalPrice}
-            </p>
-            <p className="font-semibold text-lg">₹{item.discountedPrice}</p>
-          </>
-        ) : (
-          <p className="font-semibold text-lg">₹{item.originalPrice}</p>
-        )}
-      </span>
 
-      <button
-        aria-label="add-to-cart-btn"
-        className="absolute bottom-2 right-2 bg-red-500 text-white p-2 rounded-xl hover:bg-[#F67401] transition-colors"
-      >
-        <ShoppingBasket color="#fff" />
-      </button>
+      {/* Image Container */}
+      <div className="relative w-30 h-30 mb-3 z-10">
+        <img
+          className="w-full h-full object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
+          src={item.image}
+          alt={item.name}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="w-full z-10 text-left">
+        {/* Name */}
+        <h1 className="font-bold text-base text-gray-900 line-clamp-1">
+          {item.name.toUpperCase()}
+        </h1>
+
+        {/* Price */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            {sale ? (
+              <>
+                <p className="line-through text-xs text-gray-400">
+                  ₹{item.originalPrice}
+                </p>
+                <p className="font-bold text-lg text-[#FF7407]">
+                  ₹{item.discountedPrice}
+                </p>
+              </>
+            ) : (
+              <p className="font-bold text-lg text-[#FF7407]">
+                ₹{item.originalPrice}
+              </p>
+            )}
+          </div>
+
+          {/* Add to Cart Button */}
+          <button
+            aria-label="add-to-cart-btn"
+            className="bg-[#FF7407] text-white p-2.5 rounded-xl hover:bg-[#F67401] hover:scale-110 transition-all shadow-md hover:shadow-lg"
+          >
+            <ShoppingBasket size={18} color="#fff" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
