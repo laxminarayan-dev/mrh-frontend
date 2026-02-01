@@ -9,7 +9,7 @@ import {
   UserRound,
   ChefHat,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen }) {
   const navigate = useNavigate();
@@ -24,9 +24,9 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen }) {
     <nav className="w-full max-w-6xl mx-auto bg-[#FFFBE9] flex justify-between items-center px-8 py-2 h-16 relative z-100 ">
       <div className="flex justify-center items-center">
         <ChefHat color="#F67401" size={32} />
-        <span className="text-2xl font-semibold text-[#F67401] ml-2">
+        <Link to="/" className="text-2xl font-semibold text-[#F67401] ml-2">
           Mr Halwai
-        </span>
+        </Link>
       </div>
       <div>
         <ul className="hidden md:flex gap-6 text-[#F67401] font-medium">
