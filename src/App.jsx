@@ -2,21 +2,30 @@ import { Fragment, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import {
-  Car,
-  Handbag,
+  Camera,
+  Facebook,
   IndianRupee,
+  Instagram,
   Motorbike,
+  PlaySquare,
+  Share2,
   ShoppingBag,
   ShoppingBasket,
+  Youtube,
 } from "lucide-react";
 import CardOne from "./components/CardOne";
 import CardGrid from "./components/CardGrid";
+import Footer from "./components/Footer";
+import Feedback from "./components/Feedback";
+import ChooseUs from "./components/ChooseUs";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedSpecialties, setSelectedSpecialties] = useState("Dosa");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [specialtyStartIndex, setSpecialtyStartIndex] = useState(0);
   const [specialtyVisibleCount, setSpecialtyVisibleCount] = useState(5);
+
   useEffect(() => {
     if (isSidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -106,6 +115,9 @@ function App() {
     Dosa: [
       { name: "Masala Dosa", image: "/dosa.png", originalPrice: 120 },
       { name: "Rava Dosa", image: "/masala-dosa-comp.png", originalPrice: 100 },
+      { name: "Paper Dosa", image: "/dosa-comp.png", originalPrice: 60 },
+      { name: "Onion Dosa", image: "/dosa.png", originalPrice: 90 },
+      { name: "Cheese Dosa", image: "/dosa.png", originalPrice: 130 },
     ],
     Idli: [{ name: "Sambar Idli", image: "/idli-comp.png", originalPrice: 80 }],
     "Pav Bhaji": [
@@ -126,43 +138,18 @@ function App() {
     offerPercentage: 10,
   };
 
-  const whyChooseUs = [
-    {
-      title: "Fresh Ingredients",
-      description: "Prepared daily with farm-fresh produce and spices.",
-      Icon: ShoppingBag,
-      accent: "from-orange-100 to-orange-50",
-    },
-    {
-      title: "Fast Delivery",
-      description: "Hot and delicious food delivered right on time.",
-      Icon: Motorbike,
-      accent: "from-amber-100 to-amber-50",
-    },
-    {
-      title: "Great Value",
-      description: "Premium quality meals at pocket-friendly prices.",
-      Icon: IndianRupee,
-      accent: "from-yellow-100 to-yellow-50",
-    },
-    {
-      title: "Pure Veg",
-      description: "100% vegetarian kitchen with hygienic prep.",
-      Icon: ShoppingBasket,
-      accent: "from-orange-100 to-orange-50",
-    },
-  ];
-
   return (
-    <Fragment>
+    <div className="min-h-screen  bg-[#FFFBE9]">
       <Navbar
         isSidebarOpen={isSidebarOpen}
+        isLoggedIn={isLoggedIn}
         setIsSidebarOpen={setIsSidebarOpen}
       />
       {/* sidebar and main content */}
       <div className="bg-orange-200">
         <Sidebar
           isSidebarOpen={isSidebarOpen}
+          isLoggedIn={isLoggedIn}
           setIsSidebarOpen={setIsSidebarOpen}
         />
         <main className=" min-h-screen">
@@ -189,7 +176,6 @@ function App() {
               </button>
             </div>
           </div> */}
-
           {/* Hero Section */}
           <header className="bg-gradient-to-b from-[#FFFBE9] via-orange-100 to-orange-200 relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
@@ -267,7 +253,7 @@ function App() {
               </div>
             </div>
           </header>
-
+          {/* best seller */}
           <section className="py-4 text-center">
             <h1 className="font-semibold text-4xl border-b-4 border-[#FF7407] inline">
               Best Sellers
@@ -286,7 +272,6 @@ function App() {
               ))}
             </CardGrid>
           </section>
-
           {/* Speciality Items Section */}
           <section className="max-w-6xl mx-auto mb-8 bg-transparent pt-6 text-center">
             <div className="inline-flex flex-col items-center">
@@ -431,268 +416,14 @@ function App() {
             </section>
           </div>
           {/* Why Choose Us */}
-          <section className="max-w-6xl mx-auto px-4 mb-8 pt-12">
-            <div className="text-center">
-              <p className="text-sm uppercase tracking-widest text-[#F67401] font-semibold">
-                Why Choose Us
-              </p>
-              <h1 className="font-semibold text-4xl md:text-5xl text-gray-900 mt-2">
-                Modern taste. Traditional soul.
-              </h1>
-              <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-                Clean ingredients, fast delivery, and a menu crafted with love.
-              </p>
-            </div>
-
-            <div className="mt-10 rounded-3xl bg-gradient-to-br from-orange-100 via-orange-300 to-orange-100 border border-orange-100 p-6 sm:p-8">
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {whyChooseUs.map(({ title, description, Icon, accent }) => (
-                  <div
-                    key={title}
-                    className="group bg-white/30 backdrop-blur rounded-2xl p-6 shadow-sm border border-orange-100/70 hover:-translate-y-1 hover:shadow-xl transition-all"
-                  >
-                    <div
-                      className={`h-12 w-12 rounded-2xl bg-slate-900 ${accent} flex items-center justify-center text-[#F67401] mb-4 group-hover:scale-105 transition-transform`}
-                    >
-                      <Icon size={22} color="#ffd6a7" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {title}
-                    </h3>
-                    <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                      {description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-8 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-              <div>
-                <p className="text-gray-900 font-semibold">
-                  Made fresh, packed with care, and delivered with a smile.
-                </p>
-                <p className="text-gray-600 text-sm mt-1">
-                  No preservatives • Eco-friendly packaging • Hygienic kitchen
-                </p>
-              </div>
-              <button
-                aria-label="order-now-btn"
-                className="px-6 py-2 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors"
-              >
-                Order Now
-              </button>
-            </div>
-          </section>
-
+          <ChooseUs />
           {/* Customer Feedback Section */}
-          <section className="max-w-6xl mx-auto px-4 mb-8 pt-12">
-            <div className="text-center mb-12">
-              <p className="text-sm uppercase tracking-widest text-[#F67401] font-semibold">
-                Customer Love
-              </p>
-              <h2 className="font-semibold text-4xl md:text-5xl text-gray-900 mt-2">
-                What Our Customers Say
-              </h2>
-              <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-                Join thousands of happy customers enjoying authentic flavors
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  name: "Priya Sharma",
-                  initial: "P",
-                  rating: 5,
-                  feedback:
-                    "Best dosa I've ever had! Fresh, crispy, and absolutely delicious. Will definitely order again!",
-                },
-                {
-                  name: "Rajesh Kumar",
-                  initial: "R",
-                  rating: 5,
-                  feedback:
-                    "Fast delivery and hot food. The thali is amazing value for money. Highly recommended!",
-                },
-                {
-                  name: "Anjali Patel",
-                  initial: "A",
-                  rating: 4,
-                  feedback:
-                    "Great authentic taste, friendly service. The Pav Bhaji is outstanding. 10/10!",
-                },
-              ].map((feedback, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100 hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF7407] to-[#F6A51A] flex items-center justify-center text-white font-bold text-lg">
-                      {feedback.initial}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {feedback.name}
-                      </h4>
-                      <div className="flex gap-0.5">
-                        {[...Array(feedback.rating)].map((_, i) => (
-                          <span key={i} className="text-yellow-400">
-                            ⭐
-                          </span>
-                        ))}
-                        {[...Array(5 - feedback.rating)].map((_, i) => (
-                          <span key={i} className="text-gray-300">
-                            ⭐
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    "{feedback.feedback}"
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 text-center">
-              <button className="px-8 py-3 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors shadow-sm">
-                View All Reviews
-              </button>
-            </div>
-          </section>
-
+          <Feedback />
           {/* Footer */}
-          <footer className="bg-gray-900 text-gray-300 mt-16">
-            <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                {/* Brand */}
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-white">Mr Halwai</h3>
-                  <p className="text-sm text-gray-400">
-                    Authentic Indian & Fast Food, crafted with love and
-                    tradition.
-                  </p>
-                  <div className="flex gap-3 pt-2">
-                    {[
-                      { name: "Facebook", icon: "f" },
-                      { name: "Instagram", icon: "ig" },
-                      { name: "Twitter", icon: "tw" },
-                    ].map((social) => (
-                      <button
-                        key={social.name}
-                        className="h-9 w-9 rounded-full bg-[#FF7407] hover:bg-[#F67401] transition-colors flex items-center justify-center text-white"
-                        aria-label={social.name}
-                      >
-                        {social.icon}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick Links */}
-                <div>
-                  <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-                  <ul className="space-y-2">
-                    {[
-                      "About Us",
-                      "Our Menu",
-                      "Delivery Info",
-                      "Contact Us",
-                    ].map((link) => (
-                      <li key={link}>
-                        <a
-                          href="#"
-                          className="text-sm hover:text-[#FF7407] transition-colors"
-                        >
-                          {link}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Support */}
-                <div className="hidden">
-                  <h4 className=" text-white font-semibold mb-4">Support</h4>
-                  <ul className="space-y-2">
-                    {["FAQ", "Track Order", "Returns", "Feedback"].map(
-                      (link) => (
-                        <li key={link}>
-                          <a
-                            href="#"
-                            className="text-sm hover:text-[#FF7407] transition-colors"
-                          >
-                            {link}
-                          </a>
-                        </li>
-                      ),
-                    )}
-                  </ul>
-                </div>
-
-                {/* Contact */}
-                <div>
-                  <h4 className="text-white font-semibold mb-4">
-                    Get in Touch
-                  </h4>
-                  <ul className="space-y-3 text-sm">
-                    <li className="flex gap-2">
-                      <span className="text-[#FF7407]">📞</span>
-                      <span>+91 98765 43210</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-[#FF7407]">📧</span>
-                      <span>hello@mrhalwai.com</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-[#FF7407]">📍</span>
-                      <span>123 Food Street, Delhi</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-[#FF7407]">⏰</span>
-                      <span>11 AM - 11 PM</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Payment Methods */}
-              <div className="border-t border-gray-700 py-6 mb-6">
-                <p className="text-sm text-gray-400 mb-3">
-                  We accept cash only
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <div className="px-4 py-2 bg-[#FF7407] border border-orange-400 rounded-full text-sm font-semibold text-slate-900">
-                    Cash
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Bar */}
-              <div className="border-t border-gray-700 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-                <p>© 2026 Mr Halwai. All rights reserved.</p>
-                <div className="flex gap-4 mt-4 md:mt-0">
-                  <a
-                    href="#"
-                    className="hover:text-[#FF7407] transition-colors"
-                  >
-                    Privacy Policy
-                  </a>
-                  <a
-                    href="#"
-                    className="hover:text-[#FF7407] transition-colors"
-                  >
-                    Terms & Conditions
-                  </a>
-                </div>
-              </div>
-            </div>
-          </footer>
+          <Footer />
         </main>
       </div>
-    </Fragment>
+    </div>
   );
 }
 

@@ -2,13 +2,16 @@ import React from "react";
 
 function CardGrid({ children, className }) {
   return (
-    <div
-      className={` ${className} max-w-3xl  mx-auto px-10 my-8 bg-transparent grid gap-2 place-items-center self-center `}
-      style={{
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-      }}
-    >
-      {children}
+    <div className="w-full overflow-hidden">
+      <div
+        className={`mx-auto inline-grid gap-4 px-4 my-8 ${className}`}
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 200px))",
+          maxWidth: "100%",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
