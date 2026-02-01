@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Package,
   UserRound,
+  ChefHat,
 } from "lucide-react";
 
 function Navbar({ isSidebarOpen, setIsSidebarOpen }) {
@@ -20,14 +21,11 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen }) {
   ];
   return (
     <nav className="bg-[#FFFBE9] flex justify-between items-center px-4 py-2 h-16 relative z-30 ">
-      <div>
-        <img
-          className="w-46 h-12 object-cover"
-          src="/logo.webp"
-          alt="Brand Logo"
-          loading="lazy"
-          decoding="async"
-        />
+      <div className="flex justify-center items-center">
+        <ChefHat color="#F67401" size={32} />
+        <span className="text-2xl font-semibold text-[#F67401] ml-2">
+          Mr Halwai
+        </span>
       </div>
       <div>
         <ul className="hidden md:flex gap-6 text-[#F67401] font-medium">
