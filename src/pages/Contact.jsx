@@ -1,10 +1,39 @@
-import React from "react";
+import { useState } from "react";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import Map from "../components/Map";
 
 function Contact() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    alert("Message sent successfully!");
+    setIsSubmitting(false);
+    e.target.reset();
+  };
+
   return (
-    <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200">
-      <section className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200 relative">
+      {gettingLocation && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500"></div>
+            <p className="text-slate-700 font-semibold text-lg">
+              Getting your location...
+            </p>
+            <p className="text-slate-500 text-sm">
+              Please allow location access
+            </p>
+          </div>
+        </div>
+      )}
+      <section className="relative max-w-6xl mx-auto px-6 py-12 md:py-16 z-20">
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-orange-500">
@@ -68,7 +97,7 @@ function Contact() {
             <h2 className="text-lg font-semibold text-slate-900">
               Send a message
             </h2>
-            <form className="mt-4 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div>
                 <label className="text-sm font-medium text-slate-700">
                   Full Name
@@ -100,33 +129,27 @@ function Contact() {
                 ></textarea>
               </div>
               <button
-                type="button"
-                className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700"
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Send Message
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  "Send Message"
+                )}
               </button>
             </form>
           </div>
         </div>
 
-        <div className="mt-10 rounded-3xl border border-orange-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                Visit our kitchen
-              </h3>
-              <p className="text-sm text-slate-600">
-                We’re always happy to welcome you.
-              </p>
-            </div>
-            <button className="rounded-lg border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-semibold text-orange-600 hover:bg-orange-100">
-              Get Directions
-            </button>
-          </div>
-          <div className="mt-5 h-48 w-full rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 flex items-center justify-center text-sm text-orange-400">
-            Map preview placeholder
-          </div>
-        </div>
+        <Map
+          gettingLocation={gettingLocation}
+          setGettingLocation={setGettingLocation}
+        />
       </section>
     </div>
   );
