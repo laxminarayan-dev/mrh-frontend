@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import Direction from "../components/Direction";
-import L from "leaflet";
+import L, { map } from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
 
@@ -232,7 +232,10 @@ function Map({ setGettingLocation }) {
         <button
           onClick={() => {
             let gmapsUrl = `https://www.google.com/maps?q=${mapCenter[0]},${mapCenter[1]}`;
-            if (userPos !== null) {
+            if (
+              userPos !== null &&
+              mapCenter.every((val, i) => val === userPos[i])
+            ) {
               gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination[0]},${destination[1]}&travelmode=driving`;
             }
             window.open(gmapsUrl, "_blank");
