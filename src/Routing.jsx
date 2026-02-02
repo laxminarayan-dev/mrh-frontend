@@ -8,6 +8,7 @@ import App from "./App";
 import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
+import Menu from "./pages/Menu";
 import { useEffect, useState } from "react";
 
 function Routing() {
@@ -132,6 +133,7 @@ function Routing() {
         />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
         <Route

@@ -3,10 +3,25 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { Outlet } from "react-router-dom";
+import {
+  Book,
+  House,
+  Info,
+  Phone,
+  ShoppingCart,
+  UserRound,
+} from "lucide-react";
 
 function App({ isLoggedIn = false }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const links = [
+    { name: "Home", url: "/", icon: <House /> },
+    { name: "Menu", url: "/menu", icon: <Book /> },
+    { name: "About Us", url: "/about", icon: <Info /> },
+    { name: "Contact Us", url: "/contact", icon: <Phone /> },
+    { name: "Cart", url: "/cart", icon: <ShoppingCart /> },
+    { name: "Account", url: "/account", icon: <UserRound /> },
+  ];
   useEffect(() => {
     if (isSidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -21,6 +36,7 @@ function App({ isLoggedIn = false }) {
         isSidebarOpen={isSidebarOpen}
         isLoggedIn={isLoggedIn}
         setIsSidebarOpen={setIsSidebarOpen}
+        links={links}
       />
       {/* sidebar and main content */}
       <div className="bg-orange-200 flex-1">
@@ -28,6 +44,7 @@ function App({ isLoggedIn = false }) {
           isSidebarOpen={isSidebarOpen}
           isLoggedIn={isLoggedIn}
           setIsSidebarOpen={setIsSidebarOpen}
+          links={links}
         />
         <main>
           <Outlet />

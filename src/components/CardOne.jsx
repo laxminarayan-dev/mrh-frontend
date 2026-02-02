@@ -1,8 +1,9 @@
-import { Bike, ShoppingBasket, Star } from "lucide-react";
-
+import { Image, ShoppingBasket, Star } from "lucide-react";
+import { useState } from "react";
 function CardOne({ item, sale }) {
+  const [error, setError] = useState(false);
   return (
-    <div className="group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-48 md:w-52 shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+    <div className="group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
       {/* Background Gradient on Hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -19,14 +20,21 @@ function CardOne({ item, sale }) {
       )}
 
       {/* Image Container */}
-      <div className="relative w-30 h-30 mb-3 z-10">
-        <img
-          className="w-full h-full object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
-          loading="lazy"
-          decoding="async"
-          src={item.image}
-          alt={item.name}
-        />
+      <div className="relative w-full h-full my-3 z-10 flex items-center justify-center">
+        {!error ? (
+          <img
+            className="w-30 h-30 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
+            src={item.image}
+            alt={item.name}
+            onError={() => setError(true)}
+          />
+        ) : (
+          <div className="w-full h-30 flex items-center justify-center rounded-2xl border-2 border-orange-300 text-gray-500">
+            <Image size={48} />
+          </div>
+        )}
       </div>
 
       {/* Content */}

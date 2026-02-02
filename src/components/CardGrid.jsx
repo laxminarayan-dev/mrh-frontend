@@ -6,7 +6,7 @@ function CardGrid({ children, className }) {
       <div
         className={`mx-auto inline-grid gap-4 px-4 my-8 ${className}`}
         style={{
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 200px))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 220px))",
           maxWidth: "100%",
         }}
       >

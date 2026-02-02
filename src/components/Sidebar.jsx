@@ -1,22 +1,18 @@
 import { Fragment, useState, useEffect } from "react";
-import { House, Info, Phone, ShoppingCart, UserRound } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-function Sidebar({ isSidebarOpen = false, isLoggedIn, setIsSidebarOpen }) {
+function Sidebar({
+  isSidebarOpen = false,
+  isLoggedIn,
+  setIsSidebarOpen,
+  links,
+}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState("/");
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [location.pathname]);
-
-  const links = [
-    { name: "Home", url: "/", icon: <House /> },
-    { name: "About Us", url: "/about", icon: <Info /> },
-    { name: "Contact Us", url: "/contact", icon: <Phone /> },
-    { name: "Cart", url: "/cart", icon: <ShoppingCart /> },
-    { name: "Account", url: "/account", icon: <UserRound /> },
-  ];
 
   return (
     <Fragment>

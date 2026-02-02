@@ -21,7 +21,7 @@ function Contact() {
   return (
     <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200 relative">
       {gettingLocation && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500"></div>
             <p className="text-slate-700 font-semibold text-lg">

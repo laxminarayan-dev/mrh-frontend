@@ -42,6 +42,19 @@ function MapController({ center, zoom }) {
   return null;
 }
 
+async function getStreetName(lat, lon) {
+  // const res = await fetch(
+  //   `https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}&api_key=${import.meta.env.VITE_GEOCODE_API_KEY}`,
+  // );
+
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+  );
+  const data = await res.json();
+
+  return data.display_name || "Street not found";
+}
+
 function Map({ setGettingLocation }) {
   const markers = [
     { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
@@ -100,6 +113,12 @@ function Map({ setGettingLocation }) {
       console.log("User position:", userPos);
     }
   }, [userPos]);
+
+  useEffect(() => {
+    getStreetName(mapCenter[0], mapCenter[1]).then((data) => {
+      console.log("Map centered to street:", data);
+    });
+  }, [mapCenter]);
 
   useEffect(() => {
     const timer = setTimeout(() => setMapLoading(false), 1000);

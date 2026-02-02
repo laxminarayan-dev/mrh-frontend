@@ -1,25 +1,9 @@
-import {
-  Logs,
-  X,
-  House,
-  Info,
-  Phone,
-  ShoppingCart,
-  Package,
-  UserRound,
-  ChefHat,
-} from "lucide-react";
+import { Logs, X, ChefHat } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen }) {
+function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
   const navigate = useNavigate();
-  const links = [
-    { name: "Home", url: "/", icon: <House /> },
-    { name: "About Us", url: "/about", icon: <Info /> },
-    { name: "Contact Us", url: "/contact", icon: <Phone /> },
-    { name: "Cart", url: "/cart", icon: <ShoppingCart /> },
-    { name: "Account", url: "/account", icon: <UserRound /> },
-  ];
+
   return (
     <nav className="w-full max-w-6xl mx-auto bg-[#FFFBE9] flex justify-between items-center px-8 py-2 h-16 relative z-100 ">
       <div className="flex justify-center items-center">
