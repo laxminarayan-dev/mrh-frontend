@@ -51,6 +51,7 @@ function Map({ setGettingLocation }) {
   const [tooFarDistance, setTooFarDistance] = useState(null);
   const [mapCenter, setMapCenter] = useState(markers[0].position);
   const [mapZoom, setMapZoom] = useState(16);
+  const [destination, setDestination] = useState(null);
   const [userPos, setUserPos] = useState(null);
   const [distance, setDistance] = useState(null);
   const [mapLoading, setMapLoading] = useState(true);
@@ -76,6 +77,7 @@ function Map({ setGettingLocation }) {
           setUserPos([pos.coords.latitude, pos.coords.longitude]);
           setGettingLocation(false);
           setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+
           navigator.geolocation.clearWatch(watchId);
           return;
         }
@@ -104,7 +106,7 @@ function Map({ setGettingLocation }) {
     return () => clearTimeout(timer);
   }, []);
   return (
-    <div className="mt-10 rounded-3xl border border-orange-200 bg-white p-6 shadow-sm">
+    <div className="relative mt-10 rounded-3xl border border-orange-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
@@ -125,7 +127,7 @@ function Map({ setGettingLocation }) {
       </div>
       <div>
         {/* map */}
-        <div className="mt-5 h-54 md:h-68 w-full rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 flex items-center justify-center relative">
+        <div className=" mt-5 h-68 w-full rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 flex items-center justify-center relative z-20">
           {mapLoading && (
             <div className="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-3">
@@ -167,7 +169,7 @@ function Map({ setGettingLocation }) {
                 userIcon={userIcon}
                 onTooFar={setTooFarDistance}
                 setDistance={setDistance}
-                setMapCenter={setMapCenter}
+                setDestination={setDestination}
               />
             )}
             {userPos && (
@@ -187,6 +189,7 @@ function Map({ setGettingLocation }) {
             )}
           </MapContainer>
         </div>
+
         {tooFarDistance && (
           <div className="mt-3 rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
             🚫 Too far Distance ({tooFarDistance.toFixed(1)} km away)
@@ -198,7 +201,7 @@ function Map({ setGettingLocation }) {
           </div>
         )}
         {/* locatores */}
-        <div className=" bottom-3 right-3 py-3 rounded-full text-xs font-medium text-slate-700 flex items-center gap-2 z-90">
+        <div className="absolute top-78 right-9 bg-white py-2 px-3 rounded-full text-xs font-medium text-slate-700 flex items-center gap-2 z-90">
           {markers.map((m) => (
             <button
               key={m.id}
@@ -206,7 +209,7 @@ function Map({ setGettingLocation }) {
                 setMapCenter(m.position);
                 console.log("Centered map to:", m.position);
               }}
-              className="text-orange-600 border border-orange-600 px-2 py-1 rounded-full"
+              className={`${mapCenter.every((val, i) => val === m.position[i]) ? "bg-orange-600 text-white" : "text-orange-600 border border-orange-600 "} px-2 py-1 rounded-full`}
             >
               Shop {m.id}
             </button>
@@ -217,7 +220,7 @@ function Map({ setGettingLocation }) {
                 setMapCenter(userPos);
                 console.log("Centered map to user:", userPos);
               }}
-              className="text-blue-600 border border-blue-600 px-2 py-1 rounded-full"
+              className={` ${mapCenter.every((val, i) => val === userPos[i]) ? "bg-blue-600 text-white" : "text-blue-600 border border-blue-600"}  px-2 py-1 rounded-full`}
             >
               My Location
             </button>
@@ -226,6 +229,18 @@ function Map({ setGettingLocation }) {
         <p className="text-[12px] text-gray-400 mt-1">
           © OpenStreetMap contributors | Leaflet
         </p>
+        <button
+          onClick={() => {
+            let gmapsUrl = `https://www.google.com/maps?q=${mapCenter[0]},${mapCenter[1]}`;
+            if (userPos !== null) {
+              gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination[0]},${destination[1]}&travelmode=driving`;
+            }
+            window.open(gmapsUrl, "_blank");
+          }}
+          className={`flex justify-start items-center gap-2 mt-4 text-sm text-white ${markers.map((m) => m.position).some((pos) => mapCenter.every((val, i) => val === pos[i])) ? "bg-orange-600" : "bg-blue-600"} px-4 py-2 rounded-lg `}
+        >
+          <MapPin size={18} /> Open in Google Maps
+        </button>
       </div>
     </div>
   );
