@@ -27,17 +27,17 @@ function ShopPin(color = "#f97316", size = 36) {
     popupAnchor: [0, -size],
   });
 }
-function MapController({ center }) {
+function MapController({ center, zoom }) {
   const map = useMap();
 
   useEffect(() => {
     if (center) {
-      map.flyTo(center, map.getZoom(), {
+      map.flyTo(center, zoom, {
         animate: true,
         duration: 1,
       });
     }
-  }, [center, map]);
+  }, [center, zoom, map]);
 
   return null;
 }
@@ -50,12 +50,14 @@ function Map({ setGettingLocation }) {
   ];
   const [tooFarDistance, setTooFarDistance] = useState(null);
   const [mapCenter, setMapCenter] = useState(markers[0].position);
+  const [mapZoom, setMapZoom] = useState(16);
   const [userPos, setUserPos] = useState(null);
   const [distance, setDistance] = useState(null);
   const [mapLoading, setMapLoading] = useState(true);
 
   const shopIcon = ShopPin("#f97316", 24); // orange
   const userIcon = UserPin("#2563eb", 24); // blue
+  let watchId = null;
 
   function LocateMe() {
     setGettingLocation(true);
@@ -65,11 +67,18 @@ function Map({ setGettingLocation }) {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    watchId = navigator.geolocation.watchPosition(
       (pos) => {
         console.log("Accuracy (meters):", pos.coords.accuracy);
-        setUserPos([pos.coords.latitude, pos.coords.longitude]);
-        setGettingLocation(false);
+
+        // Stop watching if accuracy is less than 300 meters
+        if (pos.coords.accuracy < 300) {
+          setUserPos([pos.coords.latitude, pos.coords.longitude]);
+          setGettingLocation(false);
+          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+          navigator.geolocation.clearWatch(watchId);
+          return;
+        }
       },
       (err) => {
         alert("Please turn on GPS / High accuracy mode");
@@ -81,7 +90,7 @@ function Map({ setGettingLocation }) {
         maximumAge: 0,
       },
     );
-    return null;
+    return () => navigator.geolocation.clearWatch(watchId);
   }
 
   useEffect(() => {
@@ -106,7 +115,9 @@ function Map({ setGettingLocation }) {
           </p>
         </div>
         <button
-          onClick={LocateMe}
+          onClick={async () => {
+            LocateMe();
+          }}
           className="rounded-lg border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-semibold text-orange-600 hover:bg-orange-100"
         >
           Get Directions
@@ -126,7 +137,7 @@ function Map({ setGettingLocation }) {
 
           <MapContainer
             center={mapCenter}
-            zoom={16}
+            zoom={mapZoom}
             scrollWheelZoom={false}
             attributionControl={false}
             style={{
@@ -141,7 +152,7 @@ function Map({ setGettingLocation }) {
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution="© Esri"
             />
-            <MapController center={mapCenter} />
+            <MapController center={mapCenter} zoom={mapZoom} />
             {markers.map((m) => (
               <Marker key={m.id} position={m.position} icon={shopIcon}>
                 <Popup>
@@ -156,7 +167,23 @@ function Map({ setGettingLocation }) {
                 userIcon={userIcon}
                 onTooFar={setTooFarDistance}
                 setDistance={setDistance}
+                setMapCenter={setMapCenter}
               />
+            )}
+            {userPos && (
+              <Marker
+                position={userPos}
+                icon={userIcon}
+                draggable
+                eventHandlers={{
+                  dragend: (e) => {
+                    const p = e.target.getLatLng();
+                    setUserPos([p.lat, p.lng]);
+                  },
+                }}
+              >
+                <Popup>📍 You are here</Popup>
+              </Marker>
             )}
           </MapContainer>
         </div>
@@ -184,6 +211,17 @@ function Map({ setGettingLocation }) {
               Shop {m.id}
             </button>
           ))}
+          {userPos && (
+            <button
+              onClick={() => {
+                setMapCenter(userPos);
+                console.log("Centered map to user:", userPos);
+              }}
+              className="text-blue-600 border border-blue-600 px-2 py-1 rounded-full"
+            >
+              My Location
+            </button>
+          )}
         </div>
         <p className="text-[12px] text-gray-400 mt-1">
           © OpenStreetMap contributors | Leaflet

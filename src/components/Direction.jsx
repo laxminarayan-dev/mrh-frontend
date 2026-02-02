@@ -3,73 +3,43 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-routing-machine";
 
-function getDistanceKm(lat1, lon1, lat2, lon2) {
+/* distance */
+function getDistanceKm(a, b) {
   const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+  const dLng = ((b[1] - a[1]) * Math.PI) / 180;
 
-  const a =
+  const x =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos((a[0] * Math.PI) / 180) *
+      Math.cos((b[0] * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
 
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-function Routes({ userPos, outlets, userIcon, onTooFar, setDistance }) {
+export default function Direction({ userPos, outlets, setDistance }) {
   const map = useMap();
   const routeRef = useRef(null);
 
   useEffect(() => {
-    if (!userPos || !outlets?.length) return;
+    if (!userPos) return;
 
-    // 🔍 Find nearest outlet
     let nearest = outlets[0];
-    let minDistance = Infinity;
+    let min = Infinity;
 
     outlets.forEach((o) => {
-      const d = getDistanceKm(
-        userPos[0],
-        userPos[1],
-        o.position[0],
-        o.position[1],
-      );
-      if (d < minDistance) {
-        minDistance = d;
+      const d = getDistanceKm(userPos, o.position);
+      if (d < min) {
+        min = d;
         nearest = o;
       }
     });
 
-    // ❌ Too far → no routing
-    if (minDistance > 10) {
-      if (onTooFar) onTooFar(minDistance);
+    setDistance?.(min);
 
-      // remove any existing route
-      if (routeRef.current) {
-        try {
-          map.removeControl(routeRef.current);
-        } catch (e) {}
-        routeRef.current = null;
-      }
-      setTimeout(() => {
-        onTooFar(null);
-      }, 2000);
-      return;
-    }
-
-    // ✅ Within range → show route
-    if (onTooFar) {
-      setDistance(minDistance);
-      onTooFar(null);
-    }
-
-    // 🧹 Remove previous route
     if (routeRef.current) {
-      try {
-        map.removeControl(routeRef.current);
-      } catch (e) {}
-      routeRef.current = null;
+      map.removeControl(routeRef.current);
     }
 
     routeRef.current = L.Routing.control({
@@ -77,38 +47,21 @@ function Routes({ userPos, outlets, userIcon, onTooFar, setDistance }) {
         L.latLng(userPos[0], userPos[1]),
         L.latLng(nearest.position[0], nearest.position[1]),
       ],
-      lineOptions: {
-        styles: [{ color: "#f97316", weight: 4 }],
-      },
       addWaypoints: false,
       draggableWaypoints: false,
-      fitSelectedRoutes: true,
-
-      // 👇 IMPORTANT FIX
+      fitSelectedRoutes: false,
       show: false,
-      collapsible: false,
-      routeWhileDragging: false,
-      showAlternatives: false,
-
-      createMarker: (i, wp) => {
-        if (i === 0 && userIcon) {
-          return L.marker(wp.latLng, { icon: userIcon });
-        }
-        return null;
-      },
+      createMarker: () => null,
+      lineOptions: { styles: [{ color: "#f97316", weight: 4 }] },
     }).addTo(map);
 
     return () => {
       if (routeRef.current) {
-        try {
-          map.removeControl(routeRef.current);
-        } catch (e) {}
+        map.removeControl(routeRef.current);
         routeRef.current = null;
       }
     };
-  }, [userPos, outlets, map, userIcon, onTooFar]);
+  }, [userPos, outlets, map, setDistance]);
 
   return null;
 }
-
-export default Routes;
