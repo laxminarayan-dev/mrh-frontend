@@ -17,7 +17,12 @@ function getDistanceKm(a, b) {
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-export default function Direction({ userPos, outlets = [], setDistance }) {
+export default function Direction({
+  userPos,
+  outlets = [],
+  setDistance,
+  setDestination,
+}) {
   const map = useMap();
   const routeRef = useRef(null);
   const abortRef = useRef(null);
@@ -40,6 +45,7 @@ export default function Direction({ userPos, outlets = [], setDistance }) {
     }
 
     setDistance?.(min);
+    setDestination?.(nearest.position);
 
     /* cleanup old route */
     if (routeRef.current) {
