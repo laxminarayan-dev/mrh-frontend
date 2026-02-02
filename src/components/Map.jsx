@@ -50,7 +50,7 @@ function Map({ setGettingLocation }) {
   ];
   const [tooFarDistance, setTooFarDistance] = useState(null);
   const [mapCenter, setMapCenter] = useState(markers[0].position);
-  const [userPos, setUserPos] = useState([28.1968, 78.3814]);
+  const [userPos, setUserPos] = useState(null);
   const [distance, setDistance] = useState(null);
   const [mapLoading, setMapLoading] = useState(true);
 
