@@ -275,11 +275,11 @@ function Menu() {
         </div>
       </section>
 
-      <section className="text-center max-w-6xl mx-auto">
+      <section className="text-center max-w-6xl mx-auto mb-8">
         <CardGrid>
-          <div className="col-span-full w-full max-w-6xl flex items-center justify-between flex-wrap gap-3 ">
-            <div className="text-left">
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900">
+          <div className="w-[80vw] mx-auto col-span-full min-[440px]:w-full max-w-6xl flex items-center justify-start min-[440px]:justify-between flex-wrap gap-3 ">
+            <div className="text-left pl-1">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
                 {activeType} Items
               </h2>
               <p className="text-gray-600">
@@ -287,7 +287,7 @@ function Menu() {
               </p>
             </div>
             <span className="text-sm px-4 py-2 rounded-full bg-white border border-orange-100 text-gray-700 shadow-sm">
-              Freshly prepared • 100% Veg
+              Freshly prepared • 100% vegetarian
             </span>
           </div>
           {filteredItems.map((item) => (
