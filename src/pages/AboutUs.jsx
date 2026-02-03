@@ -41,9 +41,9 @@ function AboutUs() {
               About Mr Halwai
             </p>
             <h1 className="mt-2 text-3xl md:text-4xl font-bold text-slate-900">
-              A celebration of authentic Indian flavors
+              A food corner of authentic Indian flavors
             </h1>
-            <p className="mt-4 text-slate-600 leading-relaxed">
+            <p className="mt-4 text-slate-600 leading-relaxed line-clamp-6">
               At Mr Halwai, we blend tradition with a modern touch to bring you
               comforting, home-style dishes. Our chefs honor regional recipes
               and use fresh, locally sourced ingredients to ensure every bite
@@ -65,12 +65,12 @@ function AboutUs() {
               <h2 className="text-lg font-semibold text-slate-900">
                 Our Story
               </h2>
-              <p className="mt-3 text-slate-600">
+              <p className="mt-3 text-slate-600 line-clamp-4">
                 Founded by passionate home chefs, Mr Halwai started as a small
                 kitchen with one mission: deliver soul-satisfying food with the
                 consistency and warmth of a family meal.
               </p>
-              <p className="mt-3 text-slate-600">
+              <p className="mt-3 text-slate-600 line-clamp-4">
                 Today, we serve thousands of customers with a menu that’s rich,
                 comforting, and always evolving.
               </p>
@@ -80,7 +80,7 @@ function AboutUs() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-12 md:pb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
             <div
               key={stat.label}
@@ -101,7 +101,7 @@ function AboutUs() {
         </p>
 
         <div className="mt-10 rounded-3xl bg-gradient-to-br from-orange-100 via-orange-300 to-orange-100 border border-orange-100 p-6 sm:p-8">
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map(({ title, description, icon }) => (
               <div
                 key={title}
