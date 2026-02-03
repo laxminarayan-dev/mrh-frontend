@@ -31,7 +31,7 @@ function Footer() {
                       <path d="M14 8h2V4h-2c-2.2 0-4 1.8-4 4v2H8v4h2v6h4v-6h2.5l.5-4H14V8z" />
                     </svg>
                   ),
-                  link: "#",
+                  link: "https://www.facebook.com/rajesh.sh.773981",
                 },
                 {
                   name: "Instagram",
