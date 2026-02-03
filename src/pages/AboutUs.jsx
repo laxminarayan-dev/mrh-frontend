@@ -65,14 +65,28 @@ function AboutUs() {
               <h2 className="text-lg font-semibold text-slate-900">
                 Our Story
               </h2>
-              <p className="mt-3 text-slate-600 line-clamp-4">
-                Founded by passionate home chefs, Mr Halwai started as a small
-                kitchen with one mission: deliver soul-satisfying food with the
-                consistency and warmth of a family meal.
+              <p className="mt-3 text-slate-600 line-clamp-6">
+                Mr Halwai was founded in 2024 by Rajesh Kumar, a young entrepreneur in his
+                mid-twenties who believed that great food could be built from passion,
+                patience, and purpose. Growing up in Narora, Bulandshahr, Uttar Pradesh,
+                Rajesh faced his share of struggles while chasing a simple but powerful
+                dream — to create a food brand that could reach homes across India.
               </p>
-              <p className="mt-3 text-slate-600 line-clamp-4">
-                Today, we serve thousands of customers with a menu that’s rich,
-                comforting, and always evolving.
+              <hr className="my-6" />
+              <p className="mt-3 text-slate-600 line-clamp-6">
+                What started as a small kitchen, driven by limited resources but unlimited
+                determination, slowly turned into a growing venture focused on delivering
+                soul-satisfying food with the warmth and consistency of a family meal. Every
+                dish was crafted with care, reflecting both traditional flavors and modern
+                tastes.
+              </p>
+              <hr className="my-6" />
+              <p className="mt-3 text-slate-600 line-clamp-6">
+                Today, Mr Halwai proudly serves thousands of customers, carrying forward the
+                values it was built on — quality, honesty, and love for food. With a vision
+                to expand pan-India, the journey continues, rooted in Narora and driven by
+                the belief that hard work and heart can turn even the smallest beginnings
+                into something truly meaningful.
               </p>
             </div>
           </div>

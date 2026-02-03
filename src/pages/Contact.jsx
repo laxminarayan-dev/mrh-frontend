@@ -54,7 +54,7 @@ function Contact() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Email</p>
-                  <p className="text-sm text-slate-600">support@mrhalwai.com</p>
+                  <p className="text-sm text-slate-600">support@mrhalwai.in</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -63,7 +63,7 @@ function Contact() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Phone</p>
-                  <p className="text-sm text-slate-600">+91 98765 43210</p>
+                  <p className="text-sm text-slate-600">+91 73105 07638</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -75,7 +75,7 @@ function Contact() {
                     Address
                   </p>
                   <p className="text-sm text-slate-600">
-                    12 MG Road, Indore, MP 452001
+                    Shop No. 57, KIC Market, Dibai, Uttar Pradesh 203393
                   </p>
                 </div>
               </div>
@@ -86,7 +86,7 @@ function Contact() {
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Hours</p>
                   <p className="text-sm text-slate-600">
-                    Mon - Sun: 9:00 AM to 10:00 PM
+                    Mon - Sun: 10:00 AM to 10:00 PM
                   </p>
                 </div>
               </div>

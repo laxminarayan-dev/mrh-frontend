@@ -4,6 +4,7 @@ import {
   IndianRupee,
   ShoppingBasket,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function ChooseUs() {
   const whyChooseUs = [
@@ -77,12 +78,12 @@ function ChooseUs() {
             No preservatives • Eco-friendly packaging • Hygienic kitchen
           </p>
         </div>
-        <button
-          aria-label="order-now-btn"
+        <Link
+          to="/menu"
           className="px-6 py-2 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors"
         >
           View Menu
-        </button>
+        </Link>
       </div>
     </section>
   );

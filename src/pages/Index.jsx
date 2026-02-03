@@ -5,6 +5,7 @@ import Feedback from "../components/Feedback";
 import ChooseUs from "../components/ChooseUs";
 import Thali from "../components/Thali";
 import CardSkeleton from "../components/CardSkeleton";
+import { Link } from "react-router-dom";
 
 function Index({
   mostSellers = [],
@@ -62,9 +63,11 @@ function Index({
               </div>
 
               <div className="pt-4">
-                <button className="w-full max-w-[18rem] px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all">
+                <Link
+                  to={'/menu'}
+                  className="px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all">
                   View Menu
-                </button>
+                </Link>
               </div>
 
               {/* Stats */}

@@ -17,8 +17,8 @@ function App({ isLoggedIn = false }) {
   const links = [
     { name: "Home", url: "/", icon: <House /> },
     { name: "Menu", url: "/menu", icon: <Book /> },
-    { name: "About Us", url: "/about", icon: <Info /> },
-    { name: "Contact Us", url: "/contact", icon: <Phone /> },
+    { name: "About Us", url: "/about-us", icon: <Info /> },
+    { name: "Contact Us", url: "/contact-us", icon: <Phone /> },
     { name: "Cart", url: "/cart", icon: <ShoppingCart /> },
     { name: "Account", url: "/account", icon: <UserRound /> },
   ];
@@ -57,16 +57,3 @@ function App({ isLoggedIn = false }) {
 }
 
 export default App;
-
-/* <Index
-  mostSellers={mostSellers}
-  Specialties={Specialties}
-  itemsBySpecialty={itemsBySpecialty}
-  selectedSpecialties={selectedSpecialties}
-  setSelectedSpecialties={setSelectedSpecialties}
-  specialtyStartIndex={specialtyStartIndex}
-  specialtyVisibleCount={specialtyVisibleCount}
-  setSpecialtyStartIndex={setSpecialtyStartIndex}
-  specialtyMaxStart={specialtyMaxStart}
-  visibleSpecialties={visibleSpecialties}
-/>; */

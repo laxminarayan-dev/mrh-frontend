@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import ForgotPasswordForm from "./components/ForgotPass";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Reviews from "./pages/Reviews";
 
 function Routing() {
   const [selectedSpecialties, setSelectedSpecialties] = useState("Dosa");
@@ -139,9 +140,9 @@ function Routing() {
             />
           }
         />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="menu" element={<Menu />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact-us" element={<Contact />} />
+        <Route path="/menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
         <Route
@@ -156,6 +157,7 @@ function Routing() {
           <Route path="signup" element={<Signup />} />
           <Route path="forgot-password" element={<ForgotPasswordForm />} />
         </Route>
+        <Route path="/reviews" element={<Reviews />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       </Route>

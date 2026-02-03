@@ -1,4 +1,6 @@
+import { Star } from "lucide-react";
 import React from "react";
+import { Link } from "react-router-dom";
 
 function Feedback() {
   return (
@@ -52,12 +54,12 @@ function Feedback() {
                 <div className="flex gap-0.5">
                   {[...Array(feedback.rating)].map((_, i) => (
                     <span key={i} className="text-yellow-400">
-                      ⭐
+                      <Star size={16} fill="gold" />
                     </span>
                   ))}
                   {[...Array(5 - feedback.rating)].map((_, i) => (
                     <span key={i} className="text-gray-300">
-                      ⭐
+                      <Star size={16} fill="#88888860" />
                     </span>
                   ))}
                 </div>
@@ -71,9 +73,9 @@ function Feedback() {
       </div>
 
       <div className="mt-10 text-center">
-        <button className="px-8 py-3 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors shadow-sm">
+        <Link to="/reviews" className="px-8 py-3 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors shadow-sm">
           View All Reviews
-        </button>
+        </Link>
       </div>
     </section>
   );
