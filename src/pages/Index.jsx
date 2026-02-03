@@ -9,12 +9,12 @@ import CardSkeleton from "../components/CardSkeleton";
 function Index({
   mostSellers = [],
   itemsBySpecialty = [],
-  selectedSpecialties = () => {},
-  setSelectedSpecialties = () => {},
+  selectedSpecialties = () => { },
+  setSelectedSpecialties = () => { },
   specialtyStartIndex = 0,
   specialtyMaxStart = 0,
   visibleSpecialties = [],
-  setSpecialtyStartIndex = () => {},
+  setSpecialtyStartIndex = () => { },
   isLoading = false,
 }) {
   return (
@@ -35,7 +35,7 @@ function Index({
                 </span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent leading-tight">
                 Taste The Authenticity
               </h1>
 
@@ -61,17 +61,14 @@ function Index({
                 ))}
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button className="px-8 py-3 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-                  Order Now
-                </button>
-                <button className="px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all">
+              <div className="pt-4">
+                <button className="w-full max-w-[18rem] px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all">
                   View Menu
                 </button>
               </div>
 
               {/* Stats */}
-              <div className="flex gap-8 pt-6 border-t border-orange-100">
+              <div className="flex flex-wrap gap-10 pt-6 border-t border-orange-100">
                 {[
                   { number: "500+", label: "Happy Customers" },
                   { number: "4.4★", label: "Rating" },
@@ -98,17 +95,24 @@ function Index({
       </header>
       {/* best seller */}
 
-      <section className="py-4 text-center">
+      <section className="max-w-6xl mx-auto py-4 text-center">
         <h1 className="font-semibold text-4xl border-b-4 border-[#FF7407] inline">
           Best Sellers
         </h1>
-        <p className="text-gray-600 mt-3">
+        <p className="text-gray-600 mt-3 px-2">
           Our most-loved dishes, picked by customers every day.
         </p>
-
-        <CardGrid
-          className={mostSellers.length >= 4 ? "md:max-w-6xl" : "md:max-w-3xl"}
+        <div
+          className="
+    grid
+    px-3
+    gap-4
+    justify-center
+    [grid-template-columns:1fr]
+    min-[410px]:[grid-template-columns:repeat(auto-fit,200px)]
+  "
         >
+
           {isLoading ? (
             <>
               {[1, 2, 3, 4].map((_, index) => (
@@ -122,7 +126,7 @@ function Index({
               ))}
             </>
           )}
-        </CardGrid>
+        </div>
       </section>
       {/* Speciality Items Section */}
       <section className="max-w-6xl mx-auto mb-8 bg-transparent pt-6 text-center">
@@ -130,11 +134,11 @@ function Index({
           <span className="text-xs uppercase tracking-[0.3em] text-[#F67401] font-semibold bg-slate-900 px-3 py-1 rounded-full border border-orange-100">
             Our Menu Picks
           </span>
-          <h2 className="mt-3 text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent">
+          <h2 className="mt-3 text-4xl sm:text-5xl md:text-5xl font-semibold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent">
             Our Specialties
           </h2>
         </div>
-        <p className="text-gray-600 mt-3">
+        <p className="text-gray-600 mt-3 px-2">
           Explore handcrafted favorites across every craving.
         </p>
         <div className="max-w-fit mx-auto mt-10 px-4">
@@ -167,11 +171,10 @@ function Index({
                 {visibleSpecialties.map((specialty, index) => (
                   <div
                     key={index}
-                    className={`w-24 sm:w-28 md:w-32 p-3 transition-all hover:-translate-y-1 ${
-                      selectedSpecialties === specialty.name
-                        ? "border-b-4 border-[#FF7407]"
-                        : ""
-                    } cursor-pointer`}
+                    className={`w-24 sm:w-28 md:w-32 p-3 transition-all hover:-translate-y-1 ${selectedSpecialties === specialty.name
+                      ? "border-b-4 border-[#FF7407]"
+                      : ""
+                      } cursor-pointer`}
                     onClick={() => setSelectedSpecialties(specialty.name)}
                   >
                     <img
@@ -201,14 +204,7 @@ function Index({
             </button>
           </div>
         </div>
-        <CardGrid
-          className={
-            Object.keys(itemsBySpecialty).length > 0 &&
-            itemsBySpecialty[selectedSpecialties].length >= 4
-              ? "md:max-w-6xl"
-              : "md:max-w-3xl"
-          }
-        >
+        <CardGrid>
           {isLoading ? (
             <>
               {[1, 2, 3, 4].map((_, index) => (

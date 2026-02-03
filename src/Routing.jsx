@@ -21,7 +21,10 @@ function Routing() {
   const [specialtyVisibleCount, setSpecialtyVisibleCount] = useState(5);
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      if (window.innerWidth < 440) {
+        setSpecialtyVisibleCount(2);
+      }
+      else if (window.innerWidth < 1024) {
         setSpecialtyVisibleCount(3);
       } else if (window.innerWidth < 1280) {
         setSpecialtyVisibleCount(4);

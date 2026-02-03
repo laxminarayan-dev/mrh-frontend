@@ -211,11 +211,10 @@ function Menu() {
                 key={category.name}
                 type="button"
                 onClick={() => setActiveType(category.name)}
-                className={`group relative overflow-hidden text-left rounded-3xl border p-5 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1 bg-white/95 ${
-                  isActive
+                className={`group relative overflow-hidden text-left rounded-3xl border p-5 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1 bg-white/95 ${isActive
                     ? "border-[#FF7407] ring-2 ring-[#FF7407]/30"
                     : "border-orange-100"
-                }`}
+                  }`}
               >
                 <div
                   className={`absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-40 transition-all group-hover:opacity-70 ${category.soft}`}
@@ -227,11 +226,10 @@ function Menu() {
                     <span className="drop-shadow-sm">{category.emoji}</span>
                   </div>
                   <span
-                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                      isActive
+                    className={`text-xs font-semibold px-3 py-1 rounded-full ${isActive
                         ? "bg-[#FF7407] text-white"
                         : "bg-orange-100 text-[#FF7407]"
-                    }`}
+                      }`}
                   >
                     {categoryCounts[category.name] || 0} items
                   </span>
@@ -245,11 +243,10 @@ function Menu() {
                   </p>
                 </div>
                 <div
-                  className={`mt-4 h-1 w-full rounded-full bg-gradient-to-r transition-all ${
-                    isActive
+                  className={`mt-4 h-1 w-full rounded-full bg-gradient-to-r transition-all ${isActive
                       ? "from-[#FF7407] to-[#F6A51A]"
                       : "from-orange-100 to-orange-50"
-                  }`}
+                    }`}
                 ></div>
               </button>
             );

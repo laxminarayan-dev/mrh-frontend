@@ -48,7 +48,7 @@ function ChooseUs() {
       </div>
 
       <div className="mt-10 rounded-3xl bg-gradient-to-br from-orange-100 via-orange-300 to-orange-100 border border-orange-100 p-6 sm:p-8">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 min-[410px]:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {whyChooseUs.map(({ title, description, Icon, accent }) => (
             <div
               key={title}
@@ -81,7 +81,7 @@ function ChooseUs() {
           aria-label="order-now-btn"
           className="px-6 py-2 bg-[#FF7407] text-white font-semibold rounded-full hover:bg-[#F67401] transition-colors"
         >
-          Order Now
+          View Menu
         </button>
       </div>
     </section>

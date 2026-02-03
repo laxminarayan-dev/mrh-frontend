@@ -25,10 +25,10 @@ function Thali() {
             alt="thali"
             loading="lazy"
             decoding="async"
-            className=" absolute right-1/2 left-1/2  translate-x-[-6rem] md:translate-x-[0rem] translate-y-[-1rem] md:translate-y-[-3rem] w-96 md:w-110 -z-0"
+            className="hidden min-[410px]:flex absolute right-1/2 left-1/2  translate-x-[-6rem] md:translate-x-[0rem] translate-y-[-1rem] md:translate-y-[-3rem] w-96 md:w-110 -z-0"
           />
           {thaliDetails.offer && (
-            <div className="absolute top-4 right-4 bg-yellow-300 p-2 rounded">
+            <div className="hidden min-[410px]:flex  absolute top-4 right-4 bg-yellow-300 p-2 rounded">
               <p>{thaliDetails.offerPercentage}% Off</p>
             </div>
           )}
