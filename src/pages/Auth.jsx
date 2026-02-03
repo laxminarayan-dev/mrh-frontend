@@ -15,11 +15,11 @@ function Auth() {
         {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-6">
           By continuing, you agree to our{" "}
-          <Link to="/terms" className="text-orange-600 hover:underline">
+          <Link to="/terms-and-conditions" className="text-orange-600 hover:underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link to="/privacy" className="text-orange-600 hover:underline">
+          <Link to="/privacy-policy" className="text-orange-600 hover:underline">
             Privacy Policy
           </Link>
         </p>
