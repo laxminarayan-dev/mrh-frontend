@@ -131,7 +131,7 @@ function Map({ setGettingLocation }) {
           <h3 className="text-lg font-semibold text-slate-900">
             Visit our kitchen
           </h3>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 line-clamp-1">
             We’re always happy to welcome you.
           </p>
         </div>
@@ -220,7 +220,7 @@ function Map({ setGettingLocation }) {
           </div>
         )}
         {/* locatores */}
-        <div className="absolute top-78 right-9 bg-white py-2 px-3 rounded-full text-xs font-medium text-slate-700 flex items-center gap-2 z-90">
+        <div className="absolute top-92 min-[476px]:top-78 right-9 bg-white py-2 px-3 rounded-full text-xs font-medium text-slate-700 flex items-center gap-2 z-90">
           {markers.map((m) => (
             <button
               key={m.id}
