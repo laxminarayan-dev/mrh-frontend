@@ -9,7 +9,10 @@ import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
 import Menu from "./pages/Menu";
+import Signup from "./components/Signup";
+import Login from "./components/Login";
 import { useEffect, useState } from "react";
+import ForgotPasswordForm from "./components/ForgotPass";
 
 function Routing() {
   const [selectedSpecialties, setSelectedSpecialties] = useState("Dosa");
@@ -143,10 +146,10 @@ function Routing() {
         <Route path="checkout" element={<Checkout />} />
         <Route path="/account" element={<div>Account Page</div>} />
         <Route path="/auth" element={<Auth />}>
-          <Route index element={<>Login</>} />
-          <Route path="login" element={<>Login</>} />
-          <Route path="register" element={<>Register</>} />
-          <Route path="forgot-password" element={<>Forgot Password</>} />
+          <Route index element={<Login />} />
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+          <Route path="forgot-password" element={<ForgotPasswordForm />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFound />} />
