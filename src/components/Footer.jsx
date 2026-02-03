@@ -72,7 +72,7 @@ function Footer() {
                       <polygon points="10 9 16 12 10 15" />
                     </svg>
                   ),
-                  link: "https://www.youtube.com/@mrHalwai-k2v",
+                  link: "https://youtube.com/@mrhalvai?si=a_Jc7N-zWRJpuQrk",
                 },
               ].map((social) => (
                 <a
