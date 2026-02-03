@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import {
   Book,
   House,
@@ -14,6 +14,7 @@ import {
 
 function App({ isLoggedIn = false }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
   const links = [
     { name: "Home", url: "/", icon: <House /> },
     { name: "Menu", url: "/menu", icon: <Book /> },
@@ -29,6 +30,11 @@ function App({ isLoggedIn = false }) {
       document.body.style.overflow = "auto";
     }
   }, [isSidebarOpen]);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">
