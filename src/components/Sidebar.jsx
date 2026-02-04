@@ -30,15 +30,13 @@ function Sidebar({
             {links.map((link) => {
               if (link.name === "Account" && !isLoggedIn) {
                 return (
-                  <li
-                    key={link.name}
-                  >
+                  <li key={link.name}>
                     <button
                       onClick={() => {
                         navigate("/auth");
                         setIsSidebarOpen(false);
                       }}
-                      className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
+                      className="w-full text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
                     >
                       Login
                     </button>
@@ -59,10 +57,11 @@ function Sidebar({
                     className="flex justify-start items-center gap-3 w-full"
                   >
                     <span
-                      className={`${currentPage.toLowerCase() === link.url.toLowerCase()
-                        ? "text-white"
-                        : "text-orange-500 group-hover:text-orange-600"
-                        }`}
+                      className={`${
+                        currentPage.toLowerCase() === link.url.toLowerCase()
+                          ? "text-white"
+                          : "text-orange-500 group-hover:text-orange-600"
+                      }`}
                     >
                       {link.icon}
                     </span>
