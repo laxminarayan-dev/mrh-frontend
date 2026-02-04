@@ -47,7 +47,7 @@ function Cart() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-[calc(100dvh-4rem)]  flex items-center justify-center px-6">
+      <div className="w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-[calc(100vh-4rem)]  flex items-center justify-center px-6">
         <div className="max-w-lg w-full text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 shadow-sm">
             <ShoppingBag size={30} />
