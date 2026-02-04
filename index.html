@@ -1,68 +1,79 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mr Halwai</title>
+    <meta
+      name="google-site-verification"
+      content="ilTtY8V8TNk87GP0M_W82Df84lgndh8nnEh9zqAgKRI"
+    />
+    <meta
+      name="description"
+      content="Mr Halwai serves fresh South Indian dosa, idli & snacks in Narora and Debai. Order tasty dosa near you."
+    />
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mr Halwai</title>
-  <meta name="google-site-verification" content="ilTtY8V8TNk87GP0M_W82Df84lgndh8nnEh9zqAgKRI" />
-  <meta name="description"
-    content="Mr Halwai serves fresh South Indian dosa, idli & snacks in Narora and Debai. Order tasty dosa near you." />
+    <meta
+      name="keywords"
+      content="Mr Halwai, mrhalwai, Mr Halwai Dosa , Dosa near me, dosa in Narora, dosa in Debai, South Indian food Narora , Food corner in Narora and Debai, Food in Narora and Debai"
+    />
 
-  <meta name="keywords"
-    content="Mr Halwai, mrhalwai, Mr Halwai Dosa , Dosa near me, dosa in Narora, dosa in Debai, South Indian food Narora , Food corner in Narora and Debai, Food in Narora and Debai" />
+    <!-- Open Graph (for sharing) -->
+    <meta property="og:title" content="Mr Halwai – Best Dosa in Narora" />
+    <meta
+      property="og:description"
+      content="Fresh dosa & South Indian food in Narora and Debai."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mrhalwai.in" />
 
-  <!-- Open Graph (for sharing) -->
-  <meta property="og:title" content="Mr Halwai – Best Dosa in Narora" />
-  <meta property="og:description" content="Fresh dosa & South Indian food in Narora and Debai." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://mrhalwai.in" />
+    <link
+      rel="preload"
+      href="/fonts/Fredoka-Medium.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
+    <style>
+      @import "tailwindcss";
 
-  <link rel="preload" href="/fonts/Fredoka-Medium.woff2" as="font" type="font/woff2" crossorigin />
+      /* Hide Leaflet Routing Machine UI */
+      .leaflet-routing-container {
+        display: none !important;
+      }
 
-  <style>
-    @import "tailwindcss";
+      @font-face {
+        font-family: "Fredoka";
+        src: url("/fonts/Fredoka-Medium.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
 
-    /* Hide Leaflet Routing Machine UI */
-    .leaflet-routing-container {
-      display: none !important;
-    }
+      * {
+        font-family: "Fredoka";
+        font-style: normal;
+      }
 
-    @font-face {
-      font-family: "Fredoka";
-      src: url("/fonts/Fredoka-Medium.woff2") format("woff2");
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
+      .seo-hidden {
+        position: absolute;
+        left: -9999px;
+      }
+    </style>
+  </head>
 
-    * {
-      font-family: "Fredoka";
-      font-style: normal;
-    }
+  <body>
+    <!-- SEO fallback content for Google -->
+    <h1 class="seo-hidden">Mr Halwai – Best Dosa in Narora and Debai</h1>
 
-    .seo-hidden {
-      position: absolute;
-      left: -9999px;
-    }
-  </style>
-</head>
+    <p class="seo-hidden">
+      Mr Halwai serves fresh South Indian dosa, idli and snacks in Narora and
+      Debai. Order tasty dosa near you.
+    </p>
 
-<body>
-  <!-- SEO fallback content for Google -->
-  <h1 class="seo-hidden">
-    Mr Halwai – Best Dosa in Narora and Debai
-  </h1>
-
-  <p class="seo-hidden">
-    Mr Halwai serves fresh South Indian dosa, idli and snacks in Narora and Debai.
-    Order tasty dosa near you.
-  </p>
-
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx" defer></script>
-</body>
-
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx" defer></script>
+  </body>
 </html>
