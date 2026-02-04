@@ -8,7 +8,7 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
     <nav className="w-full max-w-6xl mx-auto bg-[#FFFBE9] flex justify-between items-center px-8 py-2 h-16 relative z-100 ">
       <div className="flex justify-center items-center">
         <ChefHat color="#F67401" size={32} />
-        <Link to="/" className="text-2xl font-semibold text-[#F67401] ml-2">
+        <Link to="/" className="text-2xl font-semibold text-[#F67401] ml-2 ">
           Mr Halwai
         </Link>
       </div>
@@ -17,15 +17,20 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
           {links.map((link) => {
             if (link.name === "Account" && !isLoggedIn) {
               return (
-                <button
+                <li
                   key={link.name}
-                  onClick={() => {
-                    navigate("/auth");
-                  }}
-                  className="bg-orange-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-orange-600 transition-colors cursor-pointer"
                 >
-                  Login
-                </button>
+                  <button
+                    onClick={() => {
+                      navigate("/auth");
+                    }}
+                    aria-label="Login button"
+                    className="bg-orange-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-orange-600 transition-colors cursor-pointer"
+                  >
+                    Login
+                  </button>
+
+                </li>
               );
             }
             return (
@@ -41,6 +46,7 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
         </ul>
         <div className="md:hidden">
           <button
+            aria-label="Toggle Sidebar"
             onClick={() => setIsSidebarOpen((prev) => !prev)}
             className="text-[#FF7407]"
           >

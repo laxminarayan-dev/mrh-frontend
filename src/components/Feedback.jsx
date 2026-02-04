@@ -50,7 +50,7 @@ function Feedback() {
                 {feedback.initial}
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">{feedback.name}</h4>
+                <p className="font-semibold text-gray-900">{feedback.name}</p>
                 <div className="flex gap-0.5">
                   {[...Array(feedback.rating)].map((_, i) => (
                     <span key={i} className="text-yellow-400">
