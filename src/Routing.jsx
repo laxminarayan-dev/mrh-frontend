@@ -18,28 +18,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Reviews from "./pages/Reviews";
 
 function Routing() {
-  const [selectedSpecialties, setSelectedSpecialties] = useState("Dosa");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [specialtyStartIndex, setSpecialtyStartIndex] = useState(0);
-  const [specialtyVisibleCount, setSpecialtyVisibleCount] = useState(5);
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 440) {
-        setSpecialtyVisibleCount(2);
-      }
-      else if (window.innerWidth < 1024) {
-        setSpecialtyVisibleCount(3);
-      } else if (window.innerWidth < 1280) {
-        setSpecialtyVisibleCount(4);
-      } else {
-        setSpecialtyVisibleCount(5);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const mostSellers = [
     {
@@ -63,83 +42,11 @@ function Routing() {
 
     // Add more items as needed
   ];
-  const Specialties = [
-    {
-      name: "Dosa",
-      image: "/dosa-icon.png",
-    },
-    {
-      name: "Idli",
-      image: "/idli-icon.png",
-    },
-    {
-      name: "Pav Bhaji",
-      image: "/pavbhaji-icon.png",
-    },
-    {
-      name: "Noodles",
-      image: "/noodles-icon.png",
-    },
-    {
-      name: "Idli",
-      image: "/idli-icon.png",
-    },
-    {
-      name: "Pav Bhaji",
-      image: "/pavbhaji-icon.png",
-    },
-    {
-      name: "Noodles",
-      image: "/noodles-icon.png",
-    },
-  ];
-  const totalSpecialties = Specialties.length;
-  const specialtyMaxStart = Math.max(
-    0,
-    totalSpecialties - specialtyVisibleCount,
-  );
-  const visibleSpecialties = Specialties.slice(
-    specialtyStartIndex,
-    specialtyStartIndex + specialtyVisibleCount,
-  );
-  const itemsBySpecialty = {
-    Dosa: [
-      { name: "Masala Dosa", image: "/dosa.png", originalPrice: 120 },
-      { name: "Rava Dosa", image: "/masala-dosa-comp.png", originalPrice: 100 },
-      { name: "Paper Dosa", image: "/dosa-comp.png", originalPrice: 60 },
-      { name: "Onion Dosa", image: "/dosa.png", originalPrice: 90 },
-      { name: "Cheese Dosa", image: "/dosa.png", originalPrice: 130 },
-    ],
-    Idli: [{ name: "Sambar Idli", image: "/idli-comp.png", originalPrice: 80 }],
-    "Pav Bhaji": [
-      { name: "Classic Pav Bhaji", image: "/pavbhaji.png", originalPrice: 110 },
-      { name: "Cheese Pav Bhaji", image: "/pavbhaji.png", originalPrice: 130 },
-    ],
-    Noodles: [
-      { name: "Veg Hakka Noodles", image: "/noodles.png", originalPrice: 95 },
-    ],
-  };
 
   return (
     <Routes>
       <Route element={<App isLoggedIn={isLoggedIn} />}>
-        <Route
-          path="/"
-          element={
-            <Index
-              mostSellers={mostSellers}
-              Specialties={Specialties}
-              itemsBySpecialty={itemsBySpecialty}
-              selectedSpecialties={selectedSpecialties}
-              setSelectedSpecialties={setSelectedSpecialties}
-              specialtyStartIndex={specialtyStartIndex}
-              specialtyVisibleCount={specialtyVisibleCount}
-              setSpecialtyStartIndex={setSpecialtyStartIndex}
-              specialtyMaxStart={specialtyMaxStart}
-              visibleSpecialties={visibleSpecialties}
-            />
-          }
-        />
+        <Route path="/" element={<Index />} />
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/menu" element={<Menu />} />

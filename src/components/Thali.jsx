@@ -1,14 +1,13 @@
 import { ShoppingBasket } from "lucide-react";
+import { useSelector } from "react-redux";
 
 function Thali() {
-  const thaliDetails = {
-    name: "Maa ki Thali",
-    description: ["Chawal", "Dal", "Sabji", "Roti", "Raita", "Mithai"],
-    offer: true,
-    originalPrice: 110,
-    offerPrice: 99,
-    offerPercentage: 10,
-  };
+  const { items } = useSelector((state) => state.items);
+  const thalis = items.filter((item) => item.category === "thali");
+  const thaliDetails = thalis[0];
+
+  console.log(thaliDetails);
+
   return (
     <div className="w-full bg-[#ed274a]">
       <section className="max-w-2xl md:max-w-3xl mx-auto px-4 mb-8 text-center pt-6">
@@ -21,7 +20,7 @@ function Thali() {
         <div className="relative overflow-hidden p-8 px-10 mt-2 text-left  gap-6 h-80 md:h-86 ">
           {/* image */}
           <img
-            src="./thali.png"
+            src={thaliDetails.images?.url}
             alt="thali"
             loading="lazy"
             decoding="async"
@@ -36,24 +35,24 @@ function Thali() {
             {/* description */}
             <div className="relative flex gap-2 z-10 ">
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails.description.slice(0, 3).map((item, index) => (
+                {thaliDetails.includes.slice(0, 3).map((item, index) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails.description.slice(3).map((item, index) => (
+                {thaliDetails.includes.slice(3).map((item, index) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
             </div>
             {/* price */}
-            {thaliDetails.offer ? (
+            {thaliDetails.isSale ? (
               <p className="mt-4">
                 <span className="line-through text-white mr-2">
                   ₹{thaliDetails.originalPrice}
                 </span>
                 <span className="text-xl text-white font-semibold text-yellow-200">
-                  ₹{thaliDetails.offerPrice}
+                  ₹{thaliDetails.discountPrice}
                 </span>
               </p>
             ) : (

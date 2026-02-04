@@ -1,23 +1,17 @@
-import React, { Fragment } from "react";
+import { Fragment } from "react";
 import CardOne from "../components/CardOne";
-import CardGrid from "../components/CardGrid";
 import Feedback from "../components/Feedback";
 import ChooseUs from "../components/ChooseUs";
 import Thali from "../components/Thali";
 import CardSkeleton from "../components/CardSkeleton";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import Specialities from "../components/Specialities";
 
-function Index({
-  mostSellers = [],
-  itemsBySpecialty = [],
-  selectedSpecialties = () => { },
-  setSelectedSpecialties = () => { },
-  specialtyStartIndex = 0,
-  specialtyMaxStart = 0,
-  visibleSpecialties = [],
-  setSpecialtyStartIndex = () => { },
-  isLoading = false,
-}) {
+function Index({}) {
+  const { items, categories, loading } = useSelector((state) => state.items);
+  const mostSellers = items.filter((item) => item.isBestSeller === true);
+
   return (
     <Fragment>
       {/* Hero Section */}
@@ -64,8 +58,9 @@ function Index({
 
               <div className="pt-4">
                 <Link
-                  to={'/menu'}
-                  className="px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all">
+                  to={"/menu"}
+                  className="px-8 py-3 border-2 border-[#FF7407] text-[#FF7407] font-semibold rounded-full hover:bg-[#FFF0E6] transition-all"
+                >
                   View Menu
                 </Link>
               </div>
@@ -90,7 +85,7 @@ function Index({
             {/* Right Visual */}
             <div className="hidden md:flex justify-center items-center relative">
               <div className="w-80 h-80 bg-gradient-to-br from-[#FF7407] to-[#F6A51A] rounded-3xl shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-300 flex items-center justify-center text-6xl">
-                <img className="w-50 h-50" src="/dosa.png" alt="" />
+                <img className="w-70 h-auto" src="/images/dosa.png" alt="" />
               </div>
             </div>
           </div>
@@ -105,18 +100,8 @@ function Index({
         <p className="text-gray-600 mt-3 px-2">
           Our most-loved dishes, picked by customers every day.
         </p>
-        <div
-          className="
-    grid
-    px-3
-    gap-4
-    justify-center
-    [grid-template-columns:1fr]
-    min-[410px]:[grid-template-columns:repeat(auto-fit,200px)]
-  "
-        >
-
-          {isLoading ? (
+        <div className="grid px-3 gap-4 mt-8 justify-center [grid-template-columns:1fr] min-[410px]:[grid-template-columns:repeat(auto-fit,200px)]">
+          {loading ? (
             <>
               {[1, 2, 3, 4].map((_, index) => (
                 <CardSkeleton key={index} />
@@ -125,108 +110,14 @@ function Index({
           ) : (
             <>
               {mostSellers.map((item, index) => (
-                <CardOne key={index} sale={true} item={item} />
+                <CardOne key={index} item={item} />
               ))}
             </>
           )}
         </div>
       </section>
       {/* Speciality Items Section */}
-      <section className="max-w-6xl mx-auto mb-8 bg-transparent pt-6 text-center">
-        <div className="inline-flex flex-col items-center">
-          <span className="text-xs uppercase tracking-[0.3em] text-[#F67401] font-semibold bg-slate-900 px-3 py-1 rounded-full border border-orange-100">
-            Our Menu Picks
-          </span>
-          <h2 className="mt-3 text-4xl sm:text-5xl md:text-5xl font-semibold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent">
-            Our Specialties
-          </h2>
-        </div>
-        <p className="text-gray-600 mt-3 px-2">
-          Explore handcrafted favorites across every craving.
-        </p>
-        <div className="max-w-fit mx-auto mt-10 px-4">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              aria-label="previous-specialties"
-              className="h-10 w-10 rounded-full border border-orange-100 bg-white shadow-sm hover:shadow-md transition-all disabled:opacity-40"
-              onClick={() =>
-                setSpecialtyStartIndex((prev) => Math.max(0, prev - 1))
-              }
-              disabled={specialtyStartIndex === 0}
-            >
-              ‹
-            </button>
-
-            {isLoading ? (
-              [1, 2, 3].map((_, index) => (
-                <div
-                  key={index}
-                  className="w-24 sm:w-28 md:w-32 p-3 animate-pulse"
-                >
-                  {/* Image skeleton */}
-                  <div className="mx-auto h-12 w-12 sm:h-16 sm:w-16 mt-6 bg-slate-300 rounded-full"></div>
-                  {/* Name skeleton */}
-                  <div className="mx-auto h-4 w-16 sm:w-20 mt-2 bg-slate-300 rounded"></div>
-                </div>
-              ))
-            ) : (
-              <>
-                {visibleSpecialties.map((specialty, index) => (
-                  <div
-                    key={index}
-                    className={`w-24 sm:w-28 md:w-32 p-3 transition-all hover:-translate-y-1 ${selectedSpecialties === specialty.name
-                      ? "border-b-4 border-[#FF7407]"
-                      : ""
-                      } cursor-pointer`}
-                    onClick={() => setSelectedSpecialties(specialty.name)}
-                  >
-                    <img
-                      src={specialty.image}
-                      alt={specialty.name}
-                      className="mx-auto h-12 w-12 sm:h-16 sm:w-16 mt-6"
-                    />
-                    <p className="text-md sm:text-lg font-semibold pt-2">
-                      {specialty.name}
-                    </p>
-                  </div>
-                ))}
-              </>
-            )}
-
-            <button
-              aria-label="next-specialties"
-              className="h-10 w-10 rounded-full border border-orange-100 bg-white shadow-sm hover:shadow-md transition-all disabled:opacity-40"
-              onClick={() =>
-                setSpecialtyStartIndex((prev) =>
-                  Math.min(specialtyMaxStart, prev + 1),
-                )
-              }
-              disabled={specialtyStartIndex >= specialtyMaxStart}
-            >
-              ›
-            </button>
-          </div>
-        </div>
-        <CardGrid>
-          {isLoading ? (
-            <>
-              {[1, 2, 3, 4].map((_, index) => (
-                <CardSkeleton key={index} />
-              ))}
-            </>
-          ) : (
-            <>
-              {Object.keys(itemsBySpecialty).length > 0 &&
-                itemsBySpecialty[selectedSpecialties].map((item, index) => (
-                  <CardOne key={index} item={item} />
-                ))}
-            </>
-          )}
-        </CardGrid>
-        <p className="text-xs sm:text-sm text-gray-500 mt-4">
-          Tap a category to view its signature dishes.
-        </p>
-      </section>
+      <Specialities />
       {/* Thali */}
       <Thali />
       {/* Why Choose Us */}

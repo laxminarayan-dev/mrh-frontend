@@ -1,14 +1,15 @@
 import { Image, ShoppingBasket, Star } from "lucide-react";
 import { useState } from "react";
-function CardOne({ item, sale }) {
+function CardOne({ item }) {
   const [error, setError] = useState(false);
+
   return (
     <div className="mx-auto max-w-[80vw] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
       {/* Background Gradient on Hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
       {/* Badge */}
-      {sale ? (
+      {item.isSale ? (
         <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-semibold z-10 shadow-md z-20">
           Sale
         </span>
@@ -26,7 +27,7 @@ function CardOne({ item, sale }) {
             className="w-30 h-30 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
             loading="lazy"
             decoding="async"
-            src={item.image}
+            src={item.images.url}
             alt={item.name}
             onError={() => setError(true)}
           />
@@ -47,13 +48,13 @@ function CardOne({ item, sale }) {
         {/* Price */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            {sale ? (
+            {item.isSale ? (
               <>
                 <p className="line-through text-xs text-gray-400">
                   ₹{item.originalPrice}
                 </p>
                 <p className="font-bold text-lg text-[#FF7407]">
-                  ₹{item.discountedPrice}
+                  ₹{item.discountPrice}
                 </p>
               </>
             ) : (
