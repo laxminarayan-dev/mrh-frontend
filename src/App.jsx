@@ -35,7 +35,6 @@ function App({ isLoggedIn = false }) {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">
       <Navbar

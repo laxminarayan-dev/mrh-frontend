@@ -17,9 +17,7 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
           {links.map((link) => {
             if (link.name === "Account" && !isLoggedIn) {
               return (
-                <li
-                  key={link.name}
-                >
+                <li key={link.name}>
                   <button
                     onClick={() => {
                       navigate("/auth");
@@ -29,7 +27,6 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
                   >
                     Login
                   </button>
-
                 </li>
               );
             }
