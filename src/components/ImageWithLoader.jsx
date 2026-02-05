@@ -28,9 +28,8 @@ const ImageWithLoader = ({ src, alt, className }) => {
           loading="lazy"
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            loaded ? "opacity-100" : "opacity-0"
-          } ${className}`}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"
+            } ${className}`}
         />
       )}
     </div>

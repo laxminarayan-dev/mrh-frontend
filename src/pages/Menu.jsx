@@ -2,11 +2,11 @@ import React, { useMemo, useState } from "react";
 import CardGrid from "../components/CardGrid";
 import CardOne from "../components/CardOne";
 import { useSelector } from "react-redux";
+import { ArrowBigDown, ArrowDown, ChevronDown } from "lucide-react";
 
 function Menu() {
   const [activeType, setActiveType] = useState("All");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const { items, categories } = useSelector((state) => state.items);
 
   console.log(categories);
@@ -29,7 +29,7 @@ function Menu() {
       ...counts,
       All: items.length,
     };
-  }, []);
+  }, [items]);
 
   const handleCategorySelect = (categoryName) => {
     setActiveType(categoryName);
@@ -57,32 +57,22 @@ function Menu() {
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">
-                  <img
-                    className="w-12"
-                    src={`/images/image-icons/${activeType}.png`}
-                    alt={activeType}
-                  />
+                  {activeType === "All" ? ("") : (
+                    <img
+                      className="w-12"
+                      src={`/images/image-icons/${activeType}.png`}
+                      alt={activeType}
+                    />
+                  )}
                 </span>
                 <div>
                   <p className="text-sm text-gray-500 font-medium">Category</p>
                   <p className="text-base font-semibold text-gray-900">
-                    {activeType}
+                    {activeType.charAt(0).toUpperCase() + activeType.slice(1)}
                   </p>
                 </div>
               </div>
-              <svg
-                className={`w-5 h-5 text-[#FF7407] transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
+              <ChevronDown className={`w-6 h-6 text-[#FF7407] transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isDropdownOpen && (
@@ -96,32 +86,31 @@ function Menu() {
                       key={category}
                       type="button"
                       onClick={() => handleCategorySelect(category)}
-                      className={`w-full px-5 py-3 flex items-center justify-between transition-colors border-b border-orange-100 last:border-b-0 ${
-                        isSelected ? "bg-orange-50" : "hover:bg-orange-50/50"
-                      }`}
+                      className={`w-full px-5 py-3 flex items-center justify-between transition-colors border-b border-orange-100 last:border-b-0 ${isSelected ? "bg-orange-50" : "hover:bg-orange-50/50"
+                        }`}
                     >
                       <div className="flex items-center gap-3 text-left">
                         <span className="text-2xl">
-                          <img
-                            className="w-12"
-                            src={`/images/image-icons/${category}.png`}
-                            alt={category}
-                          />
+                          {category === "All" ? "" : (
+                            <img
+                              className="w-12"
+                              src={`/images/image-icons/${category}.png`}
+                              alt={category}
+                            />)}
                         </span>
                         <div>
                           <p
                             className={`font-semibold ${isSelected ? "text-[#FF7407]" : "text-gray-900"}`}
                           >
-                            {category}
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
                           </p>
                         </div>
                       </div>
                       <span
-                        className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          isSelected
-                            ? "bg-[#FF7407] text-white"
-                            : "bg-orange-100 text-[#FF7407]"
-                        }`}
+                        className={`text-xs font-bold px-2 py-1 rounded-full ${isSelected
+                          ? "bg-[#FF7407] text-white"
+                          : "bg-orange-100 text-[#FF7407]"
+                          }`}
                       >
                         {categoryCounts[category] || 0}
                       </span>
@@ -139,7 +128,7 @@ function Menu() {
           <div className="w-[80vw] mx-auto col-span-full min-[440px]:w-full max-w-6xl flex items-center justify-start min-[440px]:justify-between flex-wrap gap-3 ">
             <div className="text-left pl-1">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
-                {activeType} Items
+                {activeType !== "All" ? activeType.charAt(0).toUpperCase() + activeType.slice(1).replace(/s$/, "") + "'s Menu" : "Menu"}
               </h2>
               <p className="text-gray-600">
                 {filteredItems.length} items available
