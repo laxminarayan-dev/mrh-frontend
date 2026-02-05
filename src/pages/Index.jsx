@@ -112,7 +112,7 @@ function Index({}) {
             <>
               {mostSellers.length > 0 &&
                 mostSellers.map((item, index) => (
-                  <CardOne key={index} item={item} />
+                  <CardOne key={item._id || index} item={item} />
                 ))}
             </>
           )}

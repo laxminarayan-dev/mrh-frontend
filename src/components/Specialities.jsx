@@ -152,7 +152,7 @@ function Specialties() {
         ) : (
           <>
             {categoryItems.map((item) => (
-              <CardOne key={item.id ?? item.name} item={item} />
+              <CardOne key={item._id ?? item.name} item={item} />
             ))}
           </>
         )}
