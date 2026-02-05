@@ -1,12 +1,16 @@
 import { ShoppingBasket } from "lucide-react";
 import { useSelector } from "react-redux";
+import { useMemo } from "react";
 
 function Thali() {
-  const { items } = useSelector((state) => state.items);
-  const thalis = items.filter((item) => item.category === "thali");
-  const thaliDetails = thalis[0];
+  const { items, loading } = useSelector((state) => state.items);
+  const thalis = useMemo(
+    () => items?.filter((item) => item?.category === "thali") ?? [],
+    [items],
+  );
+  const thaliDetails = thalis.length > 0 ? thalis[0] : {};
 
-  console.log(thaliDetails);
+  console.log(loading);
 
   return (
     <div className="w-full bg-[#ed274a]">
@@ -20,7 +24,7 @@ function Thali() {
         <div className="relative overflow-hidden p-8 px-10 mt-2 text-left  gap-6 h-80 md:h-86 ">
           {/* image */}
           <img
-            src={thaliDetails.images?.url}
+            src={thaliDetails?.images?.url}
             alt="thali"
             loading="lazy"
             decoding="async"
@@ -30,34 +34,34 @@ function Thali() {
           <div className="backdrop-blur-[1px] min-[440px]:backdrop-blur-[0px]">
             {/* name */}
             <h2 className="text-3xl font-semibold mb-4 text-white">
-              {thaliDetails.name}
+              {thaliDetails?.name}
             </h2>
             {/* description */}
             <div className="relative flex gap-2 z-10 ">
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails.includes.slice(0, 3).map((item, index) => (
+                {thaliDetails?.includes?.slice(0, 3).map((item, index) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails.includes.slice(3).map((item, index) => (
+                {thaliDetails?.includes?.slice(3).map((item, index) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
             </div>
             {/* price */}
-            {thaliDetails.isSale ? (
+            {thaliDetails?.isSale ? (
               <p className="mt-4">
                 <span className="line-through text-white mr-2">
-                  ₹{thaliDetails.originalPrice}
+                  ₹{thaliDetails?.originalPrice}
                 </span>
                 <span className="text-xl text-white font-semibold text-yellow-200">
-                  ₹{thaliDetails.discountPrice}
+                  ₹{thaliDetails?.discountPrice}
                 </span>
               </p>
             ) : (
               <p className="text-xl font-semibold mt-4 text-yellow-200">
-                Only ₹{thaliDetails.originalPrice}
+                Only ₹{thaliDetails?.originalPrice}
               </p>
             )}
             {/* button */}

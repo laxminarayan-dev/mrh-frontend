@@ -1,47 +1,36 @@
+import { useState, useEffect, lazy } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import AboutUs from "./pages/AboutUs";
-import Cart from "./pages/Cart";
-import Orders from "./pages/Orders";
-import Auth from "./pages/Auth";
+import { loadItems } from "./store/itemsSlice.js";
 import App from "./App";
-import NotFound from "./pages/NotFound";
-import Contact from "./pages/Contact";
-import Checkout from "./pages/Checkout";
-import Menu from "./pages/Menu";
-import Signup from "./components/Signup";
-import Login from "./components/Login";
-import { useEffect, useState } from "react";
-import ForgotPasswordForm from "./components/ForgotPass";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Reviews from "./pages/Reviews";
+import Index from "./pages/Index";
+
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Menu = lazy(() => import("./pages/Menu"));
+const Signup = lazy(() => import("./components/Signup"));
+const Login = lazy(() => import("./components/Login"));
+const ForgotPasswordForm = lazy(() => import("./components/ForgotPass"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Reviews = lazy(() => import("./pages/Reviews"));
 
 function Routing() {
+  const { items } = useSelector((state) => state.items);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (items.length === 0) {
+      dispatch(loadItems());
+    }
+  }, [items]);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const mostSellers = [
-    {
-      name: "Paper Dosa",
-      image: "/dosa-comp.png",
-      originalPrice: 60,
-      discountedPrice: 40,
-    },
-    {
-      name: "Pav Bhaji",
-      image: "/pavbhaji-comp.png",
-      originalPrice: 100,
-      discountedPrice: 70,
-    },
-    {
-      name: "uttapam",
-      image: "/uttapam-comp.png",
-      originalPrice: 80,
-      discountedPrice: 50,
-    },
-
-    // Add more items as needed
-  ];
 
   return (
     <Routes>

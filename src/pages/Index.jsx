@@ -7,10 +7,14 @@ import CardSkeleton from "../components/CardSkeleton";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Specialities from "../components/Specialities";
+import { useMemo } from "react";
 
 function Index({}) {
-  const { items, categories, loading } = useSelector((state) => state.items);
-  const mostSellers = items.filter((item) => item.isBestSeller === true);
+  const { items, loading } = useSelector((state) => state.items);
+  const mostSellers = useMemo(
+    () => items?.filter((item) => item?.isBestSeller === true) ?? [],
+    [items],
+  );
 
   return (
     <Fragment>
@@ -109,9 +113,10 @@ function Index({}) {
             </>
           ) : (
             <>
-              {mostSellers.map((item, index) => (
-                <CardOne key={index} item={item} />
-              ))}
+              {mostSellers.length > 0 &&
+                mostSellers.map((item, index) => (
+                  <CardOne key={index} item={item} />
+                ))}
             </>
           )}
         </div>

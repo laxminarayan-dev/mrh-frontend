@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { extractUniqueCategories } from "../store/itemsSlice";
+import { extractUniqueCategories } from "../store/helper/items";
 import CardGrid from "./CardGrid.jsx";
 import CardOne from "./CardOne.jsx";
+import CardSkeleton from "./CardSkeleton.jsx";
 
 function Specialties() {
   const [selectedSpecialties, setSelectedSpecialties] = useState("");
