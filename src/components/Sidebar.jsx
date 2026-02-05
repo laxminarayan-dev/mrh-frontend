@@ -43,6 +43,9 @@ function Sidebar({
                   </li>
                 );
               }
+              if (link.name.toLowerCase() === "cart" && !isLoggedIn) {
+                return null;
+              }
               return (
                 <li
                   className={` group flex justify-start items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${currentPage.toLowerCase() === link.url.toLowerCase() ? "text-white bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg" : "text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-transparent hover:border-orange-200"}`}
@@ -57,11 +60,10 @@ function Sidebar({
                     className="flex justify-start items-center gap-3 w-full"
                   >
                     <span
-                      className={`${
-                        currentPage.toLowerCase() === link.url.toLowerCase()
-                          ? "text-white"
-                          : "text-orange-500 group-hover:text-orange-600"
-                      }`}
+                      className={`${currentPage.toLowerCase() === link.url.toLowerCase()
+                        ? "text-white"
+                        : "text-orange-500 group-hover:text-orange-600"
+                        }`}
                     >
                       {link.icon}
                     </span>

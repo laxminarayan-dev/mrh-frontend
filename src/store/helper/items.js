@@ -35,6 +35,7 @@ export const filterItems = (items, category) => {
 
 export const staticData = [
     {
+        _id: "aj2kjshkj245jh2",
         name: "Plain Dosa",
         description: "Crispy south Indian plain dosa served with chutney and sambar.",
         shortDescription: "Classic crispy plain dosa",
@@ -56,6 +57,7 @@ export const staticData = [
         preparationTime: 10
     },
     {
+        _id: "aj2kjshkj245jh3",
         name: "Masala Dosa",
         description: "Crispy dosa filled with spiced potato masala.",
         shortDescription: "Potato masala stuffed dosa",
@@ -72,6 +74,7 @@ export const staticData = [
         preparationTime: 12
     },
     {
+        _id: "aj2kjshkj245jh4",
         name: "Butter Dosa",
         description: "Plain dosa cooked with generous butter.",
         shortDescription: "Butter loaded dosa",
@@ -89,6 +92,7 @@ export const staticData = [
 
     },
     {
+        _id: "aj2kjshkj245jh5",
         name: "Paneer Dosa",
         description: "Dosa stuffed with spicy paneer filling.",
         shortDescription: "Paneer stuffed dosa",
@@ -106,6 +110,7 @@ export const staticData = [
         discountPrice: 79,
     },
     {
+        _id: "aj2kjshkj245jh6",
         name: "Onion Uttapam",
         description: "Soft uttapam topped with fresh onions.",
         shortDescription: "Onion topped uttapam",
@@ -119,6 +124,7 @@ export const staticData = [
         preparationTime: 12
     },
     {
+        _id: "aj2kjshkj245jh7",
         name: "Paneer Uttapam",
         description: "Uttapam topped with fresh paneer cubes.",
         shortDescription: "Paneer uttapam",
@@ -133,6 +139,7 @@ export const staticData = [
         preparationTime: 15
     },
     {
+        _id: "aj2kjshkj245jh8",
         name: "Veg Chowmein",
         description: "Stir fried noodles with fresh vegetables.",
         shortDescription: "Veg chowmein noodles",
@@ -146,6 +153,7 @@ export const staticData = [
         preparationTime: 15
     },
     {
+        _id: "aj2kjshkj245jh9",
         name: "Pav Bhaji",
         description: "Spicy mashed vegetables served with buttered pav.",
         shortDescription: "Classic pav bhaji",
@@ -161,6 +169,7 @@ export const staticData = [
         isSpecial: true,
     },
     {
+        _id: "aj2kjshkj245jh10",
         name: "Gulab Jamun",
         description: "Soft milk-solid dumplings soaked in sugar syrup.",
         shortDescription: "Sweet gulab jamun",
@@ -176,6 +185,7 @@ export const staticData = [
         isSpecial: true,
     },
     {
+        _id: "aj2kjshkj245jh11",
         name: "Maa ki Thali",
         description: "A wholesome plate with balanced flavors, perfect for lunch.",
         includes: ["Chawal", "Dal", "Sabji", "Roti", "Raita", "Mithai"],

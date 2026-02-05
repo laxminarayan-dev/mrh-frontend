@@ -1,56 +1,49 @@
-import React, { useState } from "react";
-import { Trash2, Plus, Minus, ShoppingBag, Handshake } from "lucide-react";
+import { useState } from "react";
+import {
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingBag,
+  Handshake,
+  CloudUpload,
+  ShoppingBasket,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { addItem, removeItem, deleteItem } from "../store/cartSlice";
 
 function Cart() {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Paper Dosa",
-      price: 40,
-      quantity: 1,
-      image: "/dosa-comp.png",
-    },
-    {
-      id: 2,
-      name: "Pav Bhaji",
-      price: 70,
-      quantity: 2,
-      image: "/pavbhaji-comp.png",
-    },
-  ]);
+  const dispatch = useDispatch();
+  const { items } = useSelector((state) => state.cart);
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeItem(id);
-      return;
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const subtotal = items.reduce((sum, item) => {
+    if (item.isSale) {
+      return sum + item.discountPrice * item.quantity;
+    } else {
+      return sum + item.originalPrice * item.quantity;
     }
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item,
-      ),
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  }, 0);
   const tax = Math.round(subtotal * 0.05);
   const delivery = subtotal > 500 ? 0 : 30;
   const total = subtotal + tax + delivery;
 
-  if (cartItems.length === 0) {
+  const handleSyncCart = () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    setTimeout(() => {
+      setIsSyncing(false);
+    }, 900);
+  };
+
+  if (items.length === 0) {
     return (
       <div className="w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-[calc(100vh-4rem)]  flex items-center justify-center px-6">
         <div className="max-w-lg w-full text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 shadow-sm">
-            <ShoppingBag size={30} />
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-orange-600 ">
+            <ShoppingBasket size={30} />
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Your cart is empty
@@ -77,15 +70,15 @@ function Cart() {
           Shopping Cart
         </h1>
         <p className="mt-2 text-slate-600">
-          {cartItems.length} item{cartItems.length !== 1 ? "s" : ""} in your
+          {items.length} item{items.length !== 1 ? "s" : ""} in your
           cart
         </p>
 
         <div className="mt-8 grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-3">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="rounded-2xl border border-orange-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex gap-4">
@@ -99,11 +92,16 @@ function Cart() {
                           {item.name}
                         </h3>
                         <p className="text-sm text-slate-600">
-                          ₹{item.price} per item
+                          {item.isSale ? (
+                            `₹${item.discountPrice} per item`
+                          ) : (
+                            `₹${item.originalPrice} each`
+                          )}
+
                         </p>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => dispatch(deleteItem(item._id))}
                         className="text-slate-400 hover:text-red-600 transition"
                       >
                         <Trash2 size={18} />
@@ -112,9 +110,7 @@ function Cart() {
                     <div className="mt-4 flex items-center justify-between">
                       <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 p-1">
                         <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
-                          }
+                          onClick={() => dispatch(removeItem(item._id))}
                           className="p-1 hover:bg-orange-100 rounded transition"
                         >
                           <Minus size={16} className="text-orange-600" />
@@ -123,16 +119,18 @@ function Cart() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
-                          }
+                          onClick={() => dispatch(addItem(item))}
                           className="p-1 hover:bg-orange-100 rounded transition"
                         >
                           <Plus size={16} className="text-orange-600" />
                         </button>
                       </div>
                       <p className="text-lg font-bold text-slate-900">
-                        ₹{item.price * item.quantity}
+                        {item.isSale ? (
+                          `₹${item.discountPrice * item.quantity}`
+                        ) : (
+                          `₹${item.originalPrice * item.quantity}`
+                        )}
                       </p>
                     </div>
                   </div>
@@ -177,6 +175,14 @@ function Cart() {
                 className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
               >
                 Proceed to Checkout
+              </button>
+              <button
+                onClick={handleSyncCart}
+                className="mt-3 w-full rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
+                disabled={isSyncing}
+              >
+                <CloudUpload size={18} className="text-orange-600" />
+                {isSyncing ? "Syncing..." : "Sync Cart to Cloud"}
               </button>
               <Link
                 to="/"

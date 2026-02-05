@@ -1,8 +1,13 @@
-import { memo } from "react";
-import { ShoppingBasket, Star } from "lucide-react";
+import { memo, useState } from "react";
+import { Check, Loader, ShoppingBasket, Star } from "lucide-react";
 import ImageWithLoader from "./ImageWithLoader";
+import { useDispatch } from "react-redux";
+import { addItem } from "../store/cartSlice";
 
 function CardOne({ item }) {
+  const dispatch = useDispatch();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   return (
     <div className="mx-auto max-w-[80vw] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
       {/* Background Gradient on Hover */}
@@ -57,10 +62,27 @@ function CardOne({ item }) {
 
           {/* Add to Cart Button */}
           <button
+            onClick={() => {
+              if (adding) return;
+              dispatch(addItem(item));
+              setAdded(false);
+              setAdding(true);
+              setTimeout(() => {
+                setAdding(false);
+                setAdded(true);
+              }, 500);
+              setTimeout(() => setAdded(false), 1000);
+            }}
             aria-label="add-to-cart-btn"
             className="bg-[#FF7407] text-white p-2.5 rounded-xl hover:bg-[#F67401] hover:scale-110 transition-all shadow-md hover:shadow-lg"
           >
-            <ShoppingBasket size={18} color="#fff" />
+            {adding ? (
+              <Loader size={18} className="animate-spin text-white" />
+            ) : added ? (
+              <Check size={18} color="#fff" />
+            ) : (
+              <ShoppingBasket size={18} color="#fff" />
+            )}
           </button>
         </div>
       </div>
