@@ -1,32 +1,46 @@
+import { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { extractUniqueCategories } from "../store/helper/items";
 import CardGrid from "./CardGrid.jsx";
 import CardOne from "./CardOne.jsx";
 import CardSkeleton from "./CardSkeleton.jsx";
+import {
+  selectSpecialItems,
+  selectSpecialCategories,
+  makeSelectItemsByCategory,
+} from "../store/selectors/itemSelector.js";
 
 function Specialties() {
   const [selectedSpecialties, setSelectedSpecialties] = useState("");
   const [specialtyStartIndex, setSpecialtyStartIndex] = useState(0);
   const [specialtyVisibleCount, setSpecialtyVisibleCount] = useState(5);
-  const [error, setError] = useState(false);
-  const { items, loading } = useSelector((state) => state.items);
-  const specialItems = items.filter((item) => item.isSpecial === true);
-  const Specialties = extractUniqueCategories(specialItems).filter(
-    (category) => category !== "All",
-  );
-  useEffect(() => {
-    if (Specialties.length > 0 && !Specialties.includes(selectedSpecialties)) {
-      setSelectedSpecialties(Specialties[0]);
-    }
-  }, [Specialties, selectedSpecialties]);
 
-  const totalSpecialties = Specialties.length;
+  const { loading } = useSelector((state) => state.items);
+
+  const specialItems = useSelector(selectSpecialItems);
+  const specialties = useSelector(selectSpecialCategories);
+
+  const selectCategoryItems = useMemo(
+    () => makeSelectItemsByCategory(selectedSpecialties),
+    [selectedSpecialties],
+  );
+
+  const categoryItems = useSelector(selectCategoryItems);
+
+  useEffect(() => {
+    if (specialties.length > 0 && !specialties.includes(selectedSpecialties)) {
+      setSelectedSpecialties(specialties[0]);
+    }
+  }, [specialties, selectedSpecialties]);
+
+  const totalSpecialties = specialties.length;
   const specialtyMaxStart = Math.max(
     0,
     totalSpecialties - specialtyVisibleCount,
   );
-  const visibleSpecialties = Specialties.slice(
+
+  const visibleSpecialties = specialties.slice(
     specialtyStartIndex,
     specialtyStartIndex + specialtyVisibleCount,
   );
@@ -56,7 +70,7 @@ function Specialties() {
           Our Menu Picks
         </span>
         <h2 className="mt-3 text-4xl sm:text-5xl md:text-5xl font-semibold bg-gradient-to-r from-[#FF7407] to-[#F6A51A] bg-clip-text text-transparent">
-          Our Specialties
+          Our specialties
         </h2>
       </div>
       <p className="text-gray-600 mt-3 px-2">
@@ -137,15 +151,9 @@ function Specialties() {
           </>
         ) : (
           <>
-            {items
-              .filter(
-                (item) =>
-                  item.category === selectedSpecialties &&
-                  item.isSpecial === true,
-              )
-              .map((item) => (
-                <CardOne key={item.id ?? item.name} item={item} />
-              ))}
+            {categoryItems.map((item) => (
+              <CardOne key={item.id ?? item.name} item={item} />
+            ))}
           </>
         )}
       </CardGrid>

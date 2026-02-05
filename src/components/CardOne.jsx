@@ -1,5 +1,7 @@
+import { memo } from "react";
 import { ShoppingBasket, Star } from "lucide-react";
 import ImageWithLoader from "./ImageWithLoader";
+
 function CardOne({ item }) {
   return (
     <div className="mx-auto max-w-[80vw] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
@@ -66,4 +68,4 @@ function CardOne({ item }) {
   );
 }
 
-export default CardOne;
+export default memo(CardOne);

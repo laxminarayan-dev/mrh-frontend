@@ -8,14 +8,11 @@ import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Specialities from "../components/Specialities";
 import { useMemo } from "react";
+import { selectBestSeller } from "../store/selectors/itemSelector";
 
 function Index({}) {
-  const { items, loading } = useSelector((state) => state.items);
-  const mostSellers = useMemo(
-    () => items?.filter((item) => item?.isBestSeller === true) ?? [],
-    [items],
-  );
-
+  const { loading } = useSelector((state) => state.items);
+  const mostSellers = useSelector(selectBestSeller);
   return (
     <Fragment>
       {/* Hero Section */}
