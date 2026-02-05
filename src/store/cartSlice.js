@@ -1,17 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
-const isLoggedIn = localStorage.getItem("token") ? true : false;
 
 export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
     async () => {
         try {
+            const isLoggedIn = Cookies.get("token") ? true : false;
             if (!isLoggedIn) {
-                return Cookies.get("cartData") ? JSON.parse(Cookies.get("cartData")) : [];
+                const cookieData = Cookies.get("cartData");
+                const parsed = cookieData ? JSON.parse(cookieData) : [];
+                return Array.isArray(parsed) ? parsed : [];
             }
             else {
                 // if user is logged in, fetch cart data from server and also store in cookies for persistence
-                const response = cartData;
+                const response = [];
                 return response;
             }
         } catch (error) {
@@ -98,8 +100,9 @@ const cartSlice = createSlice({
             })
             .addCase(fetchCartItems.fulfilled, (state, action) => {
                 state.items = action.payload;
-                state.totalQuantity = action.payload.reduce((total, item) => total + item.quantity, 0);
-                state.totalPrice = action.payload.reduce((total, item) => total + item.totalPrice, 0);
+                console.log(action.payload);
+                state.totalQuantity = action.payload.reduce((total, item) => total + item.quantity, 0) || 0;
+                state.totalPrice = action.payload.reduce((total, item) => total + item.totalPrice, 0) || 0;
                 state.synced = true;
                 state.loading = false;
             })
