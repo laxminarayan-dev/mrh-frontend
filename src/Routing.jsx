@@ -1,11 +1,7 @@
-import { useState, useEffect, lazy } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useState, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import { loadItems } from "./store/itemsSlice.js";
 import App from "./App";
 import Index from "./pages/Index";
-import { fetchReviews } from "./store/reviewSlice.js";
-import { fetchCartItems } from "./store/cartSlice.js";
 
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -23,17 +19,6 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 
 function Routing() {
-  const { items } = useSelector((state) => state.items);
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchReviews());
-      dispatch(loadItems());
-      dispatch(fetchCartItems());
-    }
-  }, [items]);
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
