@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import { loadItems } from "./store/itemsSlice.js";
 import App from "./App";
 import Index from "./pages/Index";
+import { fetchReviews } from "./store/Reviews.js";
 
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -26,6 +27,7 @@ function Routing() {
 
   useEffect(() => {
     if (items.length === 0) {
+      dispatch(fetchReviews());
       dispatch(loadItems());
     }
   }, [items]);

@@ -10,8 +10,6 @@ function Thali() {
   );
   const thaliDetails = thalis.length > 0 ? thalis[0] : {};
 
-  console.log(loading);
-
   return (
     <div className="w-full bg-[#ed274a]">
       <section className="max-w-2xl md:max-w-3xl mx-auto px-4 mb-8 text-center pt-6">

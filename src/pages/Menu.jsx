@@ -9,7 +9,6 @@ function Menu() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { items, categories } = useSelector((state) => state.items);
 
-  console.log(categories);
 
   const filteredItems = useMemo(() => {
     if (activeType === "All") {
@@ -20,7 +19,6 @@ function Menu() {
 
   const categoryCounts = useMemo(() => {
     const counts = items.reduce((acc, item) => {
-      console.log(item, acc);
 
       acc[item.category] = (acc[item.category] || 0) + 1;
       return acc;

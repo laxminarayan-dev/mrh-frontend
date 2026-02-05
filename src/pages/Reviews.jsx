@@ -1,84 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Star, User, ThumbsUp, Calendar, ChevronDown } from 'lucide-react';
+import ReviewCard from '../components/ReviewCard';
+import { useSelector } from 'react-redux';
 
-const REVIEWS_DATA = [
-    {
-        id: 1,
-        name: "Priya Sharma",
-        rating: 5,
-        date: "2026-02-01",
-        comment: "Absolutely loved the Thali Special! The food was fresh, flavorful, and delivered on time. The packaging was excellent too. Will definitely order again!",
-        helpful: 24,
-        avatar: "PS"
-    },
-    {
-        id: 2,
-        name: "Rahul Kumar",
-        rating: 5,
-        date: "2026-01-30",
-        comment: "Best Masala Dosa I've had in a long time! Crispy, well-prepared, and the sambar was perfect. Great service and quick delivery.",
-        helpful: 18,
-        avatar: "RK"
-    },
-    {
-        id: 3,
-        name: "Anjali Verma",
-        rating: 4,
-        date: "2026-01-28",
-        comment: "The Paneer Butter Masala was delicious! Creamy and rich. Only improvement would be more naan. Overall, great experience with Mr Halwai.",
-        helpful: 15,
-        avatar: "AV"
-    },
-    {
-        id: 4,
-        name: "Vikram Singh",
-        rating: 5,
-        date: "2026-01-25",
-        comment: "Ordered Veg Biryani for a family dinner. Everyone loved it! The aroma was amazing and the taste was authentic. Highly recommend!",
-        helpful: 31,
-        avatar: "VS"
-    },
-    {
-        id: 5,
-        name: "Neha Patel",
-        rating: 5,
-        date: "2026-01-23",
-        comment: "The Veg Momos were fantastic! Perfectly steamed and the spicy dip was excellent. Great value for money. Thank you Mr Halwai!",
-        helpful: 12,
-        avatar: "NP"
-    },
-    {
-        id: 6,
-        name: "Amit Joshi",
-        rating: 4,
-        date: "2026-01-20",
-        comment: "Dal Tadka was really good, reminded me of home-cooked food. Delivery was prompt. Would love to see more combo options on the menu.",
-        helpful: 9,
-        avatar: "AJ"
-    },
-    {
-        id: 7,
-        name: "Sneha Reddy",
-        rating: 5,
-        date: "2026-01-18",
-        comment: "Gulab Jamun was divine! Soft, sweet, and not too sugary. Perfect dessert after a meal. The entire order was exceptional!",
-        helpful: 21,
-        avatar: "SR"
-    },
-    {
-        id: 8,
-        name: "Karan Mehta",
-        rating: 5,
-        date: "2026-01-15",
-        comment: "Chilli Paneer was outstanding! Spicy and flavorful with perfect Indo-Chinese taste. The COD option makes it very convenient too.",
-        helpful: 17,
-        avatar: "KM"
-    }
-];
+
 
 function Reviews() {
     const [filter, setFilter] = useState('all');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const { myReviews, otherReviews } = useSelector((state) => state.reviews);
+    const REVIEWS_DATA = useMemo(() => {
+        return [...myReviews, ...otherReviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }, [myReviews, otherReviews]);
 
     const averageRating = (REVIEWS_DATA.reduce((sum, review) => sum + review.rating, 0) / REVIEWS_DATA.length).toFixed(1);
     const totalReviews = REVIEWS_DATA.length;
@@ -227,50 +160,8 @@ function Reviews() {
 
                 {/* Reviews List */}
                 <div className="space-y-6 grid md:grid-cols-2 gap-6">
-                    {filteredReviews.map((review) => (
-                        <div
-                            key={review.id}
-                            className="bg-white/90 backdrop-blur border border-orange-100 rounded-2xl p-8 shadow-md hover:shadow-lg transition-all hover:border-[#FF7407]"
-                        >
-                            <div className="flex items-start gap-4">
-                                {/* Avatar */}
-                                <div className="flex-shrink-0">
-                                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#FF7407] to-[#F6A51A] flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                                        {review.avatar}
-                                    </div>
-                                </div>
-
-                                {/* Review Content */}
-                                <div className="flex-1">
-                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900">{review.name}</h3>
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Calendar size={14} />
-                                                <span>{formatDate(review.date)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    size={20}
-                                                    className={i < review.rating ? "fill-[#FF7407] text-[#FF7407]" : "text-gray-300 fill-[#88888860]"}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">{review.comment}</p>
-
-                                    {/* Helpful Button */}
-                                    <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#FF7407] transition-colors">
-                                        <ThumbsUp size={16} />
-                                        <span>Helpful ({review.helpful})</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    {filteredReviews.map((review, index) => (
+                        <ReviewCard key={review.id || index} review={review} />
                     ))}
                 </div>
 

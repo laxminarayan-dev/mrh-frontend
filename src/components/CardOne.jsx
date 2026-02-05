@@ -11,7 +11,7 @@ function CardOne({ item }) {
       {/* Badge */}
       {item.isSale ? (
         <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-semibold z-10 shadow-md z-20">
-          Sale
+          % Sale
         </span>
       ) : (
         <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full shadow-sm z-20 border border-gray-200">

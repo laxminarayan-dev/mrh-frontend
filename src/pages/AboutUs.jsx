@@ -35,7 +35,7 @@ function AboutUs() {
   return (
     <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200  py-8">
       <section className="max-w-6xl mx-auto px-6 py-12 md:py-16">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="grid  gap-8 items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-orange-500">
               About Mr Halwai

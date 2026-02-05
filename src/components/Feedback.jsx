@@ -1,8 +1,20 @@
 import { Star } from "lucide-react";
-import React from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+
+import ReviewCard from "./ReviewCard";
+import { useMemo } from "react";
+
+
 
 function Feedback() {
+
+  const { otherReviews, myReviews } = useSelector((state) => state.reviews);
+  const reviews = useMemo(() => {
+    return [...myReviews, ...otherReviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [myReviews, otherReviews]);
+
+
   return (
     <section className="max-w-6xl mx-auto px-4 mb-8 pt-12">
       <div className="text-center mb-12">
@@ -17,58 +29,9 @@ function Feedback() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          {
-            name: "Priya Sharma",
-            initial: "P",
-            rating: 5,
-            feedback:
-              "Best dosa I've ever had! Fresh, crispy, and absolutely delicious. Will definitely order again!",
-          },
-          {
-            name: "Rajesh Kumar",
-            initial: "R",
-            rating: 5,
-            feedback:
-              "Fast delivery and hot food. The thali is amazing value for money. Highly recommended!",
-          },
-          {
-            name: "Anjali Patel",
-            initial: "A",
-            rating: 4,
-            feedback:
-              "Great authentic taste, friendly service. The Pav Bhaji is outstanding. 10/10!",
-          },
-        ].map((feedback, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100 hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF7407] to-[#F6A51A] flex items-center justify-center text-white font-bold text-lg">
-                {feedback.initial}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">{feedback.name}</p>
-                <div className="flex gap-0.5">
-                  {[...Array(feedback.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-400">
-                      <Star size={16} fill="gold" />
-                    </span>
-                  ))}
-                  {[...Array(5 - feedback.rating)].map((_, i) => (
-                    <span key={i} className="text-gray-300">
-                      <Star size={16} fill="#88888860" />
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              "{feedback.feedback}"
-            </p>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {reviews.slice(0, 4).map((review, index) => (
+          <ReviewCard key={index} review={review} />
         ))}
       </div>
 
