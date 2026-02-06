@@ -25,24 +25,6 @@ function Sidebar({ isSidebarOpen = false, setIsSidebarOpen, links }) {
         <nav>
           <ul className="flex flex-col gap-1">
             {links.map((link) => {
-              if (link.name === "Account" && !isLoggedIn) {
-                return (
-                  <li key={link.name}>
-                    <button
-                      onClick={() => {
-                        navigate("/auth");
-                        setIsSidebarOpen(false);
-                      }}
-                      className="w-full text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
-                    >
-                      Login
-                    </button>
-                  </li>
-                );
-              }
-              if (link.name.toLowerCase() === "cart" && !isLoggedIn) {
-                return null;
-              }
               return (
                 <li
                   className={` group flex justify-start items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${currentPage.toLowerCase() === link.url.toLowerCase() ? "text-white bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg" : "text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-transparent hover:border-orange-200"}`}
@@ -70,6 +52,19 @@ function Sidebar({ isSidebarOpen = false, setIsSidebarOpen, links }) {
                 </li>
               );
             })}
+            {!isLoggedIn && (
+              <li key="login">
+                <button
+                  onClick={() => {
+                    navigate("/auth");
+                    setIsSidebarOpen(false);
+                  }}
+                  className="w-full text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
+                >
+                  Login
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
       </div>

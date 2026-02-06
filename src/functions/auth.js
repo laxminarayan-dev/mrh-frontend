@@ -127,11 +127,9 @@ export const handleAuthSubmit = (e, formData, formType = "signup") => {
 
     if (Object.keys(errors).length === 0) {
         // Form is valid - proceed with submission
-        console.log(`${formType} form is valid:`, formData);
         return { success: true, data: formData, errors: {} };
     } else {
         // Form has errors
-        console.log(`${formType} form has errors:`, errors);
         return { success: false, data: null, errors };
     }
 };

@@ -1,4 +1,4 @@
-import { Logs, X, ChefHat, ShoppingBag, ShoppingBasket } from "lucide-react";
+import { Logs, X, ChefHat, UserRound, ShoppingBasket } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -15,7 +15,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
           Mr Halwai
         </Link>
       </div>
-      <div>
+      <div className="flex items-center gap-4">
         <ul className="hidden md:flex gap-6 text-[#F67401] font-medium">
           {links.map((link) => {
             if (link.name === "Account" && !isLoggedIn) {
@@ -44,22 +44,31 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
             );
           })}
         </ul>
-        <div className="md:hidden flex items-center gap-8 ">
+        <div className="flex items-center gap-8 ">
           <button
             aria-label="Cart Button"
             onClick={() => navigate("/cart")}
-            className="text-[#FF7407] relative"
+            className="cursor-pointer text-[#FF7407] relative hover:text-[#FF7407] transition-colors"
           >
             <ShoppingBasket size={26} />
-            <span className="absolute -top-1 -right-3 bg-[#FF7407] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-3 bg-[#FF7407] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center ">
               {items.length}
             </span>
           </button>
 
+          {isLoggedIn && (
+            <button
+              aria-label="Account Button"
+              onClick={() => navigate("/account")}
+              className="cursor-pointer text-[#FF7407] relative border border-[#FF7407] rounded-full p-1 hover:bg-[#FF7407] hover:text-white transition-colors"
+            >
+              <UserRound size={20} />
+            </button>
+          )}
           <button
             aria-label="Toggle Sidebar"
             onClick={() => setIsSidebarOpen((prev) => !prev)}
-            className="text-[#FF7407] relative"
+            className="md:hidden text-[#FF7407] relative"
           >
             {isSidebarOpen ? <X /> : <Logs />}
           </button>

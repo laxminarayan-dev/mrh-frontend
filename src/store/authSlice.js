@@ -1,12 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
+const scheduleErrorClear = (thunkAPI) => {
+    setTimeout(() => {
+        thunkAPI.dispatch(clearError());
+    }, 3000);
+};
+
 /* ============================
    INITIAL AUTH CHECK
 ============================ */
 export const startInitialAuth = createAsyncThunk(
     "auth/startAuth",
     async (_, thunkAPI) => {
+
         try {
             const token = Cookies.get("token");
 
@@ -15,7 +22,7 @@ export const startInitialAuth = createAsyncThunk(
             }
 
             const response = await fetch(
-                "http://localhost:5000/api/auth/verify",
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/verify-token`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -36,6 +43,7 @@ export const startInitialAuth = createAsyncThunk(
                 token,
             };
         } catch (error) {
+            scheduleErrorClear(thunkAPI);
             return thunkAPI.rejectWithValue({
                 message: error.message,
             });
@@ -51,21 +59,19 @@ export const authLogin = createAsyncThunk(
     async (credentials, thunkAPI) => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/auth/login",
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/login`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(credentials),
                 }
             );
-
             if (!response.ok) {
                 const err = await response.json();
+                scheduleErrorClear(thunkAPI);
                 return thunkAPI.rejectWithValue(err);
             }
-
             const data = await response.json();
-            Cookies.set("token", data.token, { expires: 7 });
 
             return {
                 isAuthenticated: true,
@@ -73,6 +79,7 @@ export const authLogin = createAsyncThunk(
                 token: data.token,
             };
         } catch (error) {
+            scheduleErrorClear(thunkAPI);
             return thunkAPI.rejectWithValue({ message: error.message });
         }
     }
@@ -86,7 +93,7 @@ export const sendSignupOtp = createAsyncThunk(
     async (email, thunkAPI) => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/auth/send-otp",
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/send-otp`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -96,11 +103,13 @@ export const sendSignupOtp = createAsyncThunk(
 
             if (!response.ok) {
                 const err = await response.json();
+                scheduleErrorClear(thunkAPI);
                 return thunkAPI.rejectWithValue(err);
             }
 
             return { otpSent: true };
         } catch (error) {
+            scheduleErrorClear(thunkAPI);
             return thunkAPI.rejectWithValue({ message: error.message });
         }
     }
@@ -111,24 +120,28 @@ export const sendSignupOtp = createAsyncThunk(
 ============================ */
 export const verifySignupOtp = createAsyncThunk(
     "auth/verifySignupOtp",
-    async ({ email, otp, password }, thunkAPI) => {
+    async ({ userDetail, otp }, thunkAPI) => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/auth/verify-otp",
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/verify-otp`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, otp, password }),
+                    body: JSON.stringify({ userDetail, otp }),
                 }
             );
 
             if (!response.ok) {
                 const err = await response.json();
+                scheduleErrorClear(thunkAPI);
                 return thunkAPI.rejectWithValue(err);
             }
 
             const data = await response.json();
-            Cookies.set("token", data.token, { expires: 7 });
+            const cookieOptions = thunkAPI.getState().auth.rememberMe
+                ? { expires: 7 }
+                : undefined;
+            Cookies.set("token", data.token, cookieOptions);
 
             return {
                 isAuthenticated: true,
@@ -136,6 +149,7 @@ export const verifySignupOtp = createAsyncThunk(
                 token: data.token,
             };
         } catch (error) {
+            scheduleErrorClear(thunkAPI);
             return thunkAPI.rejectWithValue({ message: error.message });
         }
     }
@@ -152,14 +166,21 @@ const initialState = {
     loading: false,
     error: null,
     otpSent: false,
+    rememberMe: false,
 };
 
 const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
+        clearError: (state) => {
+            state.error = null;
+        },
         resetOtpState: (state) => {
             state.otpSent = false;
+        },
+        setRememberMe: (state, action) => {
+            state.rememberMe = action.payload;
         },
         logout: (state) => {
             Cookies.remove("token");
@@ -195,6 +216,8 @@ const authSlice = createSlice({
                 state.isLoggedIn = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
+                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
+                Cookies.set("token", action.payload.token, cookieOptions);
             })
             .addCase(authLogin.rejected, (state, action) => {
                 state.loading = false;
@@ -226,6 +249,8 @@ const authSlice = createSlice({
                 state.isLoggedIn = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
+                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
+                Cookies.set("token", action.payload.token, cookieOptions);
             })
             .addCase(verifySignupOtp.rejected, (state, action) => {
                 state.loading = false;
@@ -234,5 +259,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { resetOtpState, logout } = authSlice.actions;
+export const { clearError, resetOtpState, setRememberMe, logout } = authSlice.actions;
 export default authSlice.reducer;

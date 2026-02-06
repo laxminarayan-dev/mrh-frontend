@@ -1,14 +1,22 @@
 import { useSelector } from "react-redux";
 import { LogIn, UserPlus, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import Loader from "./Loader";
 
 function SafeRoute({ children }) {
-  const { isLoggedIn } = useSelector((state) => state.auth);
+  const { isLoggedIn, loading } = useSelector((state) => state.auth);
 
   if (isLoggedIn) {
     return children;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-5rem)] w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 flex items-center justify-center px-6 py-12">
+        <Loader />
+      </div>
+    );
+  }
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#FFFBE9] via-orange-100 to-orange-200  flex justify-center items-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full text-center">

@@ -43,9 +43,6 @@ function Cart() {
     return (
       <div className="w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-[calc(100vh-4rem)]  flex items-center justify-center px-6">
         <div className="max-w-lg w-full text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-orange-600 ">
-            <ShoppingBasket size={30} />
-          </div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Your cart is empty
           </h1>

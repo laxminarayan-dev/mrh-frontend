@@ -100,7 +100,6 @@ const cartSlice = createSlice({
             })
             .addCase(fetchCartItems.fulfilled, (state, action) => {
                 state.items = action.payload;
-                console.log(action.payload);
                 state.totalQuantity = action.payload.reduce((total, item) => total + item.quantity, 0) || 0;
                 state.totalPrice = action.payload.reduce((total, item) => total + item.totalPrice, 0) || 0;
                 state.synced = true;

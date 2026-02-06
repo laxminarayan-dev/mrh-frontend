@@ -1,16 +1,9 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { Outlet, useLocation } from "react-router-dom";
-import {
-  Book,
-  House,
-  Info,
-  Phone,
-  ShoppingCart,
-  UserRound,
-} from "lucide-react";
+import { Book, House, Info, Phone } from "lucide-react";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,8 +13,6 @@ function App() {
     { name: "Menu", url: "/menu", icon: <Book /> },
     { name: "About Us", url: "/about-us", icon: <Info /> },
     { name: "Contact Us", url: "/contact-us", icon: <Phone /> },
-    { name: "Cart", url: "/cart", icon: <ShoppingCart /> },
-    { name: "Account", url: "/account", icon: <UserRound /> },
   ];
   useEffect(() => {
     if (isSidebarOpen) {

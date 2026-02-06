@@ -1,9 +1,18 @@
 import { Link, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ShieldUser } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Auth() {
-  const { isLoggedIn } = useSelector((state) => state.auth);
+  const { isLoggedIn, loading } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/", { replace: true });
+    }
+  }, [isLoggedIn, loading]);
   if (isLoggedIn) {
     return (
       <div className="min-h-[calc(100vh-5rem)] w-full bg-gradient-to-b from-[#FFFBE9] to-orange-200 flex flex-col items-center justify-center px-6 py-12">

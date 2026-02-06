@@ -1,7 +1,12 @@
 import { handleInputChange, handleAuthSubmit } from "../functions/auth";
-import { User, Mail, Lock, Eye, EyeOff, Phone } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setRememberMe } from "../store/authSlice";
+import { authLogin } from "../store/authSlice";
+import { useSelector } from "react-redux";
+import Loader from "./Loader";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -9,14 +14,24 @@ const LoginForm = () => {
     email: "",
     password: "",
   });
+  const { error, loading, isLoggedIn } = useSelector((state) => state.auth);
   const [validationErrors, setValidationErrors] = useState({});
+  const dispatch = useDispatch();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
+      {loading && <Loader />}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-slate-900">Welcome Back</h2>
         <p className="mt-2 text-sm text-slate-600">
           Sign in to your account to continue
         </p>
+
+        {error?.message && (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {error.message}
+          </p>
+        )}
       </div>
 
       <form
@@ -27,7 +42,7 @@ const LoginForm = () => {
             setValidationErrors(errors);
           } else {
             // Submit form logic here
-            console.log("Login form submitted successfully", formData);
+            dispatch(authLogin(formData));
           }
           setTimeout(() => {
             setValidationErrors({});
@@ -113,6 +128,9 @@ const LoginForm = () => {
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+              onChange={(e) => {
+                dispatch(setRememberMe(e.target.checked));
+              }}
             />
             <span className="ml-2 text-sm text-slate-600">Remember me</span>
           </label>
@@ -132,7 +150,7 @@ const LoginForm = () => {
         </button>
       </form>
 
-      <div className="text-center">
+      <div className="text-center z-10">
         <p className="text-sm text-slate-600">
           Don't have an account?{" "}
           <Link

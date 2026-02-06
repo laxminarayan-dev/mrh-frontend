@@ -9,6 +9,7 @@ import Contact from "./pages/Contact";
 import Menu from "./pages/Menu";
 import Login from "./components/Login";
 import SafeRoute from "./components/SafeRoute";
+import Account from "./pages/Account";
 
 const Signup = lazy(() => import("./components/Signup"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -53,7 +54,7 @@ function Routing() {
           path="/account"
           element={
             <SafeRoute>
-              <div>Account Page</div>
+              <Account />
             </SafeRoute>
           }
         />

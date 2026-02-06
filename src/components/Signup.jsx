@@ -1,7 +1,9 @@
 import { handleInputChange, handleAuthSubmit } from "../functions/auth";
 import { User, Mail, Lock, Eye, EyeOff, Phone, ArrowLeft } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { sendSignupOtp, verifySignupOtp } from "../store/authSlice";
 
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +16,15 @@ const SignupForm = () => {
     otp: "",
   });
   const [validationErrors, setValidationErrors] = useState({});
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isLoggedIn } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleOtpInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,9 +53,12 @@ const SignupForm = () => {
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
     } else {
-      console.log("Form validation passed, sending OTP to:", formData.email);
-      // Here you would typically send OTP to email
-      setShowOtpScreen(true);
+      dispatch(sendSignupOtp(formData.email))
+        .unwrap()
+        .then(() => {
+          setShowOtpScreen(true);
+        })
+        .catch(() => {});
     }
   };
 
@@ -56,9 +70,18 @@ const SignupForm = () => {
       return;
     }
     setValidationErrors({});
-    console.log("OTP verified, account created successfully");
-    // Here you would typically create the account
-    // Then redirect to login or home page
+    const userDetail = {
+      fullName: formData.name,
+      email: formData.email,
+      password: formData.password,
+      phone: formData.phone,
+    };
+    dispatch(verifySignupOtp({ userDetail, otp: formData.otp }))
+      .unwrap()
+      .then(() => {
+        navigate("/", { replace: true });
+      })
+      .catch(() => {});
   };
 
   const handleBackToForm = () => {
