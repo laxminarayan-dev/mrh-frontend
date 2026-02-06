@@ -9,9 +9,9 @@ function CardOne({ item }) {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   return (
-    <div className="mx-auto min-w-[75vw] max-w-[75vw] min-[440px]:min-w-[210px] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+    <div className="mx-auto min-w-[75vw] max-w-[75vw] min-[440px]:min-w-[210px] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ">
       {/* Background Gradient on Hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"></div>
 
       {/* Badge */}
       {item.isSale ? (
@@ -28,7 +28,7 @@ function CardOne({ item }) {
       {/* Image Container */}
       <div className="relative w-full h-full min-h-34 my-3 z-10 flex items-center justify-center">
         <ImageWithLoader
-          className="w-24 h-24 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
+          className="w-30 h-30 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
           src={item.images.url}
           alt={item.name}
         />
