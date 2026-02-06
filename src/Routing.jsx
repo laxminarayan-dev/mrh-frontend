@@ -1,14 +1,14 @@
-import { useState, lazy } from "react";
+import { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import App from "./App";
 import Index from "./pages/Index";
-
 import AboutUs from "./pages/AboutUs";
 import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Contact from "./pages/Contact";
 import Menu from "./pages/Menu";
 import Login from "./components/Login";
+import SafeRoute from "./components/SafeRoute";
 
 const Signup = lazy(() => import("./components/Signup"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -20,29 +20,51 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 
 function Routing() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   return (
     <Routes>
-      <Route element={<App isLoggedIn={isLoggedIn} />}>
+      <Route element={<App />}>
         <Route path="/" element={<Index />} />
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/orders" element={<Orders />} />
+
+        <Route
+          path="/orders"
+          element={
+            <SafeRoute>
+              <Orders />
+            </SafeRoute>
+          }
+        />
         <Route
           path="/orders/:orderId"
           element={<div>Order Details Page</div>}
         />
-        <Route path="checkout" element={<Checkout />} />
-        <Route path="/account" element={<div>Account Page</div>} />
+        <Route
+          path="checkout"
+          element={
+            <SafeRoute>
+              <Checkout />
+            </SafeRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <SafeRoute>
+              <div>Account Page</div>
+            </SafeRoute>
+          }
+        />
+
         <Route path="/auth" element={<Auth />}>
           <Route index element={<Login />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path="forgot-password" element={<ForgotPasswordForm />} />
         </Route>
+
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-function App({ isLoggedIn = false }) {
+function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const links = [
@@ -39,7 +39,6 @@ function App({ isLoggedIn = false }) {
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">
       <Navbar
         isSidebarOpen={isSidebarOpen}
-        isLoggedIn={isLoggedIn}
         setIsSidebarOpen={setIsSidebarOpen}
         links={links}
       />
@@ -47,7 +46,6 @@ function App({ isLoggedIn = false }) {
       <div className="bg-orange-200 flex-1">
         <Sidebar
           isSidebarOpen={isSidebarOpen}
-          isLoggedIn={isLoggedIn}
           setIsSidebarOpen={setIsSidebarOpen}
           links={links}
         />

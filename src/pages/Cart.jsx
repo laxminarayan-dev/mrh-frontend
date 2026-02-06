@@ -16,6 +16,7 @@ function Cart() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items } = useSelector((state) => state.cart);
+  const { isLoggedIn } = useSelector((state) => state.auth);
 
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -70,8 +71,7 @@ function Cart() {
           Shopping Cart
         </h1>
         <p className="mt-2 text-slate-600">
-          {items.length} item{items.length !== 1 ? "s" : ""} in your
-          cart
+          {items.length} item{items.length !== 1 ? "s" : ""} in your cart
         </p>
 
         <div className="mt-8 grid md:grid-cols-3 gap-8">
@@ -83,7 +83,11 @@ function Cart() {
               >
                 <div className="flex gap-4">
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-400 text-xs">
-                    {item.name}
+                    <img
+                      src={item.images.url}
+                      alt={item.name}
+                      className="w-full h-full object-contain rounded-xl p-2"
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
@@ -92,12 +96,9 @@ function Cart() {
                           {item.name}
                         </h3>
                         <p className="text-sm text-slate-600">
-                          {item.isSale ? (
-                            `₹${item.discountPrice} per item`
-                          ) : (
-                            `₹${item.originalPrice} each`
-                          )}
-
+                          {item.isSale
+                            ? `₹${item.discountPrice} per item`
+                            : `₹${item.originalPrice} each`}
                         </p>
                       </div>
                       <button
@@ -126,11 +127,9 @@ function Cart() {
                         </button>
                       </div>
                       <p className="text-lg font-bold text-slate-900">
-                        {item.isSale ? (
-                          `₹${item.discountPrice * item.quantity}`
-                        ) : (
-                          `₹${item.originalPrice * item.quantity}`
-                        )}
+                        {item.isSale
+                          ? `₹${item.discountPrice * item.quantity}`
+                          : `₹${item.originalPrice * item.quantity}`}
                       </p>
                     </div>
                   </div>
@@ -168,22 +167,36 @@ function Cart() {
                   ₹{total}
                 </span>
               </div>
-              <button
-                onClick={() => {
-                  navigate("/checkout");
-                }}
-                className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
-              >
-                Proceed to Checkout
-              </button>
-              <button
-                onClick={handleSyncCart}
-                className="mt-3 w-full rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
-                disabled={isSyncing}
-              >
-                <CloudUpload size={18} className="text-orange-600" />
-                {isSyncing ? "Syncing..." : "Sync Cart to Cloud"}
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    navigate("/checkout");
+                  }}
+                  className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+                >
+                  Proceed to Checkout
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    navigate("/auth");
+                  }}
+                  className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+                >
+                  Login to Checkout
+                </button>
+              )}
+
+              {isLoggedIn && (
+                <button
+                  onClick={handleSyncCart}
+                  className="mt-3 w-full rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
+                  disabled={isSyncing}
+                >
+                  <CloudUpload size={18} className="text-orange-600" />
+                  {isSyncing ? "Syncing..." : "Sync Cart to Cloud"}
+                </button>
+              )}
               <Link
                 to="/"
                 className="mt-3 block w-full text-center rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"

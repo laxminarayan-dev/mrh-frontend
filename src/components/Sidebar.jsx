@@ -1,15 +1,12 @@
 import { Fragment, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-function Sidebar({
-  isSidebarOpen = false,
-  isLoggedIn,
-  setIsSidebarOpen,
-  links,
-}) {
+function Sidebar({ isSidebarOpen = false, setIsSidebarOpen, links }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState("/");
+  const { isLoggedIn } = useSelector((state) => state.auth);
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [location.pathname]);
@@ -60,10 +57,11 @@ function Sidebar({
                     className="flex justify-start items-center gap-3 w-full"
                   >
                     <span
-                      className={`${currentPage.toLowerCase() === link.url.toLowerCase()
-                        ? "text-white"
-                        : "text-orange-500 group-hover:text-orange-600"
-                        }`}
+                      className={`${
+                        currentPage.toLowerCase() === link.url.toLowerCase()
+                          ? "text-white"
+                          : "text-orange-500 group-hover:text-orange-600"
+                      }`}
                     >
                       {link.icon}
                     </span>

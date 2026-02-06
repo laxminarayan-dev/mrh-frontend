@@ -2,8 +2,9 @@ import { Logs, X, ChefHat, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
+function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
   const navigate = useNavigate();
+  const { isLoggedIn } = useSelector((state) => state.auth);
   const { items } = useSelector((state) => state.cart);
 
   return (
@@ -50,7 +51,9 @@ function Navbar({ isSidebarOpen, isLoggedIn, setIsSidebarOpen, links }) {
             className="text-[#FF7407] relative"
           >
             <ShoppingBasket size={26} />
-            <span className="absolute -top-1 -right-3 bg-[#FF7407] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">{items.length}</span>
+            <span className="absolute -top-1 -right-3 bg-[#FF7407] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+              {items.length}
+            </span>
           </button>
 
           <button
