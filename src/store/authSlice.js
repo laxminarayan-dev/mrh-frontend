@@ -1,108 +1,149 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
-export const startInitialAuth = createAsyncThunk("auth/startAuth", async (_, thunkAPI) => {
-    try {
-        const token = Cookies.get("token");
+/* ============================
+   INITIAL AUTH CHECK
+============================ */
+export const startInitialAuth = createAsyncThunk(
+    "auth/startAuth",
+    async (_, thunkAPI) => {
+        try {
+            const token = Cookies.get("token");
 
-        // If no token, just return not authenticated
-        if (!token) {
-            return { isAuthenticated: false, user: null, token: null };
-        }
+            if (!token) {
+                return { isAuthenticated: false, user: null, token: null };
+            }
 
-        // Token exists, verify it with backend
-        const response = await fetch("http://localhost:5000/api/auth/verify", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
-        });
+            const response = await fetch(
+                "http://localhost:5000/api/auth/verify",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token }),
+                }
+            );
 
-        if (!response.ok) {
-            // Token is invalid, clear it and return not authenticated
-            Cookies.remove("token");
-            return { isAuthenticated: false, user: null, token: null };
-        }
+            if (!response.ok) {
+                Cookies.remove("token");
+                return { isAuthenticated: false, user: null, token: null };
+            }
 
-        const data = await response.json();
-        return {
-            isAuthenticated: true,
-            user: data.user,
-            token: token,
-        };
-    } catch (error) {
-        return thunkAPI.rejectWithValue({
-            message: error.message,
-            status: error.response?.status || 500
-        });
-    }
-});
+            const data = await response.json();
 
-export const authLogin = createAsyncThunk("auth/login", async (credentials, thunkAPI) => {
-    try {
-        const response = await fetch("http://localhost:5000/api/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
+            return {
+                isAuthenticated: true,
+                user: data.user,
+                token,
+            };
+        } catch (error) {
             return thunkAPI.rejectWithValue({
-                message: errorData.message || "Login failed",
-                status: response.status
+                message: error.message,
             });
         }
-        const data = await response.json();
-        Cookies.set("token", data.token, { expires: 7 });
-        return {
-            isAuthenticated: true,
-            user: data.user,
-            token: data.token,
-        };
-    } catch (error) {
-        return thunkAPI.rejectWithValue({
-            message: error.message,
-            status: error.response?.status || 500
-        });
     }
-});
+);
 
-export const authSignup = createAsyncThunk("auth/signup", async (userInfo, thunkAPI) => {
-    try {
-        const response = await fetch("http://localhost:5000/api/auth/signup", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userInfo),
-        });
+/* ============================
+   LOGIN (NO OTP)
+============================ */
+export const authLogin = createAsyncThunk(
+    "auth/login",
+    async (credentials, thunkAPI) => {
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/auth/login",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(credentials),
+                }
+            );
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            return thunkAPI.rejectWithValue({
-                message: errorData.message || "Signup failed",
-                status: response.status
-            });
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            const data = await response.json();
+            Cookies.set("token", data.token, { expires: 7 });
+
+            return {
+                isAuthenticated: true,
+                user: data.user,
+                token: data.token,
+            };
+        } catch (error) {
+            return thunkAPI.rejectWithValue({ message: error.message });
         }
-        const data = await response.json();
-        Cookies.set("token", data.token, { expires: 7 });
-        return {
-            isAuthenticated: true,
-            user: data.user,
-            token: data.token,
-        };
-    } catch (error) {
-        return thunkAPI.rejectWithValue({
-            message: error.message,
-            status: error.response?.status || 500
-        });
     }
-});
+);
 
+/* ============================
+   SIGNUP – SEND OTP
+============================ */
+export const sendSignupOtp = createAsyncThunk(
+    "auth/sendSignupOtp",
+    async (email, thunkAPI) => {
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/auth/send-otp",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return { otpSent: true };
+        } catch (error) {
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+/* ============================
+   SIGNUP – VERIFY OTP & CREATE USER
+============================ */
+export const verifySignupOtp = createAsyncThunk(
+    "auth/verifySignupOtp",
+    async ({ email, otp, password }, thunkAPI) => {
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/auth/verify-otp",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp, password }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            const data = await response.json();
+            Cookies.set("token", data.token, { expires: 7 });
+
+            return {
+                isAuthenticated: true,
+                user: data.user,
+                token: data.token,
+            };
+        } catch (error) {
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+/* ============================
+   SLICE
+============================ */
 
 const initialState = {
     user: null,
@@ -110,77 +151,88 @@ const initialState = {
     token: null,
     loading: false,
     error: null,
+    otpSent: false,
 };
 
 const authSlice = createSlice({
     name: "auth",
     initialState,
-    reducers: {},
+    reducers: {
+        resetOtpState: (state) => {
+            state.otpSent = false;
+        },
+        logout: (state) => {
+            Cookies.remove("token");
+            state.user = null;
+            state.token = null;
+            state.isLoggedIn = false;
+        },
+    },
     extraReducers: (builder) => {
-        // initial auth check
-        builder.addCase(startInitialAuth.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        });
-        builder.addCase(startInitialAuth.fulfilled, (state, action) => {
-            state.loading = false;
-            state.isLoggedIn = action.payload.isAuthenticated;
-            state.user = action.payload.user;
-            state.token = action.payload.token;
-            state.error = null;
-        });
-        builder.addCase(startInitialAuth.rejected, (state, action) => {
+        /* ===== Initial Auth ===== */
+        builder
+            .addCase(startInitialAuth.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(startInitialAuth.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = action.payload.isAuthenticated;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+            })
+            .addCase(startInitialAuth.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
 
-            state.loading = false;
-            state.isLoggedIn = false;
-            state.user = null;
-            state.token = null;
-            state.error = action.payload;
-        });
+        /* ===== Login ===== */
+        builder
+            .addCase(authLogin.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(authLogin.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+            })
+            .addCase(authLogin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
 
-        // login
-        builder.addCase(authLogin.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        });
-        builder.addCase(authLogin.fulfilled, (state, action) => {
-            state.loading = false;
-            state.isLoggedIn = action.payload.isAuthenticated;
-            state.user = action.payload.user;
-            state.token = action.payload.token;
-            state.error = null;
-        });
-        builder.addCase(authLogin.rejected, (state, action) => {
-            state.loading = false;
-            state.isLoggedIn = false;
-            state.user = null;
-            state.token = null;
-            state.error = action.payload;
-        });
+        /* ===== Send OTP ===== */
+        builder
+            .addCase(sendSignupOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(sendSignupOtp.fulfilled, (state) => {
+                state.loading = false;
+                state.otpSent = true;
+            })
+            .addCase(sendSignupOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
 
-        // signup
-        builder.addCase(authSignup.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        });
-        builder.addCase(authSignup.fulfilled, (state, action) => {
-            state.loading = false;
-            state.isLoggedIn = action.payload.isAuthenticated;
-            state.user = action.payload.user;
-            state.token = action.payload.token;
-            state.error = null;
-        });
-        builder.addCase(authSignup.rejected, (state, action) => {
-            state.loading = false;
-            state.isLoggedIn = false;
-            state.user = null;
-            state.token = null;
-            state.error = action.payload;
-        });
-    }
+        /* ===== Verify OTP ===== */
+        builder
+            .addCase(verifySignupOtp.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(verifySignupOtp.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+            })
+            .addCase(verifySignupOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+    },
 });
 
-export const { } =
-    authSlice.actions;
-
+export const { resetOtpState, logout } = authSlice.actions;
 export default authSlice.reducer;
