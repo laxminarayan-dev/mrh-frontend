@@ -3,16 +3,17 @@ import { Routes, Route } from "react-router-dom";
 import App from "./App";
 import Index from "./pages/Index";
 
-const AboutUs = lazy(() => import("./pages/AboutUs"));
-const Cart = lazy(() => import("./pages/Cart"));
-const Orders = lazy(() => import("./pages/Orders"));
-const Auth = lazy(() => import("./pages/Auth"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const Menu = lazy(() => import("./pages/Menu"));
+import AboutUs from "./pages/AboutUs";
+import Cart from "./pages/Cart";
+import Auth from "./pages/Auth";
+import Contact from "./pages/Contact";
+import Menu from "./pages/Menu";
+import Login from "./components/Login";
+
 const Signup = lazy(() => import("./components/Signup"));
-const Login = lazy(() => import("./components/Login"));
+const Orders = lazy(() => import("./pages/Orders"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Checkout = lazy(() => import("./pages/Checkout"));
 const ForgotPasswordForm = lazy(() => import("./components/ForgotPass"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
