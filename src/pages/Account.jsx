@@ -8,7 +8,6 @@ const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  console.log(user);
   const { orders = [], reviews = [] } = user || {};
   const [profile, setProfile] = useState({
     fullName: "",
@@ -158,12 +157,17 @@ const Account = () => {
                 </label>
                 <label className="space-y-2 text-sm text-slate-700">
                   <span className="font-medium">Phone</span>
-                  <input
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                    value={profile.phone}
-                    onChange={handleProfileChange("phone")}
-                    placeholder="+91 98765 43210"
-                  />
+                  <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100">
+                    <span className="text-sm font-semibold text-slate-500">
+                      +91
+                    </span>
+                    <input
+                      className="ml-2 w-full border-none bg-transparent px-2 py-1 text-sm outline-none"
+                      value={profile.phone}
+                      onChange={handleProfileChange("phone")}
+                      placeholder="98765 43210"
+                    />
+                  </div>
                 </label>
               </div>
 
