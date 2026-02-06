@@ -101,7 +101,7 @@ function Index({}) {
         <p className="text-gray-600 mt-3 px-2">
           Our most-loved dishes, picked by customers every day.
         </p>
-        <div className="grid px-3 gap-4 mt-8 justify-center [grid-template-columns:1fr] min-[410px]:[grid-template-columns:repeat(auto-fit,200px)]">
+        <div className="grid mx-auto w-[80vw] min-[440px]:w-full px-2 gap-4 mt-8 justify-start min-[440px]:justify-center [grid-template-columns:1fr] min-[410px]:[grid-template-columns:repeat(auto-fit,200px)]">
           {loading ? (
             <>
               {[1, 2, 3, 4].map((_, index) => (

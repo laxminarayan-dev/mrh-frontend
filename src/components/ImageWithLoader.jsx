@@ -15,7 +15,7 @@ const ImageWithLoader = ({ src, alt, className }) => {
   }, [src]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="relative w-full h-full flex justify-center items-center overflow-hidden">
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
@@ -39,7 +39,7 @@ const ImageWithLoader = ({ src, alt, className }) => {
             setError(true);
             setLoaded(true);
           }}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
+          className={`object-cover transition-opacity duration-300 ${
             loaded ? "opacity-100" : "opacity-0"
           } ${className}`}
         />
