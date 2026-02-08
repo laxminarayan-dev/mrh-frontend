@@ -16,8 +16,11 @@ function Cart() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items } = useSelector((state) => state.cart);
-  const { isLoggedIn } = useSelector((state) => state.auth);
+  const { isLoggedIn, user = { cart: [] } } = useSelector(
+    (state) => state.auth,
+  );
 
+  console.log("User in Cart:", user);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const subtotal = items.reduce((sum, item) => {

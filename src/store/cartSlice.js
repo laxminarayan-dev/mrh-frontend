@@ -5,17 +5,17 @@ export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
     async () => {
         try {
-            const isLoggedIn = Cookies.get("token") ? true : false;
-            if (!isLoggedIn) {
-                const cookieData = Cookies.get("cartData");
-                const parsed = cookieData ? JSON.parse(cookieData) : [];
-                return Array.isArray(parsed) ? parsed : [];
-            }
-            else {
-                // if user is logged in, fetch cart data from server and also store in cookies for persistence
-                const response = [];
-                return response;
-            }
+            // const isLoggedIn = Cookies.get("token") ? true : false;
+            // if (!isLoggedIn) {
+            const cookieData = Cookies.get("cartData");
+            const parsed = cookieData ? JSON.parse(cookieData) : [];
+            return Array.isArray(parsed) ? parsed : [];
+            // }
+            // else {
+            //     // if user is logged in, fetch cart data from server and also store in cookies for persistence
+            //     const response = [];
+            //     return response;
+            // }
         } catch (error) {
             return error.message || "Failed to load reviews";
         }
