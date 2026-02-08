@@ -4,10 +4,19 @@ import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { Outlet, useLocation } from "react-router-dom";
 import { Book, House, Info, Phone } from "lucide-react";
+import { useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateCartData, fetchCartItems } from "./store/cartSlice";
+import Cookies from "js-cookie";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { items, synced } = useSelector((state) => state.cart);
+  const timerRef = useRef(null);
+
   const links = [
     { name: "Home", url: "/", icon: <House /> },
     { name: "Menu", url: "/menu", icon: <Book /> },
@@ -25,6 +34,30 @@ function App() {
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) return; // ❌ not logged in
+    if (synced) return; // ❌ already synced
+
+    // clear previous debounce
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // debounce 3s
+    timerRef.current = setTimeout(() => {
+      dispatch(updateCartData());
+    }, 3000);
+
+    return () => clearTimeout(timerRef.current);
+  }, [items, synced, dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      dispatch(fetchCartItems());
+    }
+  }, [isAuthenticated, user, dispatch]);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">

@@ -251,6 +251,7 @@ export const resetForgetPassword = createAsyncThunk(
 const initialState = {
     user: null,
     isLoggedIn: false,
+    isAuthenticated: false,
     token: null,
     loading: false,
     error: null,
@@ -293,6 +294,7 @@ const authSlice = createSlice({
             .addCase(startInitialAuth.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isLoggedIn = action.payload.isAuthenticated;
+                state.isAuthenticated = action.payload.isAuthenticated;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
             })
@@ -309,6 +311,7 @@ const authSlice = createSlice({
             .addCase(authLogin.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isLoggedIn = true;
+                state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
@@ -342,6 +345,7 @@ const authSlice = createSlice({
             .addCase(verifySignupOtp.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isLoggedIn = true;
+                state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
@@ -373,6 +377,7 @@ const authSlice = createSlice({
             .addCase(verifyForgetOtp.fulfilled, (state) => {
                 state.loading = false;
                 state.forgetOtpVerified = true;
+                state.isAuthenticated = true;
             })
             .addCase(verifyForgetOtp.rejected, (state, action) => {
                 state.loading = false;
@@ -386,6 +391,7 @@ const authSlice = createSlice({
             .addCase(resetForgetPassword.fulfilled, (state) => {
                 state.loading = false;
                 state.forgetPasswordSuccess = true;
+                state.isAuthenticated = false;
             })
             .addCase(resetForgetPassword.rejected, (state, action) => {
                 state.loading = false;

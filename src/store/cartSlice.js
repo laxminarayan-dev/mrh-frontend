@@ -3,21 +3,59 @@ import Cookies from "js-cookie";
 
 export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
-    async () => {
+    async (_, thunkAPI) => {
         try {
-            // const isLoggedIn = Cookies.get("token") ? true : false;
-            // if (!isLoggedIn) {
-            const cookieData = Cookies.get("cartData");
-            const parsed = cookieData ? JSON.parse(cookieData) : [];
-            return Array.isArray(parsed) ? parsed : [];
-            // }
-            // else {
-            //     // if user is logged in, fetch cart data from server and also store in cookies for persistence
-            //     const response = [];
-            //     return response;
-            // }
+            const isLoggedIn = Cookies.get("token") ? true : false;
+            if (!isLoggedIn) {
+                const cookieData = Cookies.get("cartData");
+                const parsed = cookieData ? JSON.parse(cookieData) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } else {
+                const state = thunkAPI.getState();
+                const user = state.auth.user;
+                const cart = user?.cart || [];
+                return cart;
+            }
         } catch (error) {
             return error.message || "Failed to load reviews";
+        }
+    }
+);
+
+export const updateCartData = createAsyncThunk(
+    "cart/updateCartData",
+    async (_, thunkAPI) => {
+        try {
+            const token = Cookies.get("token");
+            if (!token) {
+                return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+            }
+
+            console.log("Updating cart data with items:", thunkAPI.getState().cart.items);
+
+            const state = thunkAPI.getState();
+            const items = state.cart.items || [];
+            console.log("Items being sent to backend:", items);
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/user/update/cart`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ items }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return await response.json();
+        } catch (error) {
+            return thunkAPI.rejectWithValue({ message: error.message });
         }
     }
 );
@@ -109,6 +147,19 @@ const cartSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload || "Failed to load cart items";
             });
+        builder
+            .addCase(updateCartData.pending, (state) => {
+                state.syncing = true;
+                state.error = null;
+            })
+            .addCase(updateCartData.fulfilled, (state, action) => {
+                state.synced = true;
+                state.syncing = false;
+            })
+            .addCase(updateCartData.rejected, (state, action) => {
+                state.syncing = false;
+                state.error = action.payload?.message || "Failed to sync cart data";
+            })
     },
 });
 

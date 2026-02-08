@@ -35,7 +35,7 @@ export const filterItems = (items, category) => {
 
 export const staticData = [
     {
-        _id: "aj2kjshkj245jh2",
+        _id: "66c7e2c4a9d9b7c4f2a10001",
         name: "Plain Dosa",
         description: "Crispy south Indian plain dosa served with chutney and sambar.",
         shortDescription: "Classic crispy plain dosa",
@@ -49,15 +49,13 @@ export const staticData = [
         isAvailable: true,
         isNewArrival: false,
         isBestSeller: true,
-        images:
-            { url: "/images/plain-dosa.png", alt: "Plain Dosa" }
-        ,
+        images: { url: "/images/plain-dosa.png", alt: "Plain Dosa" },
         thumbnail: "/images/dosa/plain-dosa-thumb.jpg",
         availableTimings: { breakfast: true, lunch: true, dinner: true },
         preparationTime: 10
     },
     {
-        _id: "aj2kjshkj245jh3",
+        _id: "66c7e2c4a9d9b7c4f2a10002",
         name: "Masala Dosa",
         description: "Crispy dosa filled with spiced potato masala.",
         shortDescription: "Potato masala stuffed dosa",
@@ -66,15 +64,13 @@ export const staticData = [
         cuisine: "south-indian",
         originalPrice: 59,
         isBestSeller: true,
-        images:
-            { url: "/images/masala-dosa.png", alt: "Masala Dosa" }
-        ,
+        images: { url: "/images/masala-dosa.png", alt: "Masala Dosa" },
         thumbnail: "/images/dosa/masala-dosa-thumb.jpg",
         availableTimings: { breakfast: true, lunch: true, dinner: true },
         preparationTime: 12
     },
     {
-        _id: "aj2kjshkj245jh4",
+        _id: "66c7e2c4a9d9b7c4f2a10003",
         name: "Butter Dosa",
         description: "Plain dosa cooked with generous butter.",
         shortDescription: "Butter loaded dosa",
@@ -82,17 +78,14 @@ export const staticData = [
         subCategory: "butter",
         cuisine: "south-indian",
         originalPrice: 69,
-        images:
-            { url: "/images/butter-dosa.png", alt: "Butter Dosa" }
-        ,
+        images: { url: "/images/butter-dosa.png", alt: "Butter Dosa" },
         thumbnail: "/images/dosa/butter-dosa-thumb.jpg",
         preparationTime: 10,
         discountPrice: 49,
-        isSale: true,
-
+        isSale: true
     },
     {
-        _id: "aj2kjshkj245jh5",
+        _id: "66c7e2c4a9d9b7c4f2a10004",
         name: "Paneer Dosa",
         description: "Dosa stuffed with spicy paneer filling.",
         shortDescription: "Paneer stuffed dosa",
@@ -101,30 +94,26 @@ export const staticData = [
         cuisine: "south-indian",
         originalPrice: 99,
         isSpecial: true,
-        images:
-            { url: "/images/paneer-dosa.png", alt: "Paneer Dosa" }
-        ,
+        images: { url: "/images/paneer-dosa.png", alt: "Paneer Dosa" },
         thumbnail: "/images/dosa/paneer-dosa-thumb.jpg",
         preparationTime: 15,
         isSale: true,
-        discountPrice: 79,
+        discountPrice: 79
     },
     {
-        _id: "aj2kjshkj245jh6",
+        _id: "66c7e2c4a9d9b7c4f2a10005",
         name: "Onion Uttapam",
         description: "Soft uttapam topped with fresh onions.",
         shortDescription: "Onion topped uttapam",
         category: "uttapam",
         cuisine: "south-indian",
         originalPrice: 79,
-        images:
-            { url: "/images/onion-uttapam.png", alt: "Onion Uttapam" }
-        ,
+        images: { url: "/images/onion-uttapam.png", alt: "Onion Uttapam" },
         thumbnail: "/images/onion-uttapam.jpg",
         preparationTime: 12
     },
     {
-        _id: "aj2kjshkj245jh7",
+        _id: "66c7e2c4a9d9b7c4f2a10006",
         name: "Paneer Uttapam",
         description: "Uttapam topped with fresh paneer cubes.",
         shortDescription: "Paneer uttapam",
@@ -132,28 +121,24 @@ export const staticData = [
         cuisine: "south-indian",
         originalPrice: 110,
         isSpecial: true,
-        images:
-            { url: "/images/paneer-uttapam.png", alt: "Paneer Uttapam" }
-        ,
+        images: { url: "/images/paneer-uttapam.png", alt: "Paneer Uttapam" },
         thumbnail: "/images/paneer-uttapam.jpg",
         preparationTime: 15
     },
     {
-        _id: "aj2kjshkj245jh8",
+        _id: "66c7e2c4a9d9b7c4f2a10007",
         name: "Veg Chowmein",
         description: "Stir fried noodles with fresh vegetables.",
         shortDescription: "Veg chowmein noodles",
         category: "chinese",
         cuisine: "chinese",
         originalPrice: 80,
-        images:
-            { url: "/images/chowmein.png", alt: "Veg Chowmein" }
-        ,
+        images: { url: "/images/chowmein.png", alt: "Veg Chowmein" },
         thumbnail: "/images/chowmein.jpg",
         preparationTime: 15
     },
     {
-        _id: "aj2kjshkj245jh9",
+        _id: "66c7e2c4a9d9b7c4f2a10008",
         name: "Pav Bhaji",
         description: "Spicy mashed vegetables served with buttered pav.",
         shortDescription: "Classic pav bhaji",
@@ -161,15 +146,13 @@ export const staticData = [
         cuisine: "north-indian",
         originalPrice: 60,
         isBestSeller: true,
-        images:
-            { url: "/images/pav-bhaji.png", alt: "Pav Bhaji" }
-        ,
+        images: { url: "/images/pav-bhaji.png", alt: "Pav Bhaji" },
         thumbnail: "/images/pav-bhaji.jpg",
         preparationTime: 15,
-        isSpecial: true,
+        isSpecial: true
     },
     {
-        _id: "aj2kjshkj245jh10",
+        _id: "66c7e2c4a9d9b7c4f2a10009",
         name: "Gulab Jamun",
         description: "Soft milk-solid dumplings soaked in sugar syrup.",
         shortDescription: "Sweet gulab jamun",
@@ -177,15 +160,13 @@ export const staticData = [
         subCategory: "sweets",
         cuisine: "north-indian",
         originalPrice: 25,
-        images:
-            { url: "/images/gulab-jamun.png", alt: "Gulab Jamun" }
-        ,
+        images: { url: "/images/gulab-jamun.png", alt: "Gulab Jamun" },
         thumbnail: "/images/gulab-jamun.jpg",
         preparationTime: 5,
-        isSpecial: true,
+        isSpecial: true
     },
     {
-        _id: "aj2kjshkj245jh11",
+        _id: "66c7e2c4a9d9b7c4f2a1000a",
         name: "Maa ki Thali",
         description: "A wholesome plate with balanced flavors, perfect for lunch.",
         includes: ["Chawal", "Dal", "Sabji", "Roti", "Raita", "Mithai"],
@@ -194,17 +175,16 @@ export const staticData = [
         subCategory: "thali",
         cuisine: "north-indian",
         originalPrice: 110,
-        images:
-            { url: "/images/maa-ki-thali.png", alt: "Maa ki Thali" }
-        ,
+        images: { url: "/images/maa-ki-thali.png", alt: "Maa ki Thali" },
         thumbnail: "/images/thali/maa-ki-thali-thumb.jpg",
         preparationTime: 5,
         isSpecial: true,
         isAvailable: true,
         isSale: true,
-        discountPrice: 99,
+        discountPrice: 99
     }
 ];
+
 
 // Initialize items from cookie or use empty array
 export const fetchItems = () => {

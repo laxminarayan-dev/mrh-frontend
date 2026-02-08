@@ -1,9 +1,13 @@
-import { ShoppingBasket } from "lucide-react";
+import { ShoppingBasket, Loader, Check } from "lucide-react";
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
-
+import { useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import { addItem } from "../store/cartSlice";
 function Thali() {
+  const dispatch = useDispatch();
   const { items, loading } = useSelector((state) => state.items);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const thalis = useMemo(
     () => items?.filter((item) => item?.category === "thali") ?? [],
     [items],
@@ -64,11 +68,30 @@ function Thali() {
             )}
             {/* button */}
             <button
-              aria-label="order-now-btn"
-              className="flex items-center  gap-2 text-md md:text-lg mt-4 px-6 py-2 bg-yellow-400 text-black font-semibold rounded hover:bg-yellow-500 transition-colors"
+              onClick={() => {
+                if (adding) return;
+                dispatch(addItem(thaliDetails));
+                setAdded(false);
+                setAdding(true);
+                setTimeout(() => {
+                  setAdding(false);
+                  setAdded(true);
+                }, 500);
+                setTimeout(() => setAdded(false), 1000);
+              }}
+              aria-label="add-to-cart-btn"
+              className="bg-yellow-300 text-black p-2.5 rounded-xl hover:bg-yellow-400 hover:scale-110 transition-all shadow-md hover:shadow-lg 
+              mt-6 inline-flex items-center gap-2"
             >
-              <ShoppingBasket />
-              Add to Cart
+              {adding ? (
+                <Loader size={18} className="animate-spin text-black" />
+              ) : added ? (
+                <Check size={18} color="#000" />
+              ) : (
+                <>
+                  <ShoppingBasket size={18} color="#000" /> Add to Cart
+                </>
+              )}
             </button>
           </div>
         </div>

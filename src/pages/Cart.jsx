@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingBag,
-  Handshake,
-  CloudUpload,
-  ShoppingBasket,
-} from "lucide-react";
+import { Trash2, Plus, Minus, Handshake, CloudUpload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addItem, removeItem, deleteItem } from "../store/cartSlice";
@@ -16,12 +8,7 @@ function Cart() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items } = useSelector((state) => state.cart);
-  const { isLoggedIn, user = { cart: [] } } = useSelector(
-    (state) => state.auth,
-  );
-
-  console.log("User in Cart:", user);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const { isLoggedIn } = useSelector((state) => state.auth);
 
   const subtotal = items.reduce((sum, item) => {
     if (item.isSale) {
@@ -33,14 +20,6 @@ function Cart() {
   const tax = Math.round(subtotal * 0.05);
   const delivery = subtotal > 500 ? 0 : 30;
   const total = subtotal + tax + delivery;
-
-  const handleSyncCart = () => {
-    if (isSyncing) return;
-    setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-    }, 900);
-  };
 
   if (items.length === 0) {
     return (
@@ -187,16 +166,6 @@ function Cart() {
                 </button>
               )}
 
-              {isLoggedIn && (
-                <button
-                  onClick={handleSyncCart}
-                  className="mt-3 w-full rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
-                  disabled={isSyncing}
-                >
-                  <CloudUpload size={18} className="text-orange-600" />
-                  {isSyncing ? "Syncing..." : "Sync Cart to Cloud"}
-                </button>
-              )}
               <Link
                 to="/"
                 className="mt-3 block w-full text-center rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"
