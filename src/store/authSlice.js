@@ -156,6 +156,95 @@ export const verifySignupOtp = createAsyncThunk(
 );
 
 /* ============================
+   Forget OTP sent
+============================ */
+
+export const sendForgetOtp = createAsyncThunk(
+    "auth/sendforgetOtp",
+    async (email, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/forgot-password/send-otp`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                console.log("Error sending forget OTP:", err);
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return { forgetOtpSent: true };
+        } catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+
+export const verifyForgetOtp = createAsyncThunk(
+    "auth/verifyForgetOtp",
+    async ({ email, otp }, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/forgot-password/verify-otp`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                console.log("Error verifying forget OTP:", err);
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return { forgetOtpVerified: true };
+        } catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+export const resetForgetPassword = createAsyncThunk(
+    "auth/resetForgetPassword",
+    async ({ email, newPassword }, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/forgot-password/reset`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, newPassword }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return { forgetPasswordSuccess: true };
+        } catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+
+/* ============================
    SLICE
 ============================ */
 
@@ -166,6 +255,9 @@ const initialState = {
     loading: false,
     error: null,
     otpSent: false,
+    forgetOtpSent: false,
+    forgetOtpVerified: false,
+    forgetPasswordSuccess: false,
     rememberMe: false,
 };
 
@@ -178,6 +270,9 @@ const authSlice = createSlice({
         },
         resetOtpState: (state) => {
             state.otpSent = false;
+            state.forgetOtpSent = false;
+            state.forgetOtpVerified = false;
+            state.forgetPasswordSuccess = false;
         },
         setRememberMe: (state, action) => {
             state.rememberMe = action.payload;
@@ -256,6 +351,47 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             });
+
+        /* ===== Forget OTP & Reset Password ===== */
+        builder
+            .addCase(sendForgetOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(sendForgetOtp.fulfilled, (state) => {
+                state.loading = false;
+                state.forgetOtpSent = true;
+            })
+            .addCase(sendForgetOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(verifyForgetOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(verifyForgetOtp.fulfilled, (state) => {
+                state.loading = false;
+                state.forgetOtpVerified = true;
+            })
+            .addCase(verifyForgetOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+        builder
+            .addCase(resetForgetPassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(resetForgetPassword.fulfilled, (state) => {
+                state.loading = false;
+                state.forgetPasswordSuccess = true;
+            })
+            .addCase(resetForgetPassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+
     },
 });
 

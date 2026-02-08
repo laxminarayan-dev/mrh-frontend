@@ -1,13 +1,19 @@
 import { handleInputChange, handleAuthSubmit } from "../functions/auth";
 import { User, Mail, Lock, Eye, EyeOff, Phone, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { sendSignupOtp, verifySignupOtp } from "../store/authSlice";
+import {
+  resetOtpState,
+  sendSignupOtp,
+  verifySignupOtp,
+} from "../store/authSlice";
+import Loader from "./Loader";
 
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,14 +23,10 @@ const SignupForm = () => {
   });
   const [validationErrors, setValidationErrors] = useState({});
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { isLoggedIn } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate("/", { replace: true });
-    }
-  }, [isLoggedIn, navigate]);
+  const { loading, error, otpSent } = useSelector((state) => state.auth);
+
+  console.log(loading, error, otpSent);
 
   const handleOtpInputChange = (e) => {
     const { name, value } = e.target;
@@ -53,12 +55,8 @@ const SignupForm = () => {
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
     } else {
-      dispatch(sendSignupOtp(formData.email))
-        .unwrap()
-        .then(() => {
-          setShowOtpScreen(true);
-        })
-        .catch(() => {});
+      dispatch(sendSignupOtp(formData.email));
+      setResendSecondsLeft(30);
     }
   };
 
@@ -76,24 +74,33 @@ const SignupForm = () => {
       password: formData.password,
       phone: formData.phone,
     };
-    dispatch(verifySignupOtp({ userDetail, otp: formData.otp }))
-      .unwrap()
-      .then(() => {
-        navigate("/", { replace: true });
-      })
-      .catch(() => {});
+    dispatch(verifySignupOtp({ userDetail, otp: formData.otp }));
   };
 
   const handleBackToForm = () => {
-    setShowOtpScreen(false);
+    dispatch(resetOtpState());
     setValidationErrors({});
     setFormData({ ...formData, otp: "" });
+    setResendSecondsLeft(0);
   };
 
+  useEffect(() => {
+    if (resendSecondsLeft <= 0) {
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setResendSecondsLeft((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [resendSecondsLeft]);
+
   // OTP Verification Screen
-  if (showOtpScreen) {
+  if (otpSent) {
     return (
       <div className="space-y-6">
+        {loading && <Loader />}
         <button
           onClick={handleBackToForm}
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4"
@@ -105,9 +112,14 @@ const SignupForm = () => {
         <div className="text-center">
           <h2 className="text-3xl font-bold text-slate-900">Verify Email</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Enter the 6-digit code sent to{" "}
+            Enter the 6-digit code sent to
             <span className="font-semibold">{formData.email}</span>
           </p>
+          {error?.message && (
+            <p className="mt-3 text-sm font-medium text-red-600">
+              {error.message}
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleOtpSubmit} className="space-y-4">
@@ -141,10 +153,16 @@ const SignupForm = () => {
 
           <button
             type="button"
-            onClick={() => console.log("Resending OTP...")}
-            className="w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
+            onClick={() => {
+              dispatch(sendSignupOtp(formData.email));
+              setResendSecondsLeft(30);
+            }}
+            className={`w-full text-sm font-medium ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
+            disabled={resendSecondsLeft > 0}
           >
-            Resend OTP
+            {resendSecondsLeft > 0
+              ? `Resend OTP in ${resendSecondsLeft}s`
+              : "Resend OTP"}
           </button>
         </form>
       </div>
@@ -154,11 +172,17 @@ const SignupForm = () => {
   // Signup Form Screen
   return (
     <div className="space-y-6">
+      {loading && <Loader />}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-slate-900">Create Account</h2>
         <p className="mt-2 text-sm text-slate-600">
           Join us and start ordering delicious food
         </p>
+        {error?.message && (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {error.message}
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSignupSubmit} className="space-y-4">

@@ -56,13 +56,23 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
             </span>
           </button>
 
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <button
               aria-label="Account Button"
               onClick={() => navigate("/account")}
               className="cursor-pointer text-[#FF7407] relative border border-[#FF7407] rounded-full p-1 hover:bg-[#FF7407] hover:text-white transition-colors"
             >
               <UserRound size={20} />
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                navigate("/auth");
+                setIsSidebarOpen(false);
+              }}
+              className="hidden md:block w-full text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
+            >
+              Login
             </button>
           )}
           <button

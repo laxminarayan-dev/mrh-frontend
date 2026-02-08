@@ -1,11 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  sendForgetOtp,
+  verifyForgetOtp,
+  resetForgetPassword,
+  resetOtpState,
+} from "../store/authSlice";
+import LoaderComp from "./Loader";
 
 const ForgotPasswordForm = () => {
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+
+  const dispatch = useDispatch();
+  const {
+    loading,
+    error,
+    forgetOtpSent,
+    forgetOtpVerified,
+    forgetPasswordSuccess,
+  } = useSelector((state) => state.auth);
+
   const [formData, setFormData] = useState({
     email: "",
     otp: "",
@@ -34,19 +52,6 @@ const ForgotPasswordForm = () => {
       errors.email = "Email is required";
     } else if (!EMAIL_PATTERN.test(formData.email)) {
       errors.email = "Please enter a valid email address";
-    }
-    return errors;
-  };
-
-  // Validate OTP
-  const validateOtp = () => {
-    const errors = {};
-    if (!formData.otp.trim()) {
-      errors.otp = "OTP is required";
-    } else if (formData.otp.length !== 6) {
-      errors.otp = "OTP must be 6 digits";
-    } else if (!/^\d{6}$/.test(formData.otp)) {
-      errors.otp = "OTP must contain only numbers";
     }
     return errors;
   };
@@ -82,23 +87,26 @@ const ForgotPasswordForm = () => {
       return;
     }
     setValidationErrors({});
-    console.log("Sending OTP to:", formData.email);
-    // Here you would typically send OTP to email
-    setStep(2);
+    dispatch(sendForgetOtp(formData.email));
+    setResendSecondsLeft(30);
   };
 
   const handleOtpSubmit = (e) => {
     e.preventDefault();
-    const errors = validateOtp();
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
+    dispatch(verifyForgetOtp({ email: formData.email, otp: formData.otp }));
+  };
+
+  useEffect(() => {
+    if (resendSecondsLeft <= 0) {
       return;
     }
-    setValidationErrors({});
-    console.log("Verifying OTP:", formData.otp);
-    // Here you would typically verify the OTP
-    setStep(3);
-  };
+
+    const timerId = setInterval(() => {
+      setResendSecondsLeft((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [resendSecondsLeft]);
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
@@ -110,12 +118,19 @@ const ForgotPasswordForm = () => {
     setValidationErrors({});
     console.log("Password reset successful");
     // Here you would typically update the password
-    setStep(4); // Success screen
+    dispatch(
+      resetForgetPassword({
+        email: formData.email,
+        newPassword: formData.newPassword,
+      }),
+    );
   };
 
   return (
     <div className="space-y-6">
-      {step === 1 && (
+      {loading && <LoaderComp />}
+
+      {!forgetOtpSent && (
         <Link
           to={"/auth/login"}
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4"
@@ -128,18 +143,18 @@ const ForgotPasswordForm = () => {
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2 mb-6">
         <div
-          className={`h-2 w-16 rounded-full ${step >= 1 ? "bg-orange-500" : "bg-slate-200"}`}
+          className={`h-2 w-16 rounded-full ${!forgetOtpSent ? "bg-orange-500" : "bg-slate-200"}`}
         ></div>
         <div
-          className={`h-2 w-16 rounded-full ${step >= 2 ? "bg-orange-500" : "bg-slate-200"}`}
+          className={`h-2 w-16 rounded-full ${forgetOtpSent && !forgetOtpVerified ? "bg-orange-500" : "bg-slate-200"}`}
         ></div>
         <div
-          className={`h-2 w-16 rounded-full ${step >= 3 ? "bg-orange-500" : "bg-slate-200"}`}
+          className={`h-2 w-16 rounded-full ${forgetOtpVerified && !forgetPasswordSuccess ? "bg-orange-500" : "bg-slate-200"}`}
         ></div>
       </div>
 
       {/* Step 1: Email Input */}
-      {step === 1 && (
+      {!forgetOtpSent && (
         <>
           <div className="text-center">
             <h2 className="text-3xl font-bold text-slate-900">
@@ -148,6 +163,11 @@ const ForgotPasswordForm = () => {
             <p className="mt-2 text-sm text-slate-600">
               Enter your email to receive an OTP
             </p>
+            {error?.message && (
+              <p className="mt-3 text-sm font-medium text-red-600">
+                {error.message}
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleEmailSubmit} className="space-y-4">
@@ -187,7 +207,7 @@ const ForgotPasswordForm = () => {
       )}
 
       {/* Step 2: OTP Verification */}
-      {step === 2 && (
+      {forgetOtpSent && !forgetOtpVerified && (
         <>
           <div className="text-center">
             <h2 className="text-3xl font-bold text-slate-900">Verify OTP</h2>
@@ -195,6 +215,11 @@ const ForgotPasswordForm = () => {
               Enter the 6-digit code sent to{" "}
               <span className="font-semibold">{formData.email}</span>
             </p>
+            {error?.message && (
+              <p className="mt-3 text-sm font-medium text-red-600">
+                {error.message}
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleOtpSubmit} className="space-y-4">
@@ -227,16 +252,22 @@ const ForgotPasswordForm = () => {
 
             <button
               type="button"
-              onClick={() => console.log("Resending OTP...")}
-              className="w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
+              onClick={() => {
+                dispatch(sendForgetOtp(formData.email));
+                setResendSecondsLeft(30);
+              }}
+              className={`w-full text-sm font-medium ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
+              disabled={resendSecondsLeft > 0}
             >
-              Resend OTP
+              {resendSecondsLeft > 0
+                ? `Resend OTP in ${resendSecondsLeft}s`
+                : "Resend OTP"}
             </button>
 
             <button
               type="button"
               onClick={() => {
-                setStep(1);
+                dispatch(resetOtpState());
                 setValidationErrors({});
                 setFormData({
                   ...formData,
@@ -254,7 +285,7 @@ const ForgotPasswordForm = () => {
       )}
 
       {/* Step 3: New Password */}
-      {step === 3 && (
+      {forgetOtpVerified && !forgetPasswordSuccess && (
         <>
           <div className="text-center">
             <h2 className="text-3xl font-bold text-slate-900">
@@ -263,6 +294,11 @@ const ForgotPasswordForm = () => {
             <p className="mt-2 text-sm text-slate-600">
               Enter a strong password for your account
             </p>
+            {error?.message && (
+              <p className="mt-3 text-sm font-medium text-red-600">
+                {error.message}
+              </p>
+            )}
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -362,7 +398,7 @@ const ForgotPasswordForm = () => {
       )}
 
       {/* Step 4: Success */}
-      {step === 4 && (
+      {forgetPasswordSuccess && (
         <>
           <div className="text-center space-y-4">
             <div className="flex justify-center">
@@ -384,7 +420,7 @@ const ForgotPasswordForm = () => {
         </>
       )}
 
-      {(step === 1 || step === 4) && (
+      {!forgetOtpSent && (
         <div className="text-center">
           <p className="text-sm text-slate-600">
             Remember your password?{" "}

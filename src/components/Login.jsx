@@ -14,7 +14,7 @@ const LoginForm = () => {
     email: "",
     password: "",
   });
-  const { error, loading, isLoggedIn } = useSelector((state) => state.auth);
+  const { error, loading } = useSelector((state) => state.auth);
   const [validationErrors, setValidationErrors] = useState({});
   const dispatch = useDispatch();
 
