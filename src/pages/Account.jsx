@@ -18,19 +18,13 @@ function distanceInMeters([lat1, lon1], [lat2, lon2]) {
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function getStreetName(lat, lon, accuracy) {
+async function getStreetName(lat, lon) {
   const res = await fetch(
     `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
   );
-  // `${import.meta.env.VITE_BACKEND_API}/api/rev-geocode?lat=${lat}&lng=${lon}`,
-
   const data = await res.json();
 
-  console.log("Geocode API response:", data);
   return data.display_name;
-  // const result = pickBestResult(data.results, accuracy);
-  // console.log("Geocode results:", result);
-  // return result ? result.formatted_address : "Unknown location";
 }
 
 function formatAddressForDisplay(formattedAddress) {
@@ -62,6 +56,23 @@ function formatAddressForDisplay(formattedAddress) {
   };
 }
 
+function formatOrderDate(value) {
+  if (!value) return "Date unavailable";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const datePart = date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const timePart = date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${datePart} • ${timePart}`;
+}
+
 const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -70,7 +81,6 @@ const Account = () => {
   const [accuracy, setAccuracy] = useState(null);
   const [newAddress, setNewAddress] = useState("");
   const [coords, setCoords] = useState(null);
-  const houseInput = useRef(null);
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [addressList, setAddressList] = useState([]);
   const [gettingLocation, setGettingLocation] = useState(false);
@@ -120,11 +130,27 @@ const Account = () => {
 
     async function hydrateAddress() {
       setGettingLocation(true);
-      const street = await getStreetName(coords[0], coords[1], accuracy);
+      const street = await getStreetName(
+        coords[0],
+        coords[1],
+        accuracy,
+        setErrorWhileGettingLocation,
+      );
       // const englishStreet = await translateToEnglish(street);
       if (cancelled) return;
-
-      setNewAddress(street);
+      if (
+        street &&
+        typeof street === "string" &&
+        !street.toLowerCase().startsWith("unnamed") &&
+        !street.toLowerCase().startsWith("unknown")
+      ) {
+        setNewAddress(street);
+      } else {
+        alert("Unable to determine street name.");
+        setCoords(null);
+        setAccuracy(null);
+        setNewAddress(null);
+      }
 
       setGettingLocation(false);
     }
@@ -304,89 +330,18 @@ const Account = () => {
                     </div>
                   </div>
                 )}
-
-                {addressList.length > 0 || newAddress ? (
-                  <div className="mt-4 space-y-4">
-                    {addressList.map((address, index) => {
-                      console.log(
-                        "Comparing addresses:",
-                        address._id,
-                        isAlreadySaved,
-                      );
-                      console.log(
-                        "Comparing type:",
-                        typeof address._id,
-                        typeof isAlreadySaved,
-                      );
-
-                      const { house, line1, line2, country } =
-                        formatAddressForDisplay(address.formattedAddress);
-                      console.log(
-                        "Comparing addresses:",
-                        address._id,
-                        isAlreadySaved,
-                      );
-                      return (
-                        <div
-                          key={`address-${index}`}
-                          className={`rounded-2xl border p-4 shadow-sm ${isAlreadySaved == address._id ? "border-orange-300 bg-orange-50" : "border-slate-200 bg-white"}`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
-                              Saved Address
-                            </p>
-                            {address.isDefault && (
-                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
-                                Default
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-3 rounded-xl border border-slate-100 bg-transparent p-3">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {house}
-                            </p>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {line1}
-                            </p>
-                            {line2 && (
-                              <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
-                                {line2}
-                              </p>
-                            )}
-                            <p className="mt-2 text-xs text-slate-500">
-                              {country}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">
-                          Add a shipping address
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          No shipping address on file yet. Use Get My Location
-                          to add one and receive your orders.
-                        </p>
-                        <p className="mt-2 text-xs text-slate-500">
-                          Tip: Make sure location services are enabled.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <ListAddresses
+                  addressList={addressList}
+                  newAddress={newAddress}
+                  isAlreadySaved={isAlreadySaved}
+                />
               </div>
             </div>
             <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm h-fit">
               <h2 className="text-xl font-serif font-semibold text-slate-900">
                 Orders Snapshot
               </h2>
-              <div className="mt-4 space-y-4">
+              <div className="mt-4 grid gap-4">
                 {orders.length === 0 ? (
                   <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-6 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl shadow-sm">
@@ -407,41 +362,77 @@ const Account = () => {
                     </button>
                   </div>
                 ) : (
-                  orders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="rounded-2xl border border-slate-100 p-4 transition hover:border-orange-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            {order.id}
-                          </p>
-                          <p className="text-xs text-slate-500">{order.date}</p>
+                  orders.map((order) => {
+                    const orderId =
+                      typeof order._id === "string"
+                        ? order._id.slice(-6).toUpperCase()
+                        : "ORDER";
+                    const items = Array.isArray(order.orderItems)
+                      ? order.orderItems
+                      : [];
+                    const topItems = items.slice(0, 3);
+                    const remainingItems = items.length - topItems.length;
+                    const itemCount = items.reduce(
+                      (total, item) => total + (item.quantity || 0),
+                      0,
+                    );
+
+                    return (
+                      <div
+                        key={order._id}
+                        className="group rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/70 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
+                              Order #{orderId}
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-slate-900">
+                              {itemCount} items • ₹{order.totalAmount}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {formatOrderDate(order.createdAt)}
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                              order.status === "Delivered"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-500"
+                            }`}
+                          >
+                            {order.status || "Processing"}
+                          </span>
                         </div>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            order.status === "Delivered"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-rose-100 text-rose-700"
-                          }`}
-                        >
-                          {order.status}
-                        </span>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
+                          {topItems.map((item) => (
+                            <span
+                              key={`${order._id}-${item.name}`}
+                              className="rounded-full border border-orange-100 bg-white/90 px-3 py-1 shadow-sm"
+                            >
+                              {item.name} x {item.quantity}
+                            </span>
+                          ))}
+                          {remainingItems > 0 && (
+                            <span className="rounded-full border border-dashed border-orange-200 px-3 py-1 text-orange-500">
+                              +{remainingItems} more
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="text-xs text-slate-500">
+                            Tap to view details
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-orange-600">
+                            <span className="h-2 w-2 rounded-full bg-orange-400"></span>
+                            Tracking active
+                          </div>
+                        </div>
                       </div>
-                      <p className="mt-3 text-sm text-slate-700">
-                        {order.items}
-                      </p>
-                      <div className="mt-3 flex items-center justify-between text-sm">
-                        <span className="font-semibold text-slate-900">
-                          {order.total}
-                        </span>
-                        <button className="rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md">
-                          View Details
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -514,8 +505,6 @@ export const getMyLocation = ({
 
   watchIdRef.current = navigator.geolocation.watchPosition(
     (pos) => {
-      console.log("Accuracy (meters):", pos.coords.accuracy);
-
       if (pos.coords.accuracy <= 170) {
         setAccuracy(pos.coords.accuracy);
         setCoords([pos.coords.latitude, pos.coords.longitude]);
@@ -534,5 +523,108 @@ export const getMyLocation = ({
       timeout: 20000,
       maximumAge: 0,
     },
+  );
+};
+
+export const ListAddresses = ({
+  onChekout = false,
+  addressList = [],
+  newAddress = null,
+  isAlreadySaved = null,
+  setSelectedAddress = () => {},
+  selectedAddress = null,
+}) => {
+  const navigate = useNavigate();
+  return (
+    <>
+      {addressList.length > 0 || newAddress ? (
+        <div className="mt-4 space-y-4">
+          {addressList.map((address, index) => {
+            const { house, line1, line2, country } = formatAddressForDisplay(
+              address.formattedAddress,
+            );
+            return (
+              <div
+                key={`address-${index}`}
+                className={`rounded-2xl border p-4 shadow-sm 
+                  ${!onChekout && isAlreadySaved == address._id ? "border-orange-200 bg-orange-50" : "border-slate-200 bg-white"} 
+                  ${onChekout && selectedAddress == address._id ? "!border-orange-200 !bg-orange-50" : "border-slate-200 bg-white"} 
+                  transition hover:border-orange-300 hover:bg-orange-50 cursor-pointer`}
+                onClick={() => onChekout && setSelectedAddress(address._id)}
+              >
+                <div className="flex items-center justify-start gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500 flex-1">
+                    Saved Address
+                  </p>
+                  {address.isDefault && (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                      Default
+                    </span>
+                  )}
+                  {onChekout && (
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        address._id === selectedAddress
+                          ? "border-orange-500 bg-orange-500"
+                          : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {address._id === selectedAddress && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className={`mt-3 rounded-xl p-3 bg-transparent ${address._id === selectedAddress || (!onChekout && isAlreadySaved == address._id) ? "border border-orange-200 bg-orange-50" : "border border-slate-200 bg-white"} transition`}
+                >
+                  <p className="text-sm font-semibold text-slate-900">
+                    {house}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {line1}
+                  </p>
+                  {line2 && (
+                    <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
+                      {line2}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-slate-500">{country}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                Add a shipping address
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                No shipping address on file yet. Use Get My Location to add one
+                and receive your orders.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Tip: Make sure location services are enabled.
+              </p>
+              {onChekout && (
+                <button
+                  aria-label="redirect-to-account"
+                  className="mt-4 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  onClick={() => {
+                    navigate("/account");
+                  }}
+                >
+                  Add Address
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

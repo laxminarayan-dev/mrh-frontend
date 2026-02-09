@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
+
 export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
     async (_, thunkAPI) => {
@@ -61,17 +62,22 @@ export const updateCartData = createAsyncThunk(
 );
 
 
+
 const initialState = {
     items: [],
     totalQuantity: 0,
     totalPrice: 0,
     synced: false,
+
 };
 
 const cartSlice = createSlice({
     name: "cart",
     initialState,
     reducers: {
+        setOrderPlaced: (state, action) => {
+            state.orderPlaced = action.payload;
+        },
         addItem: (state, action) => {
             const newItem = action.payload;
             const existingItem = state.items.find((item) => item._id === newItem._id);
@@ -160,10 +166,11 @@ const cartSlice = createSlice({
                 state.syncing = false;
                 state.error = action.payload?.message || "Failed to sync cart data";
             })
+
     },
 });
 
-export const { addItem, removeItem, deleteItem, clearCart } =
+export const { setOrderPlaced, addItem, removeItem, deleteItem, clearCart } =
     cartSlice.actions;
 
 export default cartSlice.reducer;

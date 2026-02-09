@@ -279,6 +279,45 @@ export const saveAddress = createAsyncThunk(
 );
 
 
+export const placeOrder = createAsyncThunk(
+    "auth/placeOrder",
+    async (orderDetail, thunkAPI) => {
+        try {
+            const token = Cookies.get("token");
+            if (!token) {
+                return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+            }
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/orders/place`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(orderDetail),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            const data = await response.json();
+            setTimeout(() => {
+                thunkAPI.dispatch({ type: "cart/setOrderPlaced", payload: false });
+            }, 1000);
+            return data;
+        } catch (error) {
+            console.error("Error placing order:", error);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+
+
 /* ============================
    SLICE
 ============================ */
@@ -295,6 +334,8 @@ const initialState = {
     forgetOtpVerified: false,
     forgetPasswordSuccess: false,
     rememberMe: false,
+    placingOrder: false,
+    orderPlaced: false,
 };
 
 const authSlice = createSlice({
@@ -449,6 +490,25 @@ const authSlice = createSlice({
             .addCase(saveAddress.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            });
+        //////////////////
+        builder
+            .addCase(placeOrder.pending, (state) => {
+                state.placingOrder = true;
+                state.orderPlaced = false;
+                state.error = null;
+            })
+            .addCase(placeOrder.fulfilled, (state, action) => {
+                state.placingOrder = false;
+                state.orderPlaced = true;
+                if (action.payload?.savedOrder) {
+                    state.user = action.payload.savedOrder;
+                }
+            })
+            .addCase(placeOrder.rejected, (state, action) => {
+                state.placingOrder = false;
+                state.orderPlaced = false;
+                state.error = action.payload?.message || "Failed to place order";
             });
     },
 });
