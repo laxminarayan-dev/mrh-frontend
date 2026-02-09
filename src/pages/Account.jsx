@@ -1,89 +1,101 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../store/authSlice";
-import { useEffect, useState } from "react";
-import { UtensilsCrossed } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader, UtensilsCrossed } from "lucide-react";
+
+async function getStreetName(lat, lon) {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${lat}&lon=${lon}`,
+  );
+  const data = await res.json();
+
+  return typeof data?.display_name === "string" ? data.display_name : "";
+}
+
+function formatAddressForDisplay(formattedAddress) {
+  if (typeof formattedAddress !== "string" || !formattedAddress.trim()) {
+    return { house: "", line1: "", line2: "", country: "" };
+  }
+
+  const parts = formattedAddress
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return { house: "", line1: "", line2: "", country: "" };
+  }
+
+  const country = parts[parts.length - 1];
+  const possiblePostcode = parts[parts.length - 2];
+  const hasPostcode = /^[0-9]{4,10}$/.test(possiblePostcode);
+  const tailIndex = hasPostcode ? parts.length - 2 : parts.length - 1;
+
+  const addressParts = parts.slice(0, tailIndex);
+
+  return {
+    house: addressParts[0] || "",
+    line1: addressParts[1] || "",
+    line2: addressParts.slice(2).join(", "),
+    country,
+  };
+}
 
 const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { orders = [], reviews = [] } = user || {};
+  const houseInput = useRef(null);
   const [profile, setProfile] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-  });
-  const [originalProfile, setOriginalProfile] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
+    fullName: user?.fullName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
   });
   const [addressList, setAddressList] = useState([]);
-  const [originalAddressList, setOriginalAddressList] = useState([]);
+  const [addressHydrated, setAddressHydrated] = useState(false);
+
+  let watchId = null;
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const [newAddress, setNewAddress] = useState(null);
 
   useEffect(() => {
-    const nextProfile = {
+    setAddressHydrated(false);
+    setProfile({
       fullName: user?.fullName || "",
       email: user?.email || "",
       phone: user?.phone || "",
-    };
+    });
     const nextAddresses = (user?.addresses || []).map((address) => ({
-      street: address?.street || "",
-      city: address?.city || "",
-      state: address?.state || "",
-      zip: address?.zip || "",
+      coordinates: address.coordinates || [0, 0],
+      formattedAddress: address.formattedAddress || "",
+      isDefault: address.isDefault || false,
     }));
-    setProfile(nextProfile);
-    setOriginalProfile(nextProfile);
     setAddressList(nextAddresses);
-    setOriginalAddressList(nextAddresses);
+    setAddressHydrated(true);
   }, [user]);
 
-  const handleProfileChange = (field) => (event) => {
-    setProfile((prev) => ({ ...prev, [field]: event.target.value }));
-  };
+  useEffect(() => {
+    if (!coords) return;
 
-  const handleAddressChange = (index, field) => (event) => {
-    const value = event.target.value;
-    setAddressList((prev) =>
-      prev.map((address, addrIndex) =>
-        addrIndex === index ? { ...address, [field]: value } : address,
-      ),
-    );
-  };
+    let cancelled = false;
 
-  const handleAddAddress = () => {
-    setAddressList((prev) => [
-      ...prev,
-      { street: "", city: "", state: "", zip: "" },
-    ]);
-  };
+    async function hydrateAddress() {
+      setGettingLocation(true);
+      const street = await getStreetName(coords[0], coords[1]);
+      if (cancelled) return;
 
-  const areAddressesEqual = (left, right) => {
-    if (left.length !== right.length) {
-      return false;
+      setNewAddress(formatAddressForDisplay(street));
+
+      setGettingLocation(false);
     }
-    return left.every((address, index) => {
-      const other = right[index] || {};
-      return (
-        address.street === other.street &&
-        address.city === other.city &&
-        address.state === other.state &&
-        address.zip === other.zip
-      );
-    });
-  };
 
-  const hasProfileChanges =
-    profile.fullName !== originalProfile.fullName ||
-    profile.email !== originalProfile.email ||
-    profile.phone !== originalProfile.phone;
-  const hasAddressChanges = !areAddressesEqual(
-    addressList,
-    originalAddressList,
-  );
-  const hasChanges = hasProfileChanges || hasAddressChanges;
+    hydrateAddress();
+    return () => (cancelled = true);
+  }, [coords]);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-screen">
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -106,7 +118,10 @@ const Account = () => {
             <div className="flex gap-6 md:flex-row md:items-start md:justify-between">
               <div className="flex items-center gap-5">
                 <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-md flex items-center justify-center text-xl font-semibold">
-                  MR
+                  {profile.fullName
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("") || "U"}
                 </div>
                 <div>
                   <p className="text-md font-serif font-light text-slate-900">
@@ -129,7 +144,7 @@ const Account = () => {
                 <h2 className="text-xl font-serif font-semibold text-slate-900">
                   Personal Information
                 </h2>
-                {hasChanges && (
+                {false && (
                   <button className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                     Save Changes
                   </button>
@@ -137,38 +152,27 @@ const Account = () => {
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <label className="space-y-2 text-sm text-slate-700">
+                <div className="space-y-2 text-sm text-slate-700">
                   <span className="font-medium">Full Name</span>
-                  <input
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                    value={profile.fullName}
-                    onChange={handleProfileChange("fullName")}
-                    placeholder="Your full name"
-                  />
-                </label>
-                <label className="space-y-2 text-sm text-slate-700">
+                  <p className="w-full rounded-xl border border-slate-300 px-4 py-3 ">
+                    {profile.fullName}
+                  </p>
+                </div>
+                <div className="space-y-2 text-sm text-slate-700">
                   <span className="font-medium">Email</span>
-                  <input
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                    value={profile.email}
-                    onChange={handleProfileChange("email")}
-                    placeholder="you@example.com"
-                  />
-                </label>
-                <label className="space-y-2 text-sm text-slate-700">
+                  <p className="w-full rounded-xl border border-slate-300 px-4 py-3 ">
+                    {profile.email}
+                  </p>
+                </div>
+                <div className="space-y-2 text-sm text-slate-700">
                   <span className="font-medium">Phone</span>
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100">
-                    <span className="text-sm font-semibold text-slate-500">
-                      +91
-                    </span>
-                    <input
-                      className="ml-2 w-full border-none bg-transparent px-2 py-1 text-sm outline-none"
-                      value={profile.phone}
-                      onChange={handleProfileChange("phone")}
-                      placeholder="98765 43210"
-                    />
+                  <div className="flex items-center rounded-xl border border-slate-300 bg-white px-3 py-2">
+                    <span className="text-sm">+91</span>
+                    <p className="ml-2 w-full border-none bg-transparent px-1 py-1 text-sm outline-none">
+                      {profile.phone}
+                    </p>
                   </div>
-                </label>
+                </div>
               </div>
 
               <div className="mt-6">
@@ -176,66 +180,136 @@ const Account = () => {
                   <h3 className="text-sm font-medium text-slate-900">
                     Shipping Address
                   </h3>
-                  <button
-                    onClick={handleAddAddress}
-                    className="rounded-full border border-orange-200 bg-white px-4 py-2 text-xs font-semibold text-orange-400 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
-                  >
-                    Add Address
-                  </button>
+                  {!newAddress && (
+                    <button
+                      onClick={() =>
+                        getMyLocation({
+                          watchId,
+                          coords,
+                          setGettingLocation,
+                          setCoords,
+                        })
+                      }
+                      className="rounded-full border border-orange-200 bg-white px-4 py-2 text-xs font-semibold text-orange-400 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
+                    >
+                      {gettingLocation ? (
+                        <Loader className="animate-spin" />
+                      ) : (
+                        "Get My Location"
+                      )}
+                    </button>
+                  )}
+                  {newAddress && (
+                    <button
+                      onClick={() => {
+                        if (houseInput.current) {
+                          const houseNumber = houseInput.current.value.trim();
+                          if (houseNumber) {
+                            const addressToSave = {
+                              coordinates: coords,
+                              formattedAddress: `${houseNumber}, ${newAddress.line1}, ${newAddress.line2}, ${newAddress.country}`,
+                              isDefault: addressList.length === 0, // Set as default if it's the first address
+                            };
+                            console.log("Save new address:", addressToSave);
+                          } else {
+                            alert("Please enter a flat or house number.");
+                          }
+                        }
+                      }}
+                      className="rounded-full border border-green-200 bg-white px-4 py-2 text-xs font-semibold text-green-400 shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50 hover:shadow-md"
+                    >
+                      Save New Address
+                    </button>
+                  )}
                 </div>
-
-                {addressList.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-700">
-                    No shipping address on file yet. Add one to receive your
-                    orders.
-                  </p>
-                ) : (
-                  <div className="mt-4 space-y-4">
-                    {addressList.map((address, index) => (
-                      <div
-                        key={`address-${index}`}
-                        className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
-                      >
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
-                            <span className="font-medium">Street</span>
-                            <input
-                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                              value={address.street}
-                              onChange={handleAddressChange(index, "street")}
-                              placeholder="Street address"
-                            />
-                          </label>
-                          <label className="space-y-2 text-sm text-slate-700">
-                            <span className="font-medium">City</span>
-                            <input
-                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                              value={address.city}
-                              onChange={handleAddressChange(index, "city")}
-                              placeholder="City"
-                            />
-                          </label>
-                          <label className="space-y-2 text-sm text-slate-700">
-                            <span className="font-medium">State</span>
-                            <input
-                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                              value={address.state}
-                              onChange={handleAddressChange(index, "state")}
-                              placeholder="State"
-                            />
-                          </label>
-                          <label className="space-y-2 text-sm text-slate-700">
-                            <span className="font-medium">Zip Code</span>
-                            <input
-                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                              value={address.zip}
-                              onChange={handleAddressChange(index, "zip")}
-                              placeholder="Zip"
-                            />
-                          </label>
-                        </div>
+                {newAddress && !gettingLocation && (
+                  <div className="mt-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mt-4">
+                        <label className="text-xs font-medium text-slate-500">
+                          Flat / House No.
+                        </label>
+                        <input
+                          ref={houseInput}
+                          type="text"
+                          placeholder="Enter flat or house number"
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-300 focus:ring-2 focus:ring-orange-200"
+                        />
                       </div>
-                    ))}
+                      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {newAddress.line1}
+                        </p>
+                        {newAddress.line2 && (
+                          <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
+                            {newAddress.line2}
+                          </p>
+                        )}
+                        <p className="mt-2 text-xs text-slate-500">
+                          {newAddress.country}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {addressList.length > 0 || newAddress ? (
+                  <div className="mt-4 space-y-4">
+                    {addressList.map((address, index) => {
+                      const { house, line1, line2, country } =
+                        formatAddressForDisplay(address.formattedAddress);
+
+                      return (
+                        <div
+                          key={`address-${index}`}
+                          className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
+                              Saved Address
+                            </p>
+                            {address.isDefault && (
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                                Default
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                            <p className="text-sm font-semibold text-slate-900">
+                              {house}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {line1}
+                            </p>
+                            {line2 && (
+                              <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
+                                {line2}
+                              </p>
+                            )}
+                            <p className="mt-2 text-xs text-slate-500">
+                              {country}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          Add a shipping address
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          No shipping address on file yet. Use Get My Location
+                          to add one and receive your orders.
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          Tip: Make sure location services are enabled.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -355,3 +429,42 @@ const Account = () => {
 };
 
 export default Account;
+
+export const getMyLocation = ({
+  watchId,
+  coords,
+  setGettingLocation,
+  setCoords,
+}) => {
+  setGettingLocation(true);
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    setGettingLocation(false);
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      console.log("Accuracy (meters):", pos.coords.accuracy);
+
+      // Stop watching if accuracy is less than 300 meters
+      if (pos.coords.accuracy < 300) {
+        setCoords([pos.coords.latitude, pos.coords.longitude]);
+        setGettingLocation(false);
+
+        navigator.geolocation.clearWatch(watchId);
+        return;
+      }
+    },
+    (err) => {
+      alert("Please turn on GPS");
+      setGettingLocation(false);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 20000, // ⬅ increase
+      maximumAge: 0,
+    },
+  );
+  return () => navigator.geolocation.clearWatch(watchId);
+};

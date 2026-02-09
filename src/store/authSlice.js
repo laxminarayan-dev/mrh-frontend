@@ -244,6 +244,38 @@ export const resetForgetPassword = createAsyncThunk(
 );
 
 
+export const saveAddress = createAsyncThunk(
+    "auth/saveAddress",
+    async ({ addressData, token }, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/user/save-address`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ addressData }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            const data = await response.json();
+            return data.address; // Return the saved address from backend
+        } catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+
 /* ============================
    SLICE
 ============================ */
@@ -398,6 +430,24 @@ const authSlice = createSlice({
                 state.error = action.payload;
             });
 
+        // Save Address
+        builder
+            .addCase(saveAddress.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(saveAddress.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.user) {
+                    state.user.addresses = state.user.addresses || [];
+                    state.user.addresses.push(action.payload);
+                }
+            })
+            .addCase(saveAddress.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                scheduleErrorClear(thunkAPI);
+            });
     },
 });
 
