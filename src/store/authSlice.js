@@ -7,6 +7,8 @@ const scheduleErrorClear = (thunkAPI) => {
     }, 3000);
 };
 
+
+
 /* ============================
    INITIAL AUTH CHECK
 ============================ */
@@ -246,8 +248,9 @@ export const resetForgetPassword = createAsyncThunk(
 
 export const saveAddress = createAsyncThunk(
     "auth/saveAddress",
-    async ({ addressData, token }, thunkAPI) => {
+    async (addressData, thunkAPI) => {
         try {
+            const token = Cookies.get("token");
             const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_API}/api/user/save-address`,
                 {
@@ -256,7 +259,7 @@ export const saveAddress = createAsyncThunk(
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ addressData }),
+                    body: JSON.stringify({ ...addressData }),
                 }
             );
 
@@ -446,7 +449,6 @@ const authSlice = createSlice({
             .addCase(saveAddress.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
-                scheduleErrorClear(thunkAPI);
             });
     },
 });

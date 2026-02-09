@@ -1,16 +1,31 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../store/authSlice";
+import { logout, saveAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { Loader, UtensilsCrossed } from "lucide-react";
+
+async function translateToEnglish(text) {
+  if (!text) return text;
+
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+        text,
+      )}&langpair=hi|en`,
+    );
+    const data = await res.json();
+    return data.responseData.translatedText || text;
+  } catch {
+    return text;
+  }
+}
 
 async function getStreetName(lat, lon) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${lat}&lon=${lon}`,
   );
   const data = await res.json();
-
-  return typeof data?.display_name === "string" ? data.display_name : "";
+  return data?.display_name || "";
 }
 
 function formatAddressForDisplay(formattedAddress) {
@@ -45,7 +60,7 @@ function formatAddressForDisplay(formattedAddress) {
 const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user, loading } = useSelector((state) => state.auth);
   const { orders = [], reviews = [] } = user || {};
   const houseInput = useRef(null);
   const [profile, setProfile] = useState({
@@ -56,7 +71,7 @@ const Account = () => {
   const [addressList, setAddressList] = useState([]);
   const [addressHydrated, setAddressHydrated] = useState(false);
 
-  let watchId = null;
+  const watchId = useRef(null);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState(null);
   const [newAddress, setNewAddress] = useState(null);
@@ -85,9 +100,10 @@ const Account = () => {
     async function hydrateAddress() {
       setGettingLocation(true);
       const street = await getStreetName(coords[0], coords[1]);
+      const englishStreet = await translateToEnglish(street);
       if (cancelled) return;
 
-      setNewAddress(formatAddressForDisplay(street));
+      setNewAddress(formatAddressForDisplay(englishStreet));
 
       setGettingLocation(false);
     }
@@ -184,8 +200,7 @@ const Account = () => {
                     <button
                       onClick={() =>
                         getMyLocation({
-                          watchId,
-                          coords,
+                          watchIdRef: watchId,
                           setGettingLocation,
                           setCoords,
                         })
@@ -201,16 +216,18 @@ const Account = () => {
                   )}
                   {newAddress && (
                     <button
+                      disabled={loading}
                       onClick={() => {
                         if (houseInput.current) {
                           const houseNumber = houseInput.current.value.trim();
                           if (houseNumber) {
-                            const addressToSave = {
+                            const addressData = {
                               coordinates: coords,
                               formattedAddress: `${houseNumber}, ${newAddress.line1}, ${newAddress.line2}, ${newAddress.country}`,
                               isDefault: addressList.length === 0, // Set as default if it's the first address
                             };
-                            console.log("Save new address:", addressToSave);
+                            console.log("Saving address:", addressData);
+                            dispatch(saveAddress(addressData));
                           } else {
                             alert("Please enter a flat or house number.");
                           }
@@ -218,7 +235,11 @@ const Account = () => {
                       }}
                       className="rounded-full border border-green-200 bg-white px-4 py-2 text-xs font-semibold text-green-400 shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50 hover:shadow-md"
                     >
-                      Save New Address
+                      {loading ? (
+                        <Loader className="animate-spin" />
+                      ) : (
+                        "Save New Address"
+                      )}
                     </button>
                   )}
                 </div>
@@ -431,40 +452,38 @@ const Account = () => {
 export default Account;
 
 export const getMyLocation = ({
-  watchId,
-  coords,
   setGettingLocation,
   setCoords,
+  watchIdRef,
 }) => {
   setGettingLocation(true);
+
   if (!navigator.geolocation) {
     alert("Geolocation not supported");
     setGettingLocation(false);
     return;
   }
 
-  watchId = navigator.geolocation.watchPosition(
+  watchIdRef.current = navigator.geolocation.watchPosition(
     (pos) => {
       console.log("Accuracy (meters):", pos.coords.accuracy);
 
-      // Stop watching if accuracy is less than 300 meters
-      if (pos.coords.accuracy < 300) {
+      if (pos.coords.accuracy <= 300) {
         setCoords([pos.coords.latitude, pos.coords.longitude]);
         setGettingLocation(false);
 
-        navigator.geolocation.clearWatch(watchId);
-        return;
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
       }
     },
-    (err) => {
+    () => {
       alert("Please turn on GPS");
       setGettingLocation(false);
     },
     {
       enableHighAccuracy: true,
-      timeout: 20000, // ⬅ increase
+      timeout: 20000,
       maximumAge: 0,
     },
   );
-  return () => navigator.geolocation.clearWatch(watchId);
 };
