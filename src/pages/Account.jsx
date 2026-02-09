@@ -4,24 +4,6 @@ import { logout, saveAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { Loader, UtensilsCrossed } from "lucide-react";
 
-function pickBestResult(results, accuracy) {
-  if (accuracy > 50) {
-    return (
-      results.find(
-        (r) =>
-          r.types.includes("route") &&
-          r.geometry.location_type === "GEOMETRIC_CENTER",
-      ) ||
-      results.find((r) => r.types.includes("sublocality")) ||
-      results[0]
-    );
-  }
-
-  return (
-    results.find((r) => r.geometry.location_type === "ROOFTOP") || results[0]
-  );
-}
-
 function distanceInMeters([lat1, lon1], [lat2, lon2]) {
   const R = 6371000; // meters
   const toRad = (v) => (v * Math.PI) / 180;
@@ -38,14 +20,17 @@ function distanceInMeters([lat1, lon1], [lat2, lon2]) {
 
 async function getStreetName(lat, lon, accuracy) {
   const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${import.meta.env.VITE_GOOGLE_MAP_API}`,
+    `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
   );
+  // `${import.meta.env.VITE_BACKEND_API}/api/rev-geocode?lat=${lat}&lng=${lon}`,
 
   const data = await res.json();
 
-  const result = pickBestResult(data.results, accuracy);
-  console.log("Geocode results:", result);
-  return result ? result.formatted_address : "Unknown location";
+  console.log("Geocode API response:", data);
+  return data.display_name;
+  // const result = pickBestResult(data.results, accuracy);
+  // console.log("Geocode results:", result);
+  // return result ? result.formatted_address : "Unknown location";
 }
 
 function formatAddressForDisplay(formattedAddress) {
@@ -309,8 +294,8 @@ const Account = () => {
                       <textarea
                         value={newAddress}
                         onChange={(e) => setNewAddress(e.target.value)}
-                        rows={4}
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-300 focus:ring-2 focus:ring-orange-200"
+                        rows={2}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-300 focus:ring-2 focus:ring-orange-200 resize-none"
                       />
 
                       <p className="mt-2 text-xs text-slate-500">
@@ -531,7 +516,7 @@ export const getMyLocation = ({
     (pos) => {
       console.log("Accuracy (meters):", pos.coords.accuracy);
 
-      if (pos.coords.accuracy <= 150) {
+      if (pos.coords.accuracy <= 170) {
         setAccuracy(pos.coords.accuracy);
         setCoords([pos.coords.latitude, pos.coords.longitude]);
         setGettingLocation(false);
