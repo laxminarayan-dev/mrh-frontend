@@ -4,28 +4,48 @@ import { logout, saveAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { Loader, UtensilsCrossed } from "lucide-react";
 
-async function translateToEnglish(text) {
-  if (!text) return text;
-
-  try {
-    const res = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
-        text,
-      )}&langpair=hi|en`,
+function pickBestResult(results, accuracy) {
+  if (accuracy > 50) {
+    return (
+      results.find(
+        (r) =>
+          r.types.includes("route") &&
+          r.geometry.location_type === "GEOMETRIC_CENTER",
+      ) ||
+      results.find((r) => r.types.includes("sublocality")) ||
+      results[0]
     );
-    const data = await res.json();
-    return data.responseData.translatedText || text;
-  } catch {
-    return text;
   }
+
+  return (
+    results.find((r) => r.geometry.location_type === "ROOFTOP") || results[0]
+  );
 }
 
-async function getStreetName(lat, lon) {
+function distanceInMeters([lat1, lon1], [lat2, lon2]) {
+  const R = 6371000; // meters
+  const toRad = (v) => (v * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function getStreetName(lat, lon, accuracy) {
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${lat}&lon=${lon}`,
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${import.meta.env.VITE_GOOGLE_MAP_API}`,
   );
+
   const data = await res.json();
-  return data?.display_name || "";
+
+  const result = pickBestResult(data.results, accuracy);
+  console.log("Geocode results:", result);
+  return result ? result.formatted_address : "Unknown location";
 }
 
 function formatAddressForDisplay(formattedAddress) {
@@ -62,19 +82,21 @@ const Account = () => {
   const navigate = useNavigate();
   const { user, loading } = useSelector((state) => state.auth);
   const { orders = [], reviews = [] } = user || {};
+  const [accuracy, setAccuracy] = useState(null);
+  const [newAddress, setNewAddress] = useState("");
+  const [coords, setCoords] = useState(null);
   const houseInput = useRef(null);
+  const [isAlreadySaved, setIsAlreadySaved] = useState(false);
+  const [addressList, setAddressList] = useState([]);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const watchId = useRef(null);
+
   const [profile, setProfile] = useState({
     fullName: user?.fullName || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
-  const [addressList, setAddressList] = useState([]);
   const [addressHydrated, setAddressHydrated] = useState(false);
-
-  const watchId = useRef(null);
-  const [gettingLocation, setGettingLocation] = useState(false);
-  const [coords, setCoords] = useState(null);
-  const [newAddress, setNewAddress] = useState(null);
 
   useEffect(() => {
     setAddressHydrated(false);
@@ -84,6 +106,7 @@ const Account = () => {
       phone: user?.phone || "",
     });
     const nextAddresses = (user?.addresses || []).map((address) => ({
+      _id: address._id,
       coordinates: address.coordinates || [0, 0],
       formattedAddress: address.formattedAddress || "",
       isDefault: address.isDefault || false,
@@ -97,20 +120,33 @@ const Account = () => {
 
     let cancelled = false;
 
+    const existing = addressList.find((addr) => {
+      const dist = distanceInMeters(coords, addr.coordinates);
+      return dist < 100;
+    });
+
+    if (existing) {
+      alert(
+        "Your current location is very close to an existing saved address. No need to add again.",
+      );
+      setIsAlreadySaved(existing._id);
+      return; // ✅ STOP here — DO NOT call Google
+    }
+
     async function hydrateAddress() {
       setGettingLocation(true);
-      const street = await getStreetName(coords[0], coords[1]);
-      const englishStreet = await translateToEnglish(street);
+      const street = await getStreetName(coords[0], coords[1], accuracy);
+      // const englishStreet = await translateToEnglish(street);
       if (cancelled) return;
 
-      setNewAddress(formatAddressForDisplay(englishStreet));
+      setNewAddress(street);
 
       setGettingLocation(false);
     }
 
     hydrateAddress();
     return () => (cancelled = true);
-  }, [coords]);
+  }, [coords, accuracy]);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#FFFBE9] to-orange-200 min-h-screen">
@@ -203,6 +239,7 @@ const Account = () => {
                           watchIdRef: watchId,
                           setGettingLocation,
                           setCoords,
+                          setAccuracy,
                         })
                       }
                       className="rounded-full border border-orange-200 bg-white px-4 py-2 text-xs font-semibold text-orange-400 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
@@ -218,20 +255,39 @@ const Account = () => {
                     <button
                       disabled={loading}
                       onClick={() => {
-                        if (houseInput.current) {
-                          const houseNumber = houseInput.current.value.trim();
-                          if (houseNumber) {
-                            const addressData = {
-                              coordinates: coords,
-                              formattedAddress: `${houseNumber}, ${newAddress.line1}, ${newAddress.line2}, ${newAddress.country}`,
-                              isDefault: addressList.length === 0, // Set as default if it's the first address
-                            };
-                            console.log("Saving address:", addressData);
-                            dispatch(saveAddress(addressData));
-                          } else {
-                            alert("Please enter a flat or house number.");
-                          }
+                        const isDuplicate = addressList.some(
+                          (addr) =>
+                            addr.formattedAddress.toLowerCase() ===
+                            newAddress.trim().toLowerCase(),
+                        );
+                        if (isDuplicate) {
+                          alert(
+                            "This address is already in your saved addresses",
+                          );
+                          return;
                         }
+
+                        if (!newAddress.trim()) {
+                          alert("Address cannot be empty");
+                          return;
+                        }
+
+                        const addressData = {
+                          coordinates: coords,
+                          formattedAddress: newAddress.trim(),
+                          isDefault: addressList.length === 0,
+                        };
+
+                        dispatch(saveAddress(addressData))
+                          .unwrap()
+                          .then(() => {
+                            setNewAddress("");
+                            setCoords(null);
+                            setAccuracy(null);
+                          })
+                          .catch((err) => {
+                            alert("Failed to save address: " + err.message);
+                          });
                       }}
                       className="rounded-full border border-green-200 bg-white px-4 py-2 text-xs font-semibold text-green-400 shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50 hover:shadow-md"
                     >
@@ -246,43 +302,49 @@ const Account = () => {
                 {newAddress && !gettingLocation && (
                   <div className="mt-4">
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="mt-4">
-                        <label className="text-xs font-medium text-slate-500">
-                          Flat / House No.
-                        </label>
-                        <input
-                          ref={houseInput}
-                          type="text"
-                          placeholder="Enter flat or house number"
-                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-300 focus:ring-2 focus:ring-orange-200"
-                        />
-                      </div>
-                      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {newAddress.line1}
-                        </p>
-                        {newAddress.line2 && (
-                          <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
-                            {newAddress.line2}
-                          </p>
-                        )}
-                        <p className="mt-2 text-xs text-slate-500">
-                          {newAddress.country}
-                        </p>
-                      </div>
+                      <label className="text-xs font-medium text-slate-500">
+                        Edit your address
+                      </label>
+
+                      <textarea
+                        value={newAddress}
+                        onChange={(e) => setNewAddress(e.target.value)}
+                        rows={4}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-300 focus:ring-2 focus:ring-orange-200"
+                      />
+
+                      <p className="mt-2 text-xs text-slate-500">
+                        Tip: Edit house number, floor, landmark if needed
+                      </p>
                     </div>
                   </div>
                 )}
+
                 {addressList.length > 0 || newAddress ? (
                   <div className="mt-4 space-y-4">
                     {addressList.map((address, index) => {
+                      console.log(
+                        "Comparing addresses:",
+                        address._id,
+                        isAlreadySaved,
+                      );
+                      console.log(
+                        "Comparing type:",
+                        typeof address._id,
+                        typeof isAlreadySaved,
+                      );
+
                       const { house, line1, line2, country } =
                         formatAddressForDisplay(address.formattedAddress);
-
+                      console.log(
+                        "Comparing addresses:",
+                        address._id,
+                        isAlreadySaved,
+                      );
                       return (
                         <div
                           key={`address-${index}`}
-                          className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                          className={`rounded-2xl border p-4 shadow-sm ${isAlreadySaved == address._id ? "border-orange-300 bg-orange-50" : "border-slate-200 bg-white"}`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
@@ -295,7 +357,7 @@ const Account = () => {
                             )}
                           </div>
 
-                          <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          <div className="mt-3 rounded-xl border border-slate-100 bg-transparent p-3">
                             <p className="text-sm font-semibold text-slate-900">
                               {house}
                             </p>
@@ -335,7 +397,7 @@ const Account = () => {
                 )}
               </div>
             </div>
-            <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm h-fit">
               <h2 className="text-xl font-serif font-semibold text-slate-900">
                 Orders Snapshot
               </h2>
@@ -455,6 +517,7 @@ export const getMyLocation = ({
   setGettingLocation,
   setCoords,
   watchIdRef,
+  setAccuracy,
 }) => {
   setGettingLocation(true);
 
@@ -468,7 +531,8 @@ export const getMyLocation = ({
     (pos) => {
       console.log("Accuracy (meters):", pos.coords.accuracy);
 
-      if (pos.coords.accuracy <= 300) {
+      if (pos.coords.accuracy <= 150) {
+        setAccuracy(pos.coords.accuracy);
         setCoords([pos.coords.latitude, pos.coords.longitude]);
         setGettingLocation(false);
 

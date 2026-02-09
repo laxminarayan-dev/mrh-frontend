@@ -38,12 +38,12 @@ export const startInitialAuth = createAsyncThunk(
             }
 
             const data = await response.json();
-
             return {
                 isAuthenticated: true,
                 user: data.user,
                 token,
             };
+
         } catch (error) {
             scheduleErrorClear(thunkAPI);
             return thunkAPI.rejectWithValue({
