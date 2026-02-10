@@ -521,7 +521,7 @@ export const getMyLocation = ({
 
         setAccuracy(accuracy);
 
-        if (accuracy <= 500 || attempts >= MAX_ATTEMPTS) {
+        if (accuracy <= 400 || attempts >= MAX_ATTEMPTS) {
           setCoords([latitude, longitude]);
           setGettingLocation(false);
           return;
