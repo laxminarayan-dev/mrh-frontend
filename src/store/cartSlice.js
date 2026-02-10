@@ -75,9 +75,6 @@ const cartSlice = createSlice({
     name: "cart",
     initialState,
     reducers: {
-        setOrderPlaced: (state, action) => {
-            state.orderPlaced = action.payload;
-        },
         addItem: (state, action) => {
             const newItem = action.payload;
             const existingItem = state.items.find((item) => item._id === newItem._id);
@@ -170,7 +167,7 @@ const cartSlice = createSlice({
     },
 });
 
-export const { setOrderPlaced, addItem, removeItem, deleteItem, clearCart } =
+export const { addItem, removeItem, deleteItem, clearCart } =
     cartSlice.actions;
 
 export default cartSlice.reducer;

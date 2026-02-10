@@ -13,6 +13,7 @@ import Account from "./pages/Account";
 
 const Signup = lazy(() => import("./components/Signup"));
 const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const ForgotPasswordForm = lazy(() => import("./components/ForgotPass"));
@@ -40,7 +41,11 @@ function Routing() {
         />
         <Route
           path="/orders/:orderId"
-          element={<div>Order Details Page</div>}
+          element={
+            <SafeRoute>
+              <OrderDetails />
+            </SafeRoute>
+          }
         />
         <Route
           path="checkout"

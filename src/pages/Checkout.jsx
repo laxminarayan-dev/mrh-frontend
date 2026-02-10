@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ListAddresses } from "./Account";
 import { useSelector } from "react-redux";
+import { clearCart } from "../store/cartSlice";
 
 function Checkout() {
   const dispatch = useDispatch();
@@ -324,6 +325,7 @@ function Checkout() {
               <button
                 className="mt-4 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
                 onClick={() => {
+                  dispatch(clearCart());
                   setTimeout(() => {
                     navigate("/menu");
                   }, 1200);

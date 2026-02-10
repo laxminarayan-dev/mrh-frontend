@@ -363,9 +363,10 @@ const Account = () => {
                   </div>
                 ) : (
                   orders.map((order) => {
+                    const orderTarget = order?._id || order?.orderId;
                     const orderId =
-                      typeof order._id === "string"
-                        ? order._id.slice(-6).toUpperCase()
+                      typeof orderTarget === "string"
+                        ? orderTarget.slice(-6).toUpperCase()
                         : "ORDER";
                     const items = Array.isArray(order.orderItems)
                       ? order.orderItems
@@ -378,9 +379,13 @@ const Account = () => {
                     );
 
                     return (
-                      <div
-                        key={order._id}
-                        className="group rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/70 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md cursor-pointer"
+                      <button
+                        key={order._id || orderId}
+                        type="button"
+                        className="group w-full rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/70 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+                        onClick={() =>
+                          orderTarget && navigate(`/orders/${orderTarget}`)
+                        }
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -430,7 +435,7 @@ const Account = () => {
                             Tracking active
                           </div>
                         </div>
-                      </div>
+                      </button>
                     );
                   })
                 )}
