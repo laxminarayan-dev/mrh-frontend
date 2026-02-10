@@ -23,6 +23,7 @@ async function getStreetName(lat, lon) {
     `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
   );
   const data = await res.json();
+  console.log("Reverse geocoding result:", data);
 
   return data.display_name;
 }
@@ -130,12 +131,7 @@ const Account = () => {
 
     async function hydrateAddress() {
       setGettingLocation(true);
-      const street = await getStreetName(
-        coords[0],
-        coords[1],
-        accuracy,
-        setErrorWhileGettingLocation,
-      );
+      const street = await getStreetName(coords[0], coords[1], accuracy);
       // const englishStreet = await translateToEnglish(street);
       if (cancelled) return;
       if (
@@ -510,7 +506,8 @@ export const getMyLocation = ({
 
   watchIdRef.current = navigator.geolocation.watchPosition(
     (pos) => {
-      if (pos.coords.accuracy <= 170) {
+      console.log(pos.coords);
+      if (pos.coords.accuracy <= 200) {
         setAccuracy(pos.coords.accuracy);
         setCoords([pos.coords.latitude, pos.coords.longitude]);
         setGettingLocation(false);
@@ -525,7 +522,7 @@ export const getMyLocation = ({
     },
     {
       enableHighAccuracy: true,
-      timeout: 20000,
+      timeout: 1000,
       maximumAge: 0,
     },
   );
