@@ -493,7 +493,6 @@ export default Account;
 export const getMyLocation = ({
   setGettingLocation,
   setCoords,
-  watchIdRef,
   setAccuracy,
 }) => {
   setGettingLocation(true);
@@ -504,28 +503,43 @@ export const getMyLocation = ({
     return;
   }
 
-  watchIdRef.current = navigator.geolocation.watchPosition(
-    (pos) => {
-      console.log(pos.coords);
-      if (pos.coords.accuracy <= 200) {
-        setAccuracy(pos.coords.accuracy);
-        setCoords([pos.coords.latitude, pos.coords.longitude]);
-        setGettingLocation(false);
+  const options = {
+    enableHighAccuracy: true,
+    timeout: 15000, // ✅ GPS needs time
+    maximumAge: 0,
+  };
 
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    },
-    () => {
-      alert("Please turn on GPS");
-      setGettingLocation(false);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 1000,
-      maximumAge: 0,
-    },
-  );
+  let attempts = 0;
+  const MAX_ATTEMPTS = 6; // ~30 seconds total
+
+  const fetchLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+
+        console.log("Accuracy:", accuracy);
+
+        setAccuracy(accuracy);
+
+        if (accuracy <= 200 || attempts >= MAX_ATTEMPTS) {
+          setCoords([latitude, longitude]);
+          setGettingLocation(false);
+          return;
+        }
+
+        attempts++;
+        setTimeout(fetchLocation, 5000); // retry after 5 sec
+      },
+      (err) => {
+        console.error(err);
+        alert("Please turn on GPS & keep screen ON");
+        setGettingLocation(false);
+      },
+      options,
+    );
+  };
+
+  fetchLocation();
 };
 
 export const ListAddresses = ({
