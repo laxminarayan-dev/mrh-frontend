@@ -7,5 +7,5 @@ console.log("Connecting to socket at:", SOCKET_URL);
 export const socket = io(SOCKET_URL, {
     path: "/socket.io",
     autoConnect: false,
-    transports: ["websocket"], // faster & stable
+    // transports: ["websocket"], // faster & stable
 });
