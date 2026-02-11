@@ -34,13 +34,15 @@ function App() {
     };
   }, []);
   useEffect(() => {
-    if (isAuthenticated && user?._id) {
-      console.log("Joining private room:", user._id);
-      socket.emit("join-user-room", user._id);
-    } else {
-      console.log("Leaving private room");
-      socket.emit("leave-user-room");
-    }
+    socket.on("connect", () => {
+      if (isAuthenticated && user?._id) {
+        console.log("Joining private room:", user._id);
+        socket.emit("join-user-room", user._id);
+      } else {
+        console.log("Leaving private room");
+        socket.emit("leave-user-room");
+      }
+    });
   }, [isAuthenticated, user]);
 
   useEffect(() => {
