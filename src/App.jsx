@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { updateCartData, fetchCartItems } from "./store/cartSlice";
 import Cookies from "js-cookie";
+import { socket } from "./socket";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,6 +24,25 @@ function App() {
     { name: "About Us", url: "/about-us", icon: <Info /> },
     { name: "Contact Us", url: "/contact-us", icon: <Phone /> },
   ];
+
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  useEffect(() => {
+    if (isAuthenticated && user?._id) {
+      console.log("Joining private room:", user._id);
+      socket.emit("join-user-room", user._id);
+    } else {
+      console.log("Leaving private room");
+      socket.emit("leave-user-room");
+    }
+  }, [isAuthenticated, user]);
+
   useEffect(() => {
     if (isSidebarOpen) {
       document.body.style.overflow = "hidden";
