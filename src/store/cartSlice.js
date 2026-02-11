@@ -1,6 +1,50 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
+const CART_STORAGE_KEY = "cartData";
+
+const readCartStorage = () => {
+    if (typeof window === "undefined") {
+        return [];
+    }
+    try {
+        const raw = localStorage.getItem(CART_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+        const cookieData = Cookies.get(CART_STORAGE_KEY);
+        if (cookieData) {
+            const parsed = JSON.parse(cookieData);
+            if (Array.isArray(parsed)) {
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsed));
+                Cookies.remove(CART_STORAGE_KEY);
+                return parsed;
+            }
+        }
+    } catch (error) {
+        return [];
+    }
+    return [];
+};
+
+const writeCartStorage = (items) => {
+    try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+        return;
+    }
+};
+
+const clearCartStorage = () => {
+    try {
+        localStorage.removeItem(CART_STORAGE_KEY);
+    } catch (error) {
+        return;
+    }
+    Cookies.remove(CART_STORAGE_KEY);
+};
+
 
 export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
@@ -8,14 +52,28 @@ export const fetchCartItems = createAsyncThunk(
         try {
             const isLoggedIn = Cookies.get("token") ? true : false;
             if (!isLoggedIn) {
-                const cookieData = Cookies.get("cartData");
-                const parsed = cookieData ? JSON.parse(cookieData) : [];
-                return Array.isArray(parsed) ? parsed : [];
+                return readCartStorage();
             } else {
-                const state = thunkAPI.getState();
-                const user = state.auth.user;
-                const cart = user?.cart || [];
-                return cart;
+                const token = Cookies.get("token");
+
+                const response = await fetch(
+                    `${import.meta.env.VITE_BACKEND_API}/api/user/cart`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    return thunkAPI.rejectWithValue(err);
+                }
+
+                const data = await response.json();
+                console.log("Fetched cart items from backend:", data.cart);
+                return data.cart || [];
+
             }
         } catch (error) {
             return error.message || "Failed to load reviews";
@@ -31,12 +89,10 @@ export const updateCartData = createAsyncThunk(
             if (!token) {
                 return thunkAPI.rejectWithValue({ message: "Missing auth token" });
             }
-
             console.log("Updating cart data with items:", thunkAPI.getState().cart.items);
 
             const state = thunkAPI.getState();
             const items = state.cart.items || [];
-            console.log("Items being sent to backend:", items);
             const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_API}/api/user/update/cart`,
                 {
@@ -161,9 +217,26 @@ const cartSlice = createSlice({
             }
             state.totalQuantity++;
             state.totalPrice += newItem.isSale ? newItem.discountPrice : newItem.originalPrice;
-
-            Cookies.set("cartData", JSON.stringify(state.items), { expires: 7 });
+            console.log("Cart items after adding:", state.items);
+            writeCartStorage(state.items);
         },
+        addBulkItems: (state, action) => {
+            console.log("Adding bulk items to cart:", action.payload);
+            const newItems = action.payload;
+            state.synced = false;
+            newItems.forEach((newItem) => {
+                const existingItem = state.items.find((item) => item._id === newItem._id);
+                if (existingItem) {
+                    existingItem.quantity += newItem.quantity;
+                    existingItem.totalPrice += newItem.totalPrice;
+                } else {
+                    state.items.push(newItem);
+                }
+                state.totalQuantity += newItem.quantity;
+                state.totalPrice += newItem.totalPrice;
+            });
+        },
+
         removeItem: (state, action) => {
             const id = action.payload;
             const existingItem = state.items.find((item) => item._id === id);
@@ -180,7 +253,7 @@ const cartSlice = createSlice({
                     existingItem.totalPrice -= existingItem.isSale ? existingItem.discountPrice : existingItem.originalPrice;
                 }
             }
-            Cookies.set("cartData", JSON.stringify(state.items), { expires: 7 });
+            writeCartStorage(state.items);
         },
         deleteItem: (state, action) => {
             const id = action.payload;
@@ -192,14 +265,14 @@ const cartSlice = createSlice({
                 state.totalPrice -= existingItem.isSale ? existingItem.discountPrice * existingItem.quantity : existingItem.originalPrice * existingItem.quantity;
                 state.items = state.items.filter((item) => item._id !== id);
             }
-            Cookies.set("cartData", JSON.stringify(state.items), { expires: 7 });
+            writeCartStorage(state.items);
         },
         clearCart: (state) => {
             state.items = [];
             state.totalQuantity = 0;
             state.totalPrice = 0;
             state.synced = false;
-            Cookies.remove("cartData");
+            clearCartStorage();
         },
     },
     extraReducers: (builder) => {
@@ -261,7 +334,7 @@ const cartSlice = createSlice({
                 state.totalQuantity = 0;
                 state.totalPrice = 0;
                 state.synced = false;
-                Cookies.remove("cartData");
+                clearCartStorage();
             })
             .addCase(placeOrder.rejected, (state, action) => {
                 state.placingOrder = false;
@@ -272,7 +345,7 @@ const cartSlice = createSlice({
     },
 });
 
-export const { addItem, removeItem, deleteItem, clearCart } =
+export const { addItem, addBulkItems, removeItem, deleteItem, clearCart } =
     cartSlice.actions;
 
 export default cartSlice.reducer;

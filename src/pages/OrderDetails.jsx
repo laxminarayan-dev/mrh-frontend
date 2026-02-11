@@ -124,6 +124,7 @@ const OrderDetails = () => {
   );
   const addressLines = getAddressLines(order.deliveryAddress[0]);
   const totalAmount = Number(order.totalAmount || 0);
+  const tax = Number(order.tax || 0);
   const subtotal = Number(order.subtotal || 0);
   const deliveryFee = Number(order.deliveryFee || 0);
   const discount = Number(order.discount || 0);
@@ -314,10 +315,18 @@ const OrderDetails = () => {
                   <span>Delivery fee</span>
                   <span>₹{deliveryFee}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>Discount</span>
-                  <span>-₹{discount}</span>
-                </div>
+                {tax > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span>Tax</span>
+                    <span>₹{tax}</span>
+                  </div>
+                )}
+                {discount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span>Discount</span>
+                    <span>-₹{discount}</span>
+                  </div>
+                )}
                 <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
                   <span>Total</span>
                   <span>₹{totalAmount}</span>

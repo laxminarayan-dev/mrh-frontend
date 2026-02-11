@@ -157,12 +157,75 @@ export const verifySignupOtp = createAsyncThunk(
     }
 );
 
+export const sendLoginOtp = createAsyncThunk(
+    "auth/sendLoginOtp",
+    async (email, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/login/send-otp`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            return { otpSent: true };
+        } catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+export const verifyLoginOtp = createAsyncThunk(
+    "auth/verifyLoginOtp",
+    async ({ email, otp }, thunkAPI) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/auth/login/verify-otp`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                scheduleErrorClear(thunkAPI);
+                return thunkAPI.rejectWithValue(err);
+            }
+            const data = await response.json();
+            const cookieOptions = thunkAPI.getState().auth.rememberMe
+                ? { expires: 7 }
+                : undefined;
+            Cookies.set("token", data.token, cookieOptions);
+            return {
+                isAuthenticated: true,
+                user: data.user,
+                token: data.token,
+            };
+        }
+        catch (error) {
+            scheduleErrorClear(thunkAPI);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
 /* ============================
    Forget OTP sent
 ============================ */
 
 export const sendForgetOtp = createAsyncThunk(
-    "auth/sendforgetOtp",
+    "auth/sendForgetOtp",
     async (email, thunkAPI) => {
         try {
             const response = await fetch(
@@ -361,6 +424,38 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             });
+        // send login OTP
+        builder
+            .addCase(sendLoginOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(sendLoginOtp.fulfilled, (state) => {
+                state.loading = false;
+                state.otpSent = true;
+            })
+            .addCase(sendLoginOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+        // verify login OTP
+        builder
+            .addCase(verifyLoginOtp.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(verifyLoginOtp.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.isAuthenticated = true;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
+                Cookies.set("token", action.payload.token, cookieOptions);
+            })
+            .addCase(verifyLoginOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
 
         /* ===== Send OTP ===== */
         builder
@@ -388,6 +483,7 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
+                state.otpSent = false; // reset OTP sent state after successful verification
                 const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
                 Cookies.set("token", action.payload.token, cookieOptions);
             })

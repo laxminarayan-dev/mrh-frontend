@@ -23,7 +23,6 @@ async function getStreetName(lat, lon) {
     `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
   );
   const data = await res.json();
-  console.log("Reverse geocoding result:", data);
 
   return data.display_name;
 }
@@ -79,8 +78,6 @@ const Account = () => {
   const navigate = useNavigate();
   const { user, loading } = useSelector((state) => state.auth);
   const { orders, loadingOrders } = useSelector((state) => state.cart);
-
-  console.log("order", orders);
 
   const { reviews = [] } = user || {};
   const [accuracy, setAccuracy] = useState(null);
@@ -520,8 +517,6 @@ export const getMyLocation = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
-
-        console.log("Accuracy:", accuracy);
 
         setAccuracy(accuracy);
 

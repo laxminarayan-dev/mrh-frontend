@@ -6,7 +6,11 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Book, House, Info, Phone } from "lucide-react";
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { updateCartData, fetchCartItems } from "./store/cartSlice";
+import {
+  updateCartData,
+  fetchCartItems,
+  addBulkItems,
+} from "./store/cartSlice";
 import Cookies from "js-cookie";
 import { socket } from "./socket";
 
@@ -44,6 +48,27 @@ function App() {
   //     }
   //   });
   // }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?._id) {
+      let storedCartItems = [];
+      try {
+        const raw = localStorage.getItem("cartData");
+        storedCartItems = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(storedCartItems)) {
+          storedCartItems = [];
+        }
+      } catch (error) {
+        storedCartItems = [];
+      }
+      dispatch(addBulkItems(storedCartItems));
+      dispatch(updateCartData())
+        .unwrap()
+        .then(() => {
+          dispatch(fetchCartItems()); // 👈 THIS IS MISSING
+        });
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isSidebarOpen) {

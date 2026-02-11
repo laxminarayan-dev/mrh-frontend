@@ -59,7 +59,7 @@ export const validateField = (fieldName, value, formType = "signup") => {
 };
 
 // Validate all fields based on form type
-export const validateForm = (formData, formType = "signup") => {
+export const validateForm = (formData, formType = "signup", loginOption = 'OTP') => {
     const errors = {};
 
     // Email validation
@@ -69,17 +69,18 @@ export const validateForm = (formData, formType = "signup") => {
         errors.email = "Please enter a valid email address";
     }
 
-    // Password validation
-    if (!formData.password) {
-        errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-        errors.password = "Password must be at least 6 characters";
-    } else if (!/[A-Z]/.test(formData.password)) {
-        errors.password = "Password must contain at least one uppercase letter";
-    } else if (!/[0-9]/.test(formData.password)) {
-        errors.password = "Password must contain at least one number";
+    if (loginOption === 'Password' || formType === 'signup') {
+        // Password validation
+        if (!formData.password) {
+            errors.password = "Password is required";
+        } else if (formData.password.length < 6) {
+            errors.password = "Password must be at least 6 characters";
+        } else if (!/[A-Z]/.test(formData.password)) {
+            errors.password = "Password must contain at least one uppercase letter";
+        } else if (!/[0-9]/.test(formData.password)) {
+            errors.password = "Password must contain at least one number";
+        }
     }
-
     // Signup-specific validations
     if (formType === "signup") {
         // Name validation
@@ -105,13 +106,13 @@ export const validateForm = (formData, formType = "signup") => {
 };
 
 // Handle input change with real-time validation
-export const handleInputChange = (e, setFormData, formData, setErrors = null, formType = "signup") => {
+export const handleInputChange = (e, setFormData, formData, setErrors = null, formType = "signup", loginOption = 'OTP') => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
     // Real-time validation if setErrors function is provided
     if (setErrors) {
-        const fieldErrors = validateField(name, value, formType);
+        const fieldErrors = validateField(name, value, formType, loginOption);
         setErrors((prevErrors) => ({
             ...prevErrors,
             [name]: fieldErrors[name] || "",
@@ -120,10 +121,10 @@ export const handleInputChange = (e, setFormData, formData, setErrors = null, fo
 };
 
 // Handle form submission
-export const handleAuthSubmit = (e, formData, formType = "signup") => {
+export const handleAuthSubmit = (e, formData, formType = "signup", loginOption = 'OTP') => {
     e.preventDefault();
 
-    const errors = validateForm(formData, formType);
+    const errors = validateForm(formData, formType, loginOption);
 
     if (Object.keys(errors).length === 0) {
         // Form is valid - proceed with submission
