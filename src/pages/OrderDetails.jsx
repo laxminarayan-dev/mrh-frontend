@@ -65,8 +65,7 @@ function getAddressLines(address) {
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const { user } = useSelector((state) => state.auth);
-  const orders = user?.orders || [];
+  const { orders } = useSelector((state) => state.cart);
 
   const order = useMemo(() => {
     if (!orderId) return null;

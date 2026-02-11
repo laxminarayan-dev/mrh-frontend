@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { placeOrder } from "../store/authSlice";
+import { placeOrder } from "../store/cartSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,10 +22,10 @@ function Checkout() {
   const [formData, setFormData] = useState({
     paymentMethod: "cash",
   });
-  const { user, placingOrder, orderPlaced } = useSelector(
-    (state) => state.auth,
+  const { user } = useSelector((state) => state.auth);
+  const { items, placingOrder, orderPlaced } = useSelector(
+    (state) => state.cart,
   );
-  const { items } = useSelector((state) => state.cart);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const tax = 6;
   const delivery = 30;
@@ -38,12 +38,13 @@ function Checkout() {
   }, [items]);
   const total = subTotal + tax + delivery;
   const [orderDetail, setOrderDetail] = useState({
-    userDetail: {},
+    userId: user?._id || null,
     orderItems: [],
+    totalAmount: total,
     subtotal: subTotal,
     deliveryFee: delivery,
     discount: 0,
-    totalAmount: total,
+    tax: tax,
     paymentMethod: "",
     deliveryAddress: {},
   });
@@ -63,12 +64,9 @@ function Checkout() {
         (addr) => addr._id === selectedAddress,
       );
       setOrderDetail({
-        userDetail: {
-          fullName: user.fullName,
-          email: user.email,
-          phone: user.phone,
-        },
+        userId: user?._id || null,
         orderItems: items.map((item) => ({
+          _id: item._id,
           name: item.name,
           price: item.isSale ? item.discountPrice : item.originalPrice,
           quantity: item.quantity,
@@ -77,6 +75,7 @@ function Checkout() {
         deliveryAddress: selectedAddr,
         subtotal: subTotal,
         deliveryFee: delivery,
+        tax: tax,
         discount: 0,
         totalAmount: total,
       });

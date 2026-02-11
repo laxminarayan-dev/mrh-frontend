@@ -78,7 +78,11 @@ const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, loading } = useSelector((state) => state.auth);
-  const { orders = [], reviews = [] } = user || {};
+  const { orders, loadingOrders } = useSelector((state) => state.cart);
+
+  console.log("order", orders);
+
+  const { reviews = [] } = user || {};
   const [accuracy, setAccuracy] = useState(null);
   const [newAddress, setNewAddress] = useState("");
   const [coords, setCoords] = useState(null);

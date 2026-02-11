@@ -25,25 +25,25 @@ function App() {
     { name: "Contact Us", url: "/contact-us", icon: <Phone /> },
   ];
 
-  useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-  useEffect(() => {
-    socket.on("connect", () => {
-      if (isAuthenticated && user?._id) {
-        console.log("Joining private room:", user._id);
-        socket.emit("join-user-room", user._id);
-      } else {
-        console.log("Leaving private room");
-        socket.emit("leave-user-room");
-      }
-    });
-  }, [isAuthenticated, user]);
+  // useEffect(() => {
+  //   if (!socket.connected) {
+  //     socket.connect();
+  //   }
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     if (isAuthenticated && user?._id) {
+  //       console.log("Joining private room:", user._id);
+  //       socket.emit("join-user-room", user._id);
+  //     } else {
+  //       console.log("Leaving private room");
+  //       socket.emit("leave-user-room");
+  //     }
+  //   });
+  // }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (isSidebarOpen) {

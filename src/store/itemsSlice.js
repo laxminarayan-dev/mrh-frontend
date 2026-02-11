@@ -10,7 +10,8 @@ export const loadItems = createAsyncThunk(
     "items/loadItems",
     async (_, { rejectWithValue }) => {
         try {
-            return await fetchItems();
+            const items = await fetch(`${import.meta.env.VITE_BACKEND_API}/api/items`).then((res) => res.json());
+            return items;
         } catch {
             return rejectWithValue("Failed to load items");
         }

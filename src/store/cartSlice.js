@@ -61,6 +61,72 @@ export const updateCartData = createAsyncThunk(
     }
 );
 
+export const fetchOrders = createAsyncThunk(
+    "cart/fetchOrders",
+    async (_, thunkAPI) => {
+        try {
+            const token = Cookies.get("token");
+            if (!token) {
+                return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+            }
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/orders/user`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+            const data = await response.json();
+            return data.orders || [];
+        } catch (error) {
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
+
+export const placeOrder = createAsyncThunk(
+    "auth/placeOrder",
+    async (orderDetail, thunkAPI) => {
+        try {
+            const token = Cookies.get("token");
+            if (!token) {
+                return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+            }
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/orders/place`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(orderDetail),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                return thunkAPI.rejectWithValue(err);
+            }
+
+            const data = await response.json();
+            setTimeout(() => {
+                thunkAPI.dispatch({ type: "cart/setOrderPlaced", payload: false });
+            }, 1000);
+            return data;
+        } catch (error) {
+            console.error("Error placing order:", error);
+            return thunkAPI.rejectWithValue({ message: error.message });
+        }
+    }
+);
 
 
 const initialState = {
@@ -68,7 +134,10 @@ const initialState = {
     totalQuantity: 0,
     totalPrice: 0,
     synced: false,
-
+    orders: [],
+    loadingOrders: false,
+    placingOrder: false,
+    orderPlaced: false,
 };
 
 const cartSlice = createSlice({
@@ -163,6 +232,42 @@ const cartSlice = createSlice({
                 state.syncing = false;
                 state.error = action.payload?.message || "Failed to sync cart data";
             })
+        // Orders
+        builder
+            .addCase(fetchOrders.pending, (state) => {
+                state.loadingOrders = true;
+                state.error = null;
+            }
+            )
+            .addCase(fetchOrders.fulfilled, (state, action) => {
+                state.orders = action.payload;
+                state.loadingOrders = false;
+            })
+            .addCase(fetchOrders.rejected, (state, action) => {
+                state.loadingOrders = false;
+                state.error = action.payload?.message || "Failed to load orders";
+            });
+        builder
+            .addCase(placeOrder.pending, (state) => {
+                state.placingOrder = true;
+                state.orderPlaced = false;
+                state.error = null;
+            })
+            .addCase(placeOrder.fulfilled, (state, action) => {
+                state.placingOrder = false;
+                state.orderPlaced = true;
+                state.orders.push(action.payload.order);
+                state.items = [];
+                state.totalQuantity = 0;
+                state.totalPrice = 0;
+                state.synced = false;
+                Cookies.remove("cartData");
+            })
+            .addCase(placeOrder.rejected, (state, action) => {
+                state.placingOrder = false;
+                state.orderPlaced = false;
+                state.error = action.payload?.message || "Failed to place order";
+            });
 
     },
 });
