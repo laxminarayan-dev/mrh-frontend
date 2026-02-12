@@ -158,8 +158,8 @@ const OrderDetails = () => {
         </button>
 
         <header className="mt-6 rounded-3xl border border-orange-100 bg-white/90 p-6 shadow-sm backdrop-blur flex flex-col md:flex-row gap-6">
-          <div className="flex-1 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex-1 py-2">
+            <div className="flex flex-wrap items-start justify-between gap-4 px-1">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
                   Order #
@@ -203,7 +203,7 @@ const OrderDetails = () => {
                 )}
               </div>
             </div>
-            {(!isAccepted || !isOutForDelivery) && (
+            {(isAccepted || isOutForDelivery) && (
               <div className="mt-5 rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ const OrderDetails = () => {
                   )}
                 </div>
 
-                {!isOutForDelivery ? (
+                {isOutForDelivery ? (
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
                     <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm sm:col-span-3">
                       <div className="flex items-center gap-2 text-xs text-slate-500 ">
