@@ -26,8 +26,6 @@ const SignupForm = () => {
 
   const { loading, error, otpSent } = useSelector((state) => state.auth);
 
-  console.log(loading, error, otpSent);
-
   const handleOtpInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -263,6 +261,9 @@ const SignupForm = () => {
               name="phone"
               placeholder="+91 98765XXXXX"
               value={formData.phone}
+              maxLength={10}
+              pattern="[0-9]{10}"
+              inputMode="numeric"
               onChange={(e) =>
                 handleInputChange(
                   e,
