@@ -191,7 +191,14 @@ const Account = () => {
                     {profile.fullName || "Your account"}
                   </h1>
                   <p className="text-sm text-slate-600">
-                    Member since 2023 • {orders.length} orders
+                    Member since{" "}
+                    {user?.createdAt
+                      ? `${new Date(user.createdAt).toLocaleDateString(
+                          "en-IN",
+                          { month: "short", year: "numeric" },
+                        )}`
+                      : "N/A"}{" "}
+                    • {orders.length} orders
                   </p>
                 </div>
               </div>
@@ -359,82 +366,85 @@ const Account = () => {
                     </button>
                   </div>
                 ) : (
-                  orders.map((order) => {
-                    const orderTarget = order?._id || order?.orderId;
-                    const orderId =
-                      typeof orderTarget === "string"
-                        ? orderTarget.slice(-6).toUpperCase()
-                        : "ORDER";
-                    const items = Array.isArray(order.orderItems)
-                      ? order.orderItems
-                      : [];
-                    const topItems = items.slice(0, 3);
-                    const remainingItems = items.length - topItems.length;
-                    const itemCount = items.reduce(
-                      (total, item) => total + (item.quantity || 0),
-                      0,
-                    );
+                  orders
+                    .slice()
+                    .reverse()
+                    .map((order) => {
+                      const orderTarget = order?._id || order?.orderId;
+                      const orderId =
+                        typeof orderTarget === "string"
+                          ? orderTarget.slice(-6).toUpperCase()
+                          : "ORDER";
+                      const items = Array.isArray(order.orderItems)
+                        ? order.orderItems
+                        : [];
+                      const topItems = items.slice(0, 3);
+                      const remainingItems = items.length - topItems.length;
+                      const itemCount = items.reduce(
+                        (total, item) => total + (item.quantity || 0),
+                        0,
+                      );
 
-                    return (
-                      <button
-                        key={order._id || orderId}
-                        type="button"
-                        className="group w-full rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/70 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
-                        onClick={() =>
-                          orderTarget && navigate(`/orders/${orderTarget}`)
-                        }
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
-                              Order #{orderId}
-                            </p>
-                            <p className="mt-2 text-sm font-semibold text-slate-900">
-                              {itemCount} items • ₹{order.totalAmount}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {formatOrderDate(order.createdAt)}
-                            </p>
-                          </div>
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                              order.status === "Delivered"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-500"
-                            }`}
-                          >
-                            {order.status || "Processing"}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
-                          {topItems.map((item) => (
+                      return (
+                        <button
+                          key={order._id || orderId}
+                          type="button"
+                          className="group w-full rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/70 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+                          onClick={() =>
+                            orderTarget && navigate(`/orders/${orderTarget}`)
+                          }
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
+                                Order #{orderId}
+                              </p>
+                              <p className="mt-2 text-sm font-semibold text-slate-900">
+                                {itemCount} items • ₹{order.totalAmount}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatOrderDate(order.createdAt)}
+                              </p>
+                            </div>
                             <span
-                              key={`${order._id}-${item.name}`}
-                              className="rounded-full border border-orange-100 bg-white/90 px-3 py-1 shadow-sm"
+                              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                                order.status === "Delivered"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-rose-100 text-rose-500"
+                              }`}
                             >
-                              {item.name} x {item.quantity}
+                              {order.status || "Processing"}
                             </span>
-                          ))}
-                          {remainingItems > 0 && (
-                            <span className="rounded-full border border-dashed border-orange-200 px-3 py-1 text-orange-500">
-                              +{remainingItems} more
-                            </span>
-                          )}
-                        </div>
+                          </div>
 
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="text-xs text-slate-500">
-                            Tap to view details
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
+                            {topItems.map((item) => (
+                              <span
+                                key={`${order._id}-${item.name}`}
+                                className="rounded-full border border-orange-100 bg-white/90 px-3 py-1 shadow-sm"
+                              >
+                                {item.name} x {item.quantity}
+                              </span>
+                            ))}
+                            {remainingItems > 0 && (
+                              <span className="rounded-full border border-dashed border-orange-200 px-3 py-1 text-orange-500">
+                                +{remainingItems} more
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs font-semibold text-orange-600">
-                            <span className="h-2 w-2 rounded-full bg-orange-400"></span>
-                            Tracking active
+
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="text-xs text-slate-500">
+                              Tap to view details
+                            </div>
+                            <div className="flex items-center gap-2 text-xs font-semibold text-orange-600">
+                              <span className="h-2 w-2 rounded-full bg-orange-400"></span>
+                              Tracking active
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })
+                        </button>
+                      );
+                    })
                 )}
               </div>
             </div>
@@ -592,7 +602,7 @@ export const ListAddresses = ({
                 </div>
 
                 <div
-                  className={`mt-3 rounded-xl p-3 bg-transparent ${address._id === selectedAddress || (!onChekout && isAlreadySaved == address._id) ? "border border-orange-200 bg-orange-50" : "border border-slate-200 bg-white"} transition`}
+                  className={`mt-3 rounded-xl p-3 bg-transparent ${address._id === selectedAddress || (!onChekout && isAlreadySaved == address._id) ? "border border-orange-200 bg-orange-50" : "border border-orange-200"} transition`}
                 >
                   <p className="text-sm font-semibold text-slate-900">
                     {house}

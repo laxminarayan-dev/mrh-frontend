@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -66,11 +66,12 @@ const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
   const { orders } = useSelector((state) => state.cart);
+  const [order, setOrder] = useState(null);
 
-  const order = useMemo(() => {
-    if (!orderId) return null;
-    return orders.find((entry) => {
-      const entryId = entry?._id || entry?.orderId;
+  useEffect(() => {
+    if (!orderId) return;
+    const foundOrder = orders.find((entry) => {
+      const entryId = entry?._id;
       if (!entryId) return false;
       if (String(entryId) === String(orderId)) return true;
       return (
@@ -78,6 +79,7 @@ const OrderDetails = () => {
         String(orderId).toUpperCase()
       );
     });
+    setOrder(foundOrder || null);
   }, [orderId, orders]);
 
   if (!order) {
@@ -155,192 +157,28 @@ const OrderDetails = () => {
           Back to orders
         </button>
 
-        <header className="mt-6 rounded-3xl border border-orange-100 bg-white/90 p-6 shadow-sm backdrop-blur">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
-                Order #
-                {String(order._id || order.orderId || "ORDER")
-                  .slice(-6)
-                  .toUpperCase()}
-              </p>
-              <h1 className="mt-2 text-2xl font-serif font-semibold text-slate-900">
-                {itemCount} items • ₹{totalAmount}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                {formatOrderDate(order.createdAt)}
-              </p>
-            </div>
-            <span className="rounded-full bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-              {formatStatus(order.status)}
-            </span>
-          </div>
-          {(isAccepted || isOutForDelivery) && (
-            <div className="mt-5 rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
-                    <Bike size={18} className="text-orange-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
-                      Rider status
-                    </p>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {isOutForDelivery
-                        ? "Rider on the way"
-                        : "Rider will be assigned soon"}
-                    </p>
-                  </div>
-                </div>
-                {isOutForDelivery && (
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Live tracking
-                  </span>
-                )}
-              </div>
-
-              {isOutForDelivery ? (
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <User size={14} />
-                      Rider
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {riderName}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Phone size={14} />
-                      Contact
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {riderPhone}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Bike size={14} />
-                      Vehicle
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {riderVehicle}
-                    </p>
-                  </div>
-                  {riderEta && (
-                    <div className="sm:col-span-3 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-                      ETA {riderEta}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-slate-600">
-                  We are assigning the best rider for your order. You will see
-                  live tracking once the rider is on the way.
+        <header className="mt-6 rounded-3xl border border-orange-100 bg-white/90 p-6 shadow-sm backdrop-blur flex flex-col md:flex-row gap-6">
+          <div className="flex-1 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
+                  Order #
+                  {String(order._id || order.orderId || "ORDER")
+                    .slice(-6)
+                    .toUpperCase()}
                 </p>
-              )}
+                <h1 className="mt-2 text-2xl font-serif font-semibold text-slate-900">
+                  {itemCount} items • ₹{totalAmount}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {formatOrderDate(order.createdAt)}
+                </p>
+              </div>
+              <span className="rounded-full bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                {formatStatus(order.status)}
+              </span>
             </div>
-          )}
-        </header>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
-            <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
-                  <UtensilsCrossed size={18} />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">
-                    Ordered items
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    {itemCount} items in this order
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 divide-y divide-slate-100 border-b border-slate-200 mb-4">
-                {items.map((item, index) => (
-                  <div
-                    key={`${order._id || order.orderId}-item-${index}`}
-                    className="flex items-center justify-between py-3 text-sm"
-                  >
-                    <div>
-                      <p className="text-md font-semibold text-slate-900">
-                        {item.name || "Item"}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        ₹{item.price || 0} × {item.quantity || 0}
-                      </p>
-                    </div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      ₹{(item.price || 0) * (item.quantity || 0)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {order.notes && (
-                <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    Notes
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">{order.notes}</p>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                  <ReceiptIndianRupee size={18} />
-                </div>
-                <div>
-                  <h2 className="text-md font-semibold text-slate-900">
-                    Payment summary
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Method: {order.paymentMethod || "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2 text-sm text-slate-600">
-                <div className="flex items-center justify-between">
-                  <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Delivery fee</span>
-                  <span>₹{deliveryFee}</span>
-                </div>
-                {tax > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span>Tax</span>
-                    <span>₹{tax}</span>
-                  </div>
-                )}
-                {discount > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span>Discount</span>
-                    <span>-₹{discount}</span>
-                  </div>
-                )}
-                <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
-                  <span>Total</span>
-                  <span>₹{totalAmount}</span>
-                </div>
-              </div>
-
-              {order.paymentStatus && (
-                <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                  Payment {formatStatus(order.paymentStatus)}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+            <div className="mt-4 border-t border-slate-200 pt-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                   <MapPin size={18} />
@@ -365,8 +203,174 @@ const OrderDetails = () => {
                 )}
               </div>
             </div>
+            {(!isAccepted || !isOutForDelivery) && (
+              <div className="mt-5 rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
+                      <Bike size={18} className="text-orange-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
+                        Rider status
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {isOutForDelivery
+                          ? "Rider on the way"
+                          : "Rider will be assigned soon"}
+                      </p>
+                    </div>
+                  </div>
+                  {isOutForDelivery && (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                      Live tracking
+                    </span>
+                  )}
+                </div>
+
+                {!isOutForDelivery ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm sm:col-span-3">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 ">
+                        <User size={14} />
+                        Rider
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {riderName}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm sm:col-span-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Phone size={14} />
+                        Contact
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {riderPhone}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-orange-100 bg-white p-3 shadow-sm ">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Bike size={14} />
+                        Vehicle
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {riderVehicle}
+                      </p>
+                    </div>
+                    {riderEta && (
+                      <div className="sm:col-span-3 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                        ETA {riderEta}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-600">
+                    We are assigning the best rider for your order. You will see
+                    live tracking once the rider is on the way.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+
+          {/* separator */}
+          <div className=" flex-1">
+            <div className="space-y-6">
+              <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
+                    <UtensilsCrossed size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Ordered items
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      {itemCount} items in this order
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 divide-y divide-slate-100 border-b border-slate-200 mb-4">
+                  {items.map((item, index) => (
+                    <div
+                      key={`${order._id || order.orderId}-item-${index}`}
+                      className="flex items-center justify-between py-3 text-sm"
+                    >
+                      <div>
+                        <p className="text-md font-semibold text-slate-900">
+                          {item.name || "Item"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          ₹{item.price || 0} × {item.quantity || 0}
+                        </p>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        ₹{(item.price || 0) * (item.quantity || 0)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {order.notes && (
+                  <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Notes
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600">{order.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                    <ReceiptIndianRupee size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-md font-semibold text-slate-900">
+                      Payment summary
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Method: {order.paymentMethod || "N/A"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{subtotal}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Delivery fee</span>
+                    <span>₹{deliveryFee}</span>
+                  </div>
+                  {tax > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span>Tax</span>
+                      <span>₹{tax}</span>
+                    </div>
+                  )}
+                  {discount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span>Discount</span>
+                      <span>-₹{discount}</span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
+                    <span>Total</span>
+                    <span>₹{totalAmount}</span>
+                  </div>
+                </div>
+
+                {order.paymentStatus && (
+                  <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Payment {formatStatus(order.paymentStatus)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
       </div>
     </section>
   );
