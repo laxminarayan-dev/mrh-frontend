@@ -27,7 +27,7 @@ function ShopPin(color = "#f97316", size = 36) {
     popupAnchor: [0, -size],
   });
 }
-function MapController({ center, zoom }) {
+export function MapController({ center, zoom }) {
   const map = useMap();
 
   useEffect(() => {

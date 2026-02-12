@@ -71,7 +71,6 @@ export const fetchCartItems = createAsyncThunk(
                 }
 
                 const data = await response.json();
-                console.log("Fetched cart items from backend:", data.cart);
                 return data.cart || [];
 
             }
@@ -89,7 +88,6 @@ export const updateCartData = createAsyncThunk(
             if (!token) {
                 return thunkAPI.rejectWithValue({ message: "Missing auth token" });
             }
-            console.log("Updating cart data with items:", thunkAPI.getState().cart.items);
 
             const state = thunkAPI.getState();
             const items = state.cart.items || [];
@@ -217,11 +215,9 @@ const cartSlice = createSlice({
             }
             state.totalQuantity++;
             state.totalPrice += newItem.isSale ? newItem.discountPrice : newItem.originalPrice;
-            console.log("Cart items after adding:", state.items);
             writeCartStorage(state.items);
         },
         addBulkItems: (state, action) => {
-            console.log("Adding bulk items to cart:", action.payload);
             const newItems = action.payload;
             state.synced = false;
             newItems.forEach((newItem) => {

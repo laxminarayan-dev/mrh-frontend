@@ -20,7 +20,26 @@ const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 
+async function checkLocationPermission() {
+  const result = await navigator.permissions.query({ name: "geolocation" });
+  console.log(result.state);
+
+  if (result.state === "granted") {
+    alert("Location already allowed");
+  }
+
+  if (result.state === "denied") {
+    alert("Location denied");
+  }
+
+  if (result.state === "prompt") {
+    alert("User has not decided yet");
+  }
+}
+
+
 function Routing() {
+  // checkLocationPermission();
   return (
     <Routes>
       <Route element={<App />}>
