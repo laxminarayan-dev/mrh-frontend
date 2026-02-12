@@ -12,7 +12,6 @@ import SafeRoute from "./components/SafeRoute";
 import Account from "./pages/Account";
 
 const Signup = lazy(() => import("./components/Signup"));
-const Orders = lazy(() => import("./pages/Orders"));
 const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Checkout = lazy(() => import("./pages/Checkout"));
@@ -30,15 +29,6 @@ function Routing() {
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
-
-        <Route
-          path="/orders"
-          element={
-            <SafeRoute>
-              <Orders />
-            </SafeRoute>
-          }
-        />
         <Route
           path="/orders/:orderId"
           element={
