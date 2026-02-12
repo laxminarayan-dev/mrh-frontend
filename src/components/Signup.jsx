@@ -49,6 +49,7 @@ const SignupForm = () => {
 
   const handleSignupSubmit = (e) => {
     e.preventDefault();
+    console.log("Form Data on Submit:", formData);
     const errors = handleAuthSubmit(e, formData, "signup").errors;
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
