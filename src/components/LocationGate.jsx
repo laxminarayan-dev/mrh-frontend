@@ -50,7 +50,9 @@ export default function LocationGate({ children }) {
   const [gpsCoords, setGpsCoords] = useState(null);
   const [confirmingLocation, setConfirmingLocation] = useState(false);
   const defaultShopLocation = [28.203326, 78.267783]; // Default shop location
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, tempAddress } = useSelector(
+    (state) => state.auth,
+  );
   const markers = [
     { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
     { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
@@ -147,6 +149,47 @@ export default function LocationGate({ children }) {
       }
     };
   }, [geolocationWatch]);
+
+  // Handle saving tempAddress when user logs in after selecting an address
+  useEffect(() => {
+    // Save tempAddress if user just became authenticated and has an unsaved address
+    if (isAuthenticated && user && tempAddress && !tempAddress.saved) {
+      // Check if this address already exists in user's saved addresses
+      const addressExists = user.addresses?.find((addr) => {
+        const [savedLat, savedLng] = addr.coordinates;
+        const [tempLat, tempLng] = tempAddress.coordinates;
+        const latDiff = Math.abs(savedLat - tempLat);
+        const lngDiff = Math.abs(savedLng - tempLng);
+        return latDiff < 0.001 && lngDiff < 0.001;
+      });
+
+      if (!addressExists) {
+        // Save the address that was selected before login
+        dispatch(
+          saveAddress({
+            ...tempAddress,
+            label: "Address from session",
+          }),
+        )
+          .unwrap()
+          .then(() => {
+            dispatch(updateTempAddressSaved());
+            console.log("Address saved after login");
+          })
+          .catch((err) => {
+            console.error("Error saving address after login:", err);
+          });
+      } else {
+        // If address already exists, just mark tempAddress as saved and use existing address
+        dispatch(setTempAddress(addressExists));
+      }
+    }
+  }, [
+    isAuthenticated,
+    user?.addresses,
+    tempAddress?.coordinates,
+    tempAddress?.saved,
+  ]);
 
   function validateSession() {
     const time = Number(sessionStorage.getItem("locationChoiceTime"));
