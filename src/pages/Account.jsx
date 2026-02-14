@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout, saveAddress } from "../store/authSlice";
+import { logout, saveAddress, setTempAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { Loader, UtensilsCrossed } from "lucide-react";
 import { getStreetName } from "../components/Map";
@@ -68,7 +68,7 @@ function formatOrderDate(value) {
 const Account = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, loading } = useSelector((state) => state.auth);
+  const { user, loading, tempAddress } = useSelector((state) => state.auth);
   const { orders, loadingOrders } = useSelector((state) => state.cart);
 
   const { reviews = [] } = user || {};
@@ -186,9 +186,9 @@ const Account = () => {
                     Member since{" "}
                     {user?.createdAt
                       ? `${new Date(user.createdAt).toLocaleDateString(
-                        "en-IN",
-                        { month: "short", year: "numeric" },
-                      )}`
+                          "en-IN",
+                          { month: "short", year: "numeric" },
+                        )}`
                       : "N/A"}{" "}
                     • {orders.length} orders
                   </p>
@@ -235,77 +235,6 @@ const Account = () => {
               </div>
 
               <div className="mt-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-slate-900">
-                    Shipping Address
-                  </h3>
-                  {!newAddress && (
-                    <button
-                      onClick={() =>
-                        getMyLocation({
-                          watchIdRef: watchId,
-                          setGettingLocation,
-                          setCoords,
-                          setAccuracy,
-                        })
-                      }
-                      className="rounded-full border border-orange-200 bg-white px-4 py-2 text-xs font-semibold text-orange-400 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
-                    >
-                      {gettingLocation ? (
-                        <Loader className="animate-spin" />
-                      ) : (
-                        "Get My Location"
-                      )}
-                    </button>
-                  )}
-                  {newAddress && (
-                    <button
-                      disabled={loading}
-                      onClick={() => {
-                        const isDuplicate = addressList.some(
-                          (addr) =>
-                            addr.formattedAddress.toLowerCase() ===
-                            newAddress.trim().toLowerCase(),
-                        );
-                        if (isDuplicate) {
-                          alert(
-                            "This address is already in your saved addresses",
-                          );
-                          return;
-                        }
-
-                        if (!newAddress.trim()) {
-                          alert("Address cannot be empty");
-                          return;
-                        }
-
-                        const addressData = {
-                          coordinates: coords,
-                          formattedAddress: newAddress.trim(),
-                          isDefault: addressList.length === 0,
-                        };
-
-                        dispatch(saveAddress(addressData))
-                          .unwrap()
-                          .then(() => {
-                            setNewAddress("");
-                            setCoords(null);
-                            setAccuracy(null);
-                          })
-                          .catch((err) => {
-                            alert("Failed to save address: " + err.message);
-                          });
-                      }}
-                      className="rounded-full border border-green-200 bg-white px-4 py-2 text-xs font-semibold text-green-400 shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50 hover:shadow-md"
-                    >
-                      {loading ? (
-                        <Loader className="animate-spin" />
-                      ) : (
-                        "Save New Address"
-                      )}
-                    </button>
-                  )}
-                </div>
                 {newAddress && !gettingLocation && (
                   <div className="mt-4">
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -330,6 +259,7 @@ const Account = () => {
                   addressList={addressList}
                   newAddress={newAddress}
                   isAlreadySaved={isAlreadySaved}
+                  tempAddress={tempAddress}
                 />
               </div>
             </div>
@@ -399,10 +329,11 @@ const Account = () => {
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${order.status === "Delivered"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-500"
-                                }`}
+                              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                                order.status === "Delivered"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-rose-100 text-rose-500"
+                              }`}
                             >
                               {order.status || "Processing"}
                             </span>
@@ -465,10 +396,11 @@ const Account = () => {
                         {Array.from({ length: 5 }).map((_, idx) => (
                           <span
                             key={`${review.id}-star-${idx}`}
-                            className={`text-sm ${idx < review.rating
-                              ? "text-orange-500"
-                              : "text-slate-300"
-                              }`}
+                            className={`text-sm ${
+                              idx < review.rating
+                                ? "text-orange-500"
+                                : "text-slate-300"
+                            }`}
                           >
                             ★
                           </span>
@@ -546,10 +478,12 @@ export const ListAddresses = ({
   addressList = [],
   newAddress = null,
   isAlreadySaved = null,
-  setSelectedAddress = () => { },
+  tempAddress = null,
+  setSelectedAddress = () => {},
   selectedAddress = null,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   return (
     <>
       {addressList.length > 0 || newAddress ? (
@@ -558,84 +492,183 @@ export const ListAddresses = ({
             const { house, line1, line2, country } = formatAddressForDisplay(
               address.formattedAddress,
             );
+
+            // Check if this address matches the current tempAddress
+            const isCurrentTempAddress =
+              tempAddress &&
+              address.coordinates &&
+              Math.abs(tempAddress.coordinates[0] - address.coordinates[0]) <
+                0.001 &&
+              Math.abs(tempAddress.coordinates[1] - address.coordinates[1]) <
+                0.001;
+
+            const isSelected = !onChekout
+              ? isAlreadySaved == address._id || isCurrentTempAddress
+              : selectedAddress == address._id;
+
             return (
               <div
                 key={`address-${index}`}
-                className={`rounded-2xl border p-4 shadow-sm 
-                  ${!onChekout && isAlreadySaved == address._id ? "border-orange-200 bg-orange-50" : "border-slate-200 bg-white"} 
-                  ${onChekout && selectedAddress == address._id ? "!border-orange-200 !bg-orange-50" : "border-slate-200 bg-white"} 
-                  transition hover:border-orange-300 hover:bg-orange-50 cursor-pointer`}
-                onClick={() => onChekout && setSelectedAddress(address._id)}
+                className={`group relative rounded-xl border-2 p-4 shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md
+                  ${
+                    isSelected
+                      ? "border-orange-400 bg-gradient-to-br from-orange-50 to-orange-100/60 shadow-orange-100"
+                      : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/30"
+                  }
+                `}
+                onClick={() => {
+                  if (onChekout) {
+                    setSelectedAddress(address._id);
+                  } else if (!isCurrentTempAddress) {
+                    // Set this address as tempAddress if it's not already the current one
+                    dispatch(
+                      setTempAddress({
+                        formattedAddress: address.formattedAddress,
+                        coordinates: address.coordinates,
+                        saved: true,
+                      }),
+                    );
+
+                    // Update sessionStorage to maintain consistency
+                    sessionStorage.setItem(
+                      "userCoords",
+                      JSON.stringify(address.coordinates),
+                    );
+                    sessionStorage.setItem("locationChoice", "saved");
+                    sessionStorage.setItem("locationChoiceTime", Date.now());
+                  }
+                }}
               >
-                <div className="flex items-center justify-start gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500 flex-1">
-                    Saved Address
-                  </p>
-                  {address.isDefault && (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
-                      Default
-                    </span>
-                  )}
-                  {onChekout && (
+                {/* Selection Indicator */}
+                {isSelected && (
+                  <div className="absolute top-3 right-3">
+                    <div className="flex items-center justify-center w-5 h-5 bg-orange-500 rounded-full">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {onChekout && (
+                  <div className="absolute top-3 right-3">
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${address._id === selectedAddress
-                        ? "border-orange-500 bg-orange-500"
-                        : "border-slate-300 bg-white"
-                        }`}
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                        address._id === selectedAddress
+                          ? "border-orange-500 bg-orange-500"
+                          : "border-slate-300 bg-white group-hover:border-orange-300"
+                      }`}
                     >
                       {address._id === selectedAddress && (
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div
-                  className={`mt-3 rounded-xl p-3 bg-transparent ${address._id === selectedAddress || (!onChekout && isAlreadySaved == address._id) ? "border border-orange-200 bg-orange-50" : "border border-orange-200"} transition`}
-                >
-                  <p className="text-sm font-semibold text-slate-900">
-                    {house}
-                  </p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {line1}
-                  </p>
-                  {line2 && (
-                    <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
-                      {line2}
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-orange-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-900 text-sm leading-snug">
+                      {house && <div>{house}</div>}
+                      {line1 && <div>{line1}</div>}
+                    </div>
+                    {line2 && (
+                      <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                        {line2}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      {country}
                     </p>
-                  )}
-                  <p className="mt-2 text-xs text-slate-500">{country}</p>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                Add a shipping address
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                No shipping address on file yet. Use Get My Location to add one
-                and receive your orders.
-              </p>
-              <p className="mt-2 text-xs text-slate-500">
-                Tip: Make sure location services are enabled.
-              </p>
-              {onChekout && (
-                <button
-                  aria-label="redirect-to-account"
-                  className="mt-4 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  onClick={() => {
-                    navigate("/account");
-                  }}
-                >
-                  Add Address
-                </button>
-              )}
+        <div className="mt-4 rounded-xl border-2 border-dashed border-orange-200 bg-gradient-to-br from-orange-50/50 via-white to-amber-50/30 p-6">
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3">
+              <svg
+                className="w-6 h-6 text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
             </div>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">
+              No addresses saved
+            </h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Add your first delivery address to get started.
+            </p>
+            {onChekout && (
+              <button
+                aria-label="redirect-to-account"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                onClick={() => {
+                  navigate("/account");
+                }}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add Address
+              </button>
+            )}
           </div>
         </div>
       )}

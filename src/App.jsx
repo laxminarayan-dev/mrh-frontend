@@ -122,7 +122,6 @@ function App() {
   // Finding nearest shop and verifying range
   useEffect(() => {
     if (tempAddress) {
-      console.log(tempAddress);
       let nearest = shopCoords[0];
       let min = Infinity;
       for (const o of shopCoords) {
@@ -137,7 +136,8 @@ function App() {
       } else {
         dispatch(setInRange(true));
       }
-      // dispatch(getShopData(nearest.position.join(",")));
+      console.log("nearest outlet ", nearest.name);
+      dispatch(getShopData(nearest.position.join(",")));
     }
   }, [tempAddress]);
 
