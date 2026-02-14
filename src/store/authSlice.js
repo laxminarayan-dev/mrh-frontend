@@ -374,6 +374,9 @@ const authSlice = createSlice({
         setTempAddress: (state, action) => {
             state.tempAddress = action.payload;
         },
+        updateTempAddressSaved: (state, action) => {
+            state.tempAddress.saved = true;
+        },
         resetOtpState: (state) => {
             state.otpSent = false;
             state.forgetOtpSent = false;
@@ -556,5 +559,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { clearError, setTempAddress, resetOtpState, setRememberMe, logout } = authSlice.actions;
+export const { clearError, setTempAddress, resetOtpState, setRememberMe, logout, updateTempAddressSaved } = authSlice.actions;
 export default authSlice.reducer;

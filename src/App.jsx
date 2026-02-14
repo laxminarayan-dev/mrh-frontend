@@ -85,6 +85,7 @@ function App() {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
+  // Setting Unsaved Cookies when login or signup
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) return; // ❌ not logged in
@@ -118,6 +119,7 @@ function App() {
   ];
   const range = 10; // km
 
+  // Finding nearest shop and verifying range
   useEffect(() => {
     if (tempAddress) {
       console.log(tempAddress);
@@ -135,7 +137,7 @@ function App() {
       } else {
         dispatch(setInRange(true));
       }
-      dispatch(getShopData(nearest.position.join(",")));
+      // dispatch(getShopData(nearest.position.join(",")));
     }
   }, [tempAddress]);
 

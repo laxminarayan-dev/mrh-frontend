@@ -6,7 +6,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
 import { getStreetName, MapController } from "./Map";
 import { useSelector } from "react-redux";
-import { setTempAddress } from "../store/authSlice";
+import {
+  setTempAddress,
+  saveAddress,
+  updateTempAddressSaved,
+} from "../store/authSlice";
 import { useDispatch } from "react-redux";
 
 function ShopPin(color = "#f97316", size = 36) {
@@ -55,10 +59,27 @@ export default function LocationGate({ children }) {
   const shopIcon = ShopPin("#f97316", 24);
   const mapPin = UserPin("#2563eb", 28);
 
-  const saveTempAddress = async (coords) => {
+  const saveTempAddress = async (coords, shouldSaveToBackend = false) => {
     console.log(coords);
     const lat = Array.isArray(coords) ? coords[0] : coords.lat;
     const lng = Array.isArray(coords) ? coords[1] : coords.lng;
+
+    // Check if this address already exists in user's saved addresses
+    if (isAuthenticated && user && user.addresses) {
+      const existingAddress = user.addresses.find((addr) => {
+        const [savedLat, savedLng] = addr.coordinates;
+        // Check if coordinates are very close (within ~100 meters)
+        const latDiff = Math.abs(savedLat - lat);
+        const lngDiff = Math.abs(savedLng - lng);
+        return latDiff < 0.001 && lngDiff < 0.001;
+      });
+
+      if (existingAddress) {
+        // Use existing saved address
+        dispatch(setTempAddress(existingAddress));
+        return;
+      }
+    }
 
     try {
       const res = await fetch(
@@ -71,7 +92,33 @@ export default function LocationGate({ children }) {
 
       const data = await res.json();
       const formattedAddress = data.display_name || "Unknown location";
-      dispatch(setTempAddress({ formattedAddress, coordinates: [lat, lng] }));
+      const addressData = {
+        formattedAddress,
+        coordinates: [lat, lng],
+      };
+
+      dispatch(setTempAddress(addressData));
+
+      // Save to backend if user is authenticated and shouldSaveToBackend is true
+      if (shouldSaveToBackend && isAuthenticated && user) {
+        try {
+          const result = await dispatch(
+            saveAddress({
+              formattedAddress,
+              coordinates: [lat, lng],
+              label: "New Address",
+            }),
+          );
+
+          if (result.meta.requestStatus === "fulfilled") {
+            // Update temp address to mark it as saved
+            dispatch(updateTempAddressSaved());
+            console.log("Address saved successfully");
+          }
+        } catch (err) {
+          console.error("Error saving address:", err);
+        }
+      }
     } catch (err) {
       console.error("Error fetching address:", err);
     }
@@ -117,7 +164,8 @@ export default function LocationGate({ children }) {
     const saved = sessionStorage.getItem("locationChoice");
     if (saved) {
       const coords = JSON.parse(sessionStorage.getItem("userCoords"));
-      saveTempAddress(coords);
+      // Don't save to backend when loading from session - just set temp address
+      saveTempAddress(coords, false);
       setChecking(false);
       return;
     }
@@ -190,7 +238,8 @@ export default function LocationGate({ children }) {
     sessionStorage.setItem("userCoords", JSON.stringify(address.coordinates));
     sessionStorage.setItem("locationChoice", "saved");
     sessionStorage.setItem("locationChoiceTime", Date.now());
-    saveTempAddress(address.coordinates);
+    // For saved addresses, just set the temp address, don't save to backend again
+    dispatch(setTempAddress(address));
     setShowModal(false);
   }
 
@@ -208,7 +257,9 @@ export default function LocationGate({ children }) {
       sessionStorage.setItem("locationChoice", isGPS ? "gps" : "manual");
       sessionStorage.setItem("locationChoiceTime", Date.now());
 
-      await saveTempAddress(finalCoords);
+      // Save to backend if user is authenticated and this is a new address
+      const shouldSaveToBackend = isAuthenticated && user;
+      await saveTempAddress(finalCoords, shouldSaveToBackend);
 
       // Add small delay to ensure redux state is updated
       setTimeout(() => {
@@ -510,9 +561,7 @@ export default function LocationGate({ children }) {
                         key={index}
                         className="w-full text-left rounded-xl border border-gray-200 bg-white px-4 py-4 hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md"
                         onClick={() => {
-                          console.log(addr);
-                          dispatch(setTempAddress(addr));
-                          setShowModal(false);
+                          handleSavedAddressSelection(addr);
                         }}
                       >
                         <div className="flex items-start gap-3">
