@@ -49,6 +49,7 @@ export default function LocationGate({ children }) {
   const [geolocationWatch, setGeolocationWatch] = useState(null);
   const [gpsCoords, setGpsCoords] = useState(null);
   const [confirmingLocation, setConfirmingLocation] = useState(false);
+  const [addressText, setAddressText] = useState("");
   const defaultShopLocation = [28.203326, 78.267783]; // Default shop location
   const { user, isAuthenticated, tempAddress } = useSelector(
     (state) => state.auth,
@@ -126,6 +127,28 @@ export default function LocationGate({ children }) {
     }
   };
 
+  const fetchAndSetAddressText = async (coords) => {
+    const lat = Array.isArray(coords) ? coords[0] : coords.lat;
+    const lng = Array.isArray(coords) ? coords[1] : coords.lng;
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/api/geocode/reverse-geocode?lat=${lat}&lon=${lng}`,
+      );
+
+      if (!res.ok) {
+        throw new Error(`Reverse geocoding failed: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const formattedAddress = data.display_name || "Unknown location";
+      setAddressText(formattedAddress);
+    } catch (err) {
+      console.error("Error fetching address text:", err);
+      setAddressText("Unable to fetch address");
+    }
+  };
+
   useEffect(() => {
     validateSession();
     checkPermission();
@@ -190,6 +213,17 @@ export default function LocationGate({ children }) {
     tempAddress?.coordinates,
     tempAddress?.saved,
   ]);
+
+  // Fetch and display formatted address when coordinates change
+  useEffect(() => {
+    if (isGPS && gpsCoords) {
+      fetchAndSetAddressText(gpsCoords);
+    } else if (isManual && selectedCoords) {
+      fetchAndSetAddressText(selectedCoords);
+    } else if (isManual && userMarkerPos) {
+      fetchAndSetAddressText(userMarkerPos);
+    }
+  }, [gpsCoords, selectedCoords, userMarkerPos, isGPS, isManual]);
 
   function validateSession() {
     const time = Number(sessionStorage.getItem("locationChoiceTime"));
@@ -300,9 +334,68 @@ export default function LocationGate({ children }) {
       sessionStorage.setItem("locationChoice", isGPS ? "gps" : "manual");
       sessionStorage.setItem("locationChoiceTime", Date.now());
 
-      // Save to backend if user is authenticated and this is a new address
-      const shouldSaveToBackend = isAuthenticated && user;
-      await saveTempAddress(finalCoords, shouldSaveToBackend);
+      // Use the edited address text from the input
+      const addressData = {
+        formattedAddress: addressText.trim() || "Unknown location",
+        coordinates: finalCoords,
+      };
+
+      // Check if this address already exists in user's saved addresses
+      if (isAuthenticated && user && user.addresses) {
+        const existingAddress = user.addresses.find((addr) => {
+          const [savedLat, savedLng] = addr.coordinates;
+          const [tempLat, tempLng] = finalCoords;
+          const latDiff = Math.abs(savedLat - tempLat);
+          const lngDiff = Math.abs(savedLng - tempLng);
+          return latDiff < 0.001 && lngDiff < 0.001;
+        });
+
+        if (existingAddress) {
+          // Update existing address with new text if different
+          if (
+            existingAddress.formattedAddress !== addressData.formattedAddress
+          ) {
+            dispatch(
+              setTempAddress({
+                ...existingAddress,
+                formattedAddress: addressData.formattedAddress,
+              }),
+            );
+          } else {
+            dispatch(setTempAddress(existingAddress));
+          }
+        } else {
+          // Set temp address and save if user is authenticated
+          dispatch(setTempAddress(addressData));
+
+          if (isAuthenticated && user) {
+            try {
+              const result = await dispatch(
+                saveAddress({
+                  ...addressData,
+                  label: "New Address",
+                }),
+              );
+
+              if (result.meta.requestStatus === "fulfilled") {
+                // Update tempAddress to mark it as saved to prevent duplicate saves
+                dispatch(
+                  setTempAddress({
+                    ...addressData,
+                    saved: true,
+                  }),
+                );
+                console.log("Address saved successfully");
+              }
+            } catch (err) {
+              console.error("Error saving address:", err);
+            }
+          }
+        }
+      } else {
+        // No user addresses to check, just set temp address
+        dispatch(setTempAddress(addressData));
+      }
 
       // Add small delay to ensure redux state is updated
       setTimeout(() => {
@@ -417,13 +510,13 @@ export default function LocationGate({ children }) {
                 <div className="flex items-center justify-between mb-6">
                   <div className="text-left">
                     <h2 className="text-xl font-bold text-gray-800">
-                      {isGPS
-                        ? "📍 Finding Your Location"
-                        : "🗺️ Pin Your Location"}
+                      {isGPS ? "📍 Your Location" : "🗺️ Pin Your Location"}
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
                       {isGPS
-                        ? "Please wait while we locate you..."
+                        ? gettingLocation
+                          ? "Please wait while we locate you..."
+                          : "Location found! Drag the pin to adjust if needed"
                         : "Drag the pin to set your delivery address"}
                     </p>
                   </div>
@@ -517,19 +610,25 @@ export default function LocationGate({ children }) {
                         isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
                       }
                       icon={mapPin}
-                      draggable={isManual}
-                      eventHandlers={
-                        isManual
-                          ? {
-                              dragend: (e) => {
-                                const pos = e.target.getLatLng();
-                                const newPos = [pos.lat, pos.lng];
-                                setUserMarkerPos(newPos);
-                                setSelectedCoords(newPos);
-                              },
-                            }
-                          : {}
-                      }
+                      draggable
+                      eventHandlers={{
+                        dragend: (e) => {
+                          const pos = e.target.getLatLng();
+                          const newPos = [pos.lat, pos.lng];
+
+                          // Update positions for both GPS and manual modes
+                          setUserMarkerPos(newPos);
+                          setSelectedCoords(newPos);
+
+                          // If in GPS mode, update gpsCoords as well
+                          if (isGPS) {
+                            setGpsCoords(newPos);
+                          }
+
+                          // Fetch new address for the dragged position
+                          fetchAndSetAddressText(newPos);
+                        },
+                      }}
                     >
                       <Popup>
                         <div className="text-center">
@@ -537,12 +636,30 @@ export default function LocationGate({ children }) {
                             📍 Delivery Here
                           </p>
                           <p className="text-xs text-slate-500 mt-1">
-                            {isManual ? "Drag to adjust" : "Your location"}
+                            Drag to adjust your location
                           </p>
                         </div>
                       </Popup>
                     </Marker>
                   </MapContainer>
+                </div>
+
+                {/* Address Input Field */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    📍 Edit your address
+                  </label>
+                  <textarea
+                    value={addressText}
+                    onChange={(e) => setAddressText(e.target.value)}
+                    placeholder="Enter your complete address with house number, landmark etc."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"
+                    rows={2}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    You can edit this address to add house number, floor,
+                    landmark etc.
+                  </p>
                 </div>
 
                 {/* Confirm Button */}
