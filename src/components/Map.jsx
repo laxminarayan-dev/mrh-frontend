@@ -41,18 +41,13 @@ export function MapController({ center, zoom }) {
 
   return null;
 }
-
-async function getStreetName(lat, lon) {
-  // const res = await fetch(
-  //   `https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}&api_key=${import.meta.env.VITE_GEOCODE_API_KEY}`,
-  // );
-
+export const getStreetName = async (lat, lon) => {
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+    `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
   );
   const data = await res.json();
 
-  return data.display_name || "Street not found";
+  return data.display_name;
 }
 
 function Map({ setGettingLocation }) {
@@ -83,8 +78,6 @@ function Map({ setGettingLocation }) {
 
     watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        console.log("Accuracy (meters):", pos.coords.accuracy);
-
         // Stop watching if accuracy is less than 300 meters
         if (pos.coords.accuracy < 300) {
           setUserPos([pos.coords.latitude, pos.coords.longitude]);

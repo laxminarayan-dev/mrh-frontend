@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { logout, saveAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { Loader, UtensilsCrossed } from "lucide-react";
+import { getStreetName } from "../components/Map";
 
 function distanceInMeters([lat1, lon1], [lat2, lon2]) {
   const R = 6371000; // meters
@@ -16,15 +17,6 @@ function distanceInMeters([lat1, lon1], [lat2, lon2]) {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
 
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-async function getStreetName(lat, lon) {
-  const res = await fetch(
-    `https://us1.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`,
-  );
-  const data = await res.json();
-
-  return data.display_name;
 }
 
 function formatAddressForDisplay(formattedAddress) {
@@ -194,9 +186,9 @@ const Account = () => {
                     Member since{" "}
                     {user?.createdAt
                       ? `${new Date(user.createdAt).toLocaleDateString(
-                          "en-IN",
-                          { month: "short", year: "numeric" },
-                        )}`
+                        "en-IN",
+                        { month: "short", year: "numeric" },
+                      )}`
                       : "N/A"}{" "}
                     • {orders.length} orders
                   </p>
@@ -407,11 +399,10 @@ const Account = () => {
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                                order.status === "Delivered"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-rose-100 text-rose-500"
-                              }`}
+                              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${order.status === "Delivered"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-500"
+                                }`}
                             >
                               {order.status || "Processing"}
                             </span>
@@ -474,11 +465,10 @@ const Account = () => {
                         {Array.from({ length: 5 }).map((_, idx) => (
                           <span
                             key={`${review.id}-star-${idx}`}
-                            className={`text-sm ${
-                              idx < review.rating
-                                ? "text-orange-500"
-                                : "text-slate-300"
-                            }`}
+                            className={`text-sm ${idx < review.rating
+                              ? "text-orange-500"
+                              : "text-slate-300"
+                              }`}
                           >
                             ★
                           </span>
@@ -556,7 +546,7 @@ export const ListAddresses = ({
   addressList = [],
   newAddress = null,
   isAlreadySaved = null,
-  setSelectedAddress = () => {},
+  setSelectedAddress = () => { },
   selectedAddress = null,
 }) => {
   const navigate = useNavigate();
@@ -588,11 +578,10 @@ export const ListAddresses = ({
                   )}
                   {onChekout && (
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        address._id === selectedAddress
-                          ? "border-orange-500 bg-orange-500"
-                          : "border-slate-300 bg-white"
-                      }`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${address._id === selectedAddress
+                        ? "border-orange-500 bg-orange-500"
+                        : "border-slate-300 bg-white"
+                        }`}
                     >
                       {address._id === selectedAddress && (
                         <div className="w-2 h-2 bg-white rounded-full"></div>

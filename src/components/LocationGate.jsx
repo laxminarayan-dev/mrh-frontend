@@ -4,9 +4,10 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
-import { MapController } from "./Map";
+import { getStreetName, MapController } from "./Map";
 import { useSelector } from "react-redux";
-import Cookies from "js-cookie";
+import { setTempAddress } from "../store/authSlice";
+import { useDispatch } from "react-redux";
 
 function ShopPin(color = "#f97316", size = 36) {
     return L.divIcon({
@@ -39,6 +40,7 @@ export default function LocationGate({ children }) {
     const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
     const [selectedCoords, setSelectedCoords] = useState(null);
     const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
 
     const markers = [
         { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
@@ -48,9 +50,51 @@ export default function LocationGate({ children }) {
     const shopIcon = ShopPin("#f97316", 24);
     const mapPin = UserPin("#2563eb", 28);
 
+    const saveTempAddress = async (coords) => {
+        const lat = Array.isArray(coords) ? coords[0] : coords.lat;
+        const lng = Array.isArray(coords) ? coords[1] : coords.lng;
+
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+                {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                    },
+                },
+            );
+
+            if (!res.ok) {
+                throw new Error(`Reverse geocoding failed: ${res.status}`);
+            }
+
+            const data = await res.json();
+            const formattedAddress = data.display_name || "Unknown location";
+            dispatch(setTempAddress({ formattedAddress, coordinates: [lat, lng] }));
+        } catch (err) {
+            console.error("Error fetching address:", err);
+        }
+    };
+
     useEffect(() => {
         validateSession();
         checkPermission();
+    }, []);
+
+    useEffect(() => {
+        const handleOpenLocationGate = () => {
+            setIsManual(false);
+            setGettingLocation(false);
+            setShowModal(true);
+            setChecking(false);
+        };
+
+        window.addEventListener("open-location-gate", handleOpenLocationGate);
+
+        return () => {
+            window.removeEventListener("open-location-gate", handleOpenLocationGate);
+        };
     }, []);
 
     function validateSession() {
@@ -67,30 +111,14 @@ export default function LocationGate({ children }) {
 
     async function checkPermission() {
         const saved = sessionStorage.getItem("locationChoice");
-        console.log("Saved location choice:", saved);
         if (saved) {
+            const coords = JSON.parse(sessionStorage.getItem("userCoords"));
+            saveTempAddress(coords);
             setChecking(false);
             return;
         }
 
-        if (!navigator.geolocation) {
-            setShowModal(true);
-            setChecking(false);
-            return;
-        }
-
-        try {
-            const perm = await navigator.permissions.query({ name: "geolocation" });
-
-            if (perm.state === "granted") {
-                getLocation();
-            } else {
-                setShowModal(true);
-            }
-        } catch {
-            setShowModal(true);
-        }
-
+        setShowModal(true);
         setChecking(false);
     }
 
@@ -108,6 +136,7 @@ export default function LocationGate({ children }) {
                     setShowModal(false);
                 }, 1000);
                 setUserMarkerPos([coords.lat, coords.lng]);
+                saveTempAddress(coords);
                 sessionStorage.setItem("userCoords", JSON.stringify(coords));
                 sessionStorage.setItem("locationChoice", "gps");
                 sessionStorage.setItem("locationChoiceTime", Date.now());
@@ -280,6 +309,7 @@ export default function LocationGate({ children }) {
                                                 onClick={() => {
                                                     setUserMarkerPos(addr.coordinates);
                                                     setSelectedCoords(addr.coordinates);
+                                                    saveTempAddress(addr.coordinates);
                                                 }}
                                             >
                                                 {addr.formattedAddress}
@@ -294,7 +324,7 @@ export default function LocationGate({ children }) {
                                         sessionStorage.setItem("userCoords", JSON.stringify(selectedCoords || userMarkerPos));
                                         sessionStorage.setItem("locationChoice", "manual");
                                         sessionStorage.setItem("locationChoiceTime", Date.now());
-
+                                        saveTempAddress(selectedCoords || userMarkerPos);
                                         setShowModal(false);
                                     }}
                                     className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"

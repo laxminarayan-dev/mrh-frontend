@@ -361,8 +361,7 @@ const initialState = {
     forgetOtpVerified: false,
     forgetPasswordSuccess: false,
     rememberMe: false,
-
-
+    tempAddress: null,
 };
 
 const authSlice = createSlice({
@@ -371,6 +370,9 @@ const authSlice = createSlice({
     reducers: {
         clearError: (state) => {
             state.error = null;
+        },
+        setTempAddress: (state, action) => {
+            state.tempAddress = action.payload;
         },
         resetOtpState: (state) => {
             state.otpSent = false;
@@ -554,5 +556,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { clearError, resetOtpState, setRememberMe, logout } = authSlice.actions;
+export const { clearError, setTempAddress, resetOtpState, setRememberMe, logout } = authSlice.actions;
 export default authSlice.reducer;

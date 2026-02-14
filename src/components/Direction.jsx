@@ -3,7 +3,7 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 
 /* distance in KM */
-function getDistanceKm(a, b) {
+export const getDistanceKm = (a, b) => {
   const R = 6371;
   const dLat = ((b[0] - a[0]) * Math.PI) / 180;
   const dLng = ((b[1] - a[1]) * Math.PI) / 180;
@@ -11,8 +11,8 @@ function getDistanceKm(a, b) {
   const x =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((a[0] * Math.PI) / 180) *
-      Math.cos((b[0] * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos((b[0] * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
 
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }

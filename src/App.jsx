@@ -13,6 +13,8 @@ import {
 } from "./store/cartSlice";
 import Cookies from "js-cookie";
 import { socket } from "./socket";
+import { getShopData } from "./store/shopSlice";
+import LoaderComp from "./components/Loader";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -106,6 +108,15 @@ function App() {
     }
   }, [isAuthenticated, user, dispatch]);
 
+  const { tempAddress } = useSelector(state => state.auth);
+  const { loading: ShopLoading } = useSelector(state => state.shop);
+
+  useEffect(() => {
+    if (tempAddress) {
+      dispatch(getShopData(tempAddress.coordinates));
+    }
+  }, [tempAddress])
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">
       <Navbar
@@ -121,6 +132,7 @@ function App() {
           links={links}
         />
         <main>
+          {ShopLoading && <LoaderComp />}
           <Outlet />
         </main>
         {/* Footer */}
