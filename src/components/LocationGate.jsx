@@ -1,4 +1,4 @@
-import { Loader, X } from "lucide-react";
+import { Captions, Copyright, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
 import { getStreetName, MapController } from "./Map";
 import { useSelector } from "react-redux";
+import { getDistanceKm } from "./Direction";
 import {
   setTempAddress,
   saveAddress,
@@ -37,20 +38,20 @@ function UserPin(color = "#2563eb", size = 36) {
 }
 export default function LocationGate({ children }) {
   const dispatch = useDispatch();
-  const [showModal, setShowModal] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [gettingLocation, setGettingLocation] = useState(false);
   const [isGPS, setIsGPS] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [isManual, setIsManual] = useState(false);
-  const [fromSavedAddress, setFromSavedAddress] = useState(false);
-  const [mapLoading, setMapLoading] = useState(true);
-  const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
-  const [selectedCoords, setSelectedCoords] = useState(null);
-  const [geolocationWatch, setGeolocationWatch] = useState(null);
   const [gpsCoords, setGpsCoords] = useState(null);
-  const [confirmingLocation, setConfirmingLocation] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
   const [addressText, setAddressText] = useState("");
-  const defaultShopLocation = [28.203326, 78.267783]; // Default shop location
+  const [isDeliverable, setIsDeliverable] = useState(false);
+  const [selectedCoords, setSelectedCoords] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [geolocationWatch, setGeolocationWatch] = useState(null);
+  const [fromSavedAddress, setFromSavedAddress] = useState(false);
+  const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
+  const [confirmingLocation, setConfirmingLocation] = useState(false);
   const { user, isAuthenticated, tempAddress } = useSelector(
     (state) => state.auth,
   );
@@ -59,8 +60,9 @@ export default function LocationGate({ children }) {
     { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
     { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
   ];
-  const shopIcon = ShopPin("#f97316", 24);
   const mapPin = UserPin("#2563eb", 28);
+  const shopIcon = ShopPin("#f97316", 24);
+  const defaultShopLocation = [28.203326, 78.267783];
 
   const saveTempAddress = async (coords, shouldSaveToBackend = false) => {
     console.log(coords);
@@ -145,7 +147,7 @@ export default function LocationGate({ children }) {
       setAddressText(formattedAddress);
     } catch (err) {
       console.error("Error fetching address text:", err);
-      setAddressText("Unable to fetch address");
+      setAddressText("");
     }
   };
 
@@ -266,6 +268,7 @@ export default function LocationGate({ children }) {
         setGpsCoords([coords.lat, coords.lng]);
         // Only store coordinates, don't move marker until confirmation
         setSelectedCoords([coords.lat, coords.lng]);
+        setUserMarkerPos([coords.lat, coords.lng]);
         setGettingLocation(false);
         setMapLoading(false);
       },
@@ -407,6 +410,26 @@ export default function LocationGate({ children }) {
       setConfirmingLocation(false);
     }
   }
+  const verifyDistance = (coordinates = userMarkerPos) => {
+    let range = 10;
+    let nearest = markers[0];
+    let min = Infinity;
+    for (const o of markers) {
+      const d = getDistanceKm(coordinates, o.position);
+      if (d < min) {
+        min = d;
+        nearest = o;
+      }
+    }
+    if (min > range) {
+      setIsDeliverable(false);
+    } else {
+      setIsDeliverable(true);
+    }
+  };
+  useEffect(() => {
+    verifyDistance();
+  }, [userMarkerPos, selectedCoords]);
 
   if (checking) return null;
 
@@ -643,6 +666,9 @@ export default function LocationGate({ children }) {
                     </Marker>
                   </MapContainer>
                 </div>
+                <p className="text-xs text-gray-500 mt-2 flex items-center justify-center gap-1">
+                  <Copyright size={12} /> OpenStreetMap contributors | Leaflet
+                </p>
 
                 {/* Address Input Field */}
                 <div className="mt-4">
@@ -653,7 +679,7 @@ export default function LocationGate({ children }) {
                     value={addressText}
                     onChange={(e) => setAddressText(e.target.value)}
                     placeholder="Enter your complete address with house number, landmark etc."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none resize-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm"
                     rows={2}
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -665,31 +691,41 @@ export default function LocationGate({ children }) {
                 {/* Confirm Button */}
                 <button
                   onClick={confirmLocation}
-                  disabled={gettingLocation || confirmingLocation}
-                  className="mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  disabled={
+                    !isDeliverable || gettingLocation || confirmingLocation
+                  }
+                  className={
+                    isDeliverable
+                      ? `mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed`
+                      : `mt-6 w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed cursor-not-allowed`
+                  }
                 >
                   {confirmingLocation ? (
                     <Loader className="animate-spin" size={20} />
                   ) : (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    isDeliverable && (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )
                   )}
-                  {gettingLocation
-                    ? "Please wait..."
-                    : confirmingLocation
-                      ? "Confirming..."
-                      : "Confirm Location"}
+                  {isDeliverable === false
+                    ? "Not in delivery range"
+                    : gettingLocation
+                      ? "Please wait..."
+                      : confirmingLocation
+                        ? "Confirming..."
+                        : "Confirm Location"}
                 </button>
               </div>
             ) : null}

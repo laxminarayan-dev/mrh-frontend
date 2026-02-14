@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout, saveAddress, setTempAddress } from "../store/authSlice";
+import { logout, setTempAddress } from "../store/authSlice";
 import { useEffect, useRef, useState } from "react";
-import { Loader, UtensilsCrossed } from "lucide-react";
+import { UtensilsCrossed } from "lucide-react";
 import { getStreetName } from "../components/Map";
 
 function distanceInMeters([lat1, lon1], [lat2, lon2]) {
