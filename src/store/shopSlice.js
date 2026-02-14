@@ -3,12 +3,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 export const getShopData = createAsyncThunk(
     "shop/getShopData",
     async (shopCoordinates, { rejectWithValue }) => {
+        console.log("getShopData", shopCoordinates)
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_API}/api/shop/${shopCoordinates}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch shop data");
             }
             const data = await response.json();
+            console.log(data)
             return data;
         } catch (error) {
             return rejectWithValue(error.message);

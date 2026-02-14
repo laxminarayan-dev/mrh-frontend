@@ -109,8 +109,8 @@ function App() {
     }
   }, [isAuthenticated, user, dispatch]);
 
-  const { tempAddress } = useSelector(state => state.auth);
-  const { loading: ShopLoading } = useSelector(state => state.shop);
+  const { tempAddress } = useSelector((state) => state.auth);
+  const { loading: ShopLoading } = useSelector((state) => state.shop);
   const shopCoords = [
     { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
     { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
@@ -120,6 +120,7 @@ function App() {
 
   useEffect(() => {
     if (tempAddress) {
+      console.log(tempAddress);
       let nearest = shopCoords[0];
       let min = Infinity;
       for (const o of shopCoords) {
@@ -131,13 +132,12 @@ function App() {
       }
       if (min > range) {
         dispatch(setInRange(false));
-        return;
       } else {
         dispatch(setInRange(true));
-        dispatch(getShopData(nearest.position.join(",")));
       }
+      dispatch(getShopData(nearest.position.join(",")));
     }
-  }, [tempAddress])
+  }, [tempAddress]);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">

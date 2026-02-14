@@ -56,18 +56,13 @@ export default function LocationGate({ children }) {
   const mapPin = UserPin("#2563eb", 28);
 
   const saveTempAddress = async (coords) => {
+    console.log(coords);
     const lat = Array.isArray(coords) ? coords[0] : coords.lat;
     const lng = Array.isArray(coords) ? coords[1] : coords.lng;
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
+        `${import.meta.env.VITE_BACKEND_API}/api/geocode/reverse-geocode?lat=${lat}&lon=${lng}`,
       );
 
       if (!res.ok) {
@@ -514,7 +509,11 @@ export default function LocationGate({ children }) {
                       <button
                         key={index}
                         className="w-full text-left rounded-xl border border-gray-200 bg-white px-4 py-4 hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md"
-                        onClick={() => handleSavedAddressSelection(addr)}
+                        onClick={() => {
+                          console.log(addr);
+                          dispatch(setTempAddress(addr));
+                          setShowModal(false);
+                        }}
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
