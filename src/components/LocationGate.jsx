@@ -47,6 +47,7 @@ export default function LocationGate({ children }) {
   const [addressText, setAddressText] = useState("");
   const [isDeliverable, setIsDeliverable] = useState(false);
   const [selectedCoords, setSelectedCoords] = useState(null);
+  const [addressTextError, setAddressTextError] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [geolocationWatch, setGeolocationWatch] = useState(null);
   const [fromSavedAddress, setFromSavedAddress] = useState(false);
@@ -328,6 +329,15 @@ export default function LocationGate({ children }) {
     try {
       const finalCoords = selectedCoords || userMarkerPos;
 
+      if (addressText.trim() === "") {
+        setAddressTextError("Address cannot be empty");
+        setConfirmingLocation(false);
+        setTimeout(() => {
+          setAddressTextError("");
+        }, 3000);
+        return;
+      }
+
       // If GPS mode, update marker position now
       if (isGPS && gpsCoords) {
         setUserMarkerPos(gpsCoords);
@@ -410,6 +420,7 @@ export default function LocationGate({ children }) {
       setConfirmingLocation(false);
     }
   }
+
   const verifyDistance = (coordinates = userMarkerPos) => {
     let range = 10;
     let nearest = markers[0];
@@ -427,6 +438,7 @@ export default function LocationGate({ children }) {
       setIsDeliverable(true);
     }
   };
+
   useEffect(() => {
     verifyDistance();
   }, [userMarkerPos, selectedCoords]);
@@ -677,11 +689,19 @@ export default function LocationGate({ children }) {
                   </label>
                   <textarea
                     value={addressText}
-                    onChange={(e) => setAddressText(e.target.value)}
+                    onChange={(e) => {
+                      setAddressText(e.target.value);
+                      setAddressTextError("");
+                    }}
                     placeholder="Enter your complete address with house number, landmark etc."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none resize-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none resize-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm ${addressTextError ? "border-red-500" : ""}`}
                     rows={2}
                   />
+                  {addressTextError && (
+                    <div className="text-left w-full text-xs text-red-500 px-2">
+                      {addressTextError}
+                    </div>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     You can edit this address to add house number, floor,
                     landmark etc.
