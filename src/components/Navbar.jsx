@@ -8,11 +8,11 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
   const { isLoggedIn, tempAddress } = useSelector((state) => state.auth);
   const { items } = useSelector((state) => state.cart);
   const [address, setAddress] = useState(null);
+  const { inRange } = useSelector((state) => state.shop);
   const displayAddress = address || "Set delivery location";
 
   const handleLocationChange = (event) => {
     if (event.target.value !== "change") return;
-
     sessionStorage.removeItem("locationChoice");
     sessionStorage.removeItem("locationChoiceTime");
     sessionStorage.removeItem("userCoords");
@@ -105,23 +105,33 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
           </div>
         </div>
       </nav>
-      <div className="mx-6 mt-2 flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
-        <div className="flex min-w-[60%] items-center gap-2">
-          <MapPin size={18} className="text-orange-500" />
-          <span className="truncate">{displayAddress}</span>
+      <div className="mx-6 mt-2 flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <MapPin size={16} className="text-orange-500 flex-shrink-0" />
+            <span className="truncate">{displayAddress}</span>
+          </div>
+          <div className="relative flex items-center flex-shrink-0">
+            <select
+              aria-label="Change delivery location"
+              defaultValue="keep"
+              onChange={handleLocationChange}
+              className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-5"
+            >
+              <option value="keep">Current</option>
+              <option value="change">Change location</option>
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-1 text-orange-600" />
+          </div>
         </div>
-        <div className="relative flex items-center justify-center max-w-[fit-content]">
-          <select
-            aria-label="Change delivery location"
-            defaultValue="keep"
-            onChange={handleLocationChange}
-            className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 max-w-[fit-content]"
-          >
-            <option value="keep">Current</option>
-            <option value="change">Change location</option>
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-1 text-orange-600" />
-        </div>
+        {inRange === false && (
+          <div className="px-3 py-1 flex items-center gap-2">
+            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs text-red-600 font-medium">Sorry, we don't deliver to your location yet.</span>
+          </div>
+        )}
       </div>
 
     </>

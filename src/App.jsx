@@ -13,8 +13,9 @@ import {
 } from "./store/cartSlice";
 import Cookies from "js-cookie";
 import { socket } from "./socket";
-import { getShopData } from "./store/shopSlice";
+import { getShopData, setInRange } from "./store/shopSlice";
 import LoaderComp from "./components/Loader";
+import { getDistanceKm } from "./components/Direction";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,10 +111,31 @@ function App() {
 
   const { tempAddress } = useSelector(state => state.auth);
   const { loading: ShopLoading } = useSelector(state => state.shop);
+  const shopCoords = [
+    { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
+    { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
+    { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
+  ];
+  const range = 10; // km
 
   useEffect(() => {
     if (tempAddress) {
-      dispatch(getShopData(tempAddress.coordinates));
+      let nearest = shopCoords[0];
+      let min = Infinity;
+      for (const o of shopCoords) {
+        const d = getDistanceKm(tempAddress.coordinates, o.position);
+        if (d < min) {
+          min = d;
+          nearest = o;
+        }
+      }
+      if (min > range) {
+        dispatch(setInRange(false));
+        return;
+      } else {
+        dispatch(setInRange(true));
+        dispatch(getShopData(nearest.position.join(",")));
+      }
     }
   }, [tempAddress])
 

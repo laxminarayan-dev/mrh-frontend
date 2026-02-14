@@ -32,6 +32,7 @@ function UserPin(color = "#2563eb", size = 36) {
     });
 }
 export default function LocationGate({ children }) {
+    const dispatch = useDispatch();
     const [showModal, setShowModal] = useState(false);
     const [checking, setChecking] = useState(true);
     const [gettingLocation, setGettingLocation] = useState(false);
@@ -40,8 +41,6 @@ export default function LocationGate({ children }) {
     const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
     const [selectedCoords, setSelectedCoords] = useState(null);
     const { user, isAuthenticated } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
-
     const markers = [
         { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
         { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },

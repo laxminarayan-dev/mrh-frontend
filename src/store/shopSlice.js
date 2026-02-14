@@ -22,9 +22,12 @@ const shopSlice = createSlice({
         loading: false,
         shopsData: {},
         error: null,
+        inRange: null,
     },
     reducers: {
-
+        setInRange: (state, action) => {
+            state.inRange = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.
@@ -47,5 +50,5 @@ const shopSlice = createSlice({
 });
 
 
-export const { setSelectedShop, setShops } = shopSlice.actions;
+export const { setSelectedShop, setShops, setInRange } = shopSlice.actions;
 export default shopSlice.reducer;
