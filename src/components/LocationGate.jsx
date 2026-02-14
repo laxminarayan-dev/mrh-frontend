@@ -1,4 +1,4 @@
-import { Loader } from "lucide-react";
+import { Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -10,337 +10,564 @@ import { setTempAddress } from "../store/authSlice";
 import { useDispatch } from "react-redux";
 
 function ShopPin(color = "#f97316", size = 36) {
-    return L.divIcon({
-        html: renderToStaticMarkup(
-            <Store size={size} color="white" fill={color} strokeWidth={1.5} />,
-        ),
-        className: "", // IMPORTANT: remove default styles
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size],
-    });
+  return L.divIcon({
+    html: renderToStaticMarkup(
+      <Store size={size} color="white" fill={color} strokeWidth={1.5} />,
+    ),
+    className: "", // IMPORTANT: remove default styles
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
 }
 function UserPin(color = "#2563eb", size = 36) {
-    return L.divIcon({
-        html: renderToStaticMarkup(
-            <MapPin size={size} color="white" fill={color} strokeWidth={1.5} />,
-        ),
-        className: "",
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size],
-    });
+  return L.divIcon({
+    html: renderToStaticMarkup(
+      <MapPin size={size} color="white" fill={color} strokeWidth={1.5} />,
+    ),
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
 }
 export default function LocationGate({ children }) {
-    const dispatch = useDispatch();
-    const [showModal, setShowModal] = useState(false);
-    const [checking, setChecking] = useState(true);
-    const [gettingLocation, setGettingLocation] = useState(false);
-    const [isManual, setIsManual] = useState(false);
-    const [mapLoading, setMapLoading] = useState(true);
-    const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
-    const [selectedCoords, setSelectedCoords] = useState(null);
-    const { user, isAuthenticated } = useSelector((state) => state.auth);
-    const markers = [
-        { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
-        { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
-        { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
-    ];
-    const shopIcon = ShopPin("#f97316", 24);
-    const mapPin = UserPin("#2563eb", 28);
+  const dispatch = useDispatch();
+  const [showModal, setShowModal] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [isGPS, setIsGPS] = useState(false);
+  const [isManual, setIsManual] = useState(false);
+  const [fromSavedAddress, setFromSavedAddress] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [userMarkerPos, setUserMarkerPos] = useState([28.203326, 78.267783]);
+  const [selectedCoords, setSelectedCoords] = useState(null);
+  const [geolocationWatch, setGeolocationWatch] = useState(null);
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const [confirmingLocation, setConfirmingLocation] = useState(false);
+  const defaultShopLocation = [28.203326, 78.267783]; // Default shop location
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const markers = [
+    { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
+    { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
+    { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
+  ];
+  const shopIcon = ShopPin("#f97316", 24);
+  const mapPin = UserPin("#2563eb", 28);
 
-    const saveTempAddress = async (coords) => {
-        const lat = Array.isArray(coords) ? coords[0] : coords.lat;
-        const lng = Array.isArray(coords) ? coords[1] : coords.lng;
+  const saveTempAddress = async (coords) => {
+    const lat = Array.isArray(coords) ? coords[0] : coords.lat;
+    const lng = Array.isArray(coords) ? coords[1] : coords.lng;
 
-        try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-                {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                    },
-                },
-            );
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
-            if (!res.ok) {
-                throw new Error(`Reverse geocoding failed: ${res.status}`);
-            }
+      if (!res.ok) {
+        throw new Error(`Reverse geocoding failed: ${res.status}`);
+      }
 
-            const data = await res.json();
-            const formattedAddress = data.display_name || "Unknown location";
-            dispatch(setTempAddress({ formattedAddress, coordinates: [lat, lng] }));
-        } catch (err) {
-            console.error("Error fetching address:", err);
-        }
+      const data = await res.json();
+      const formattedAddress = data.display_name || "Unknown location";
+      dispatch(setTempAddress({ formattedAddress, coordinates: [lat, lng] }));
+    } catch (err) {
+      console.error("Error fetching address:", err);
+    }
+  };
+
+  useEffect(() => {
+    validateSession();
+    checkPermission();
+  }, []);
+
+  useEffect(() => {
+    const handleOpenLocationGate = () => {
+      setIsManual(false);
+      setGettingLocation(false);
+      setShowModal(true);
+      setChecking(false);
     };
 
-    useEffect(() => {
-        validateSession();
-        checkPermission();
-    }, []);
+    window.addEventListener("open-location-gate", handleOpenLocationGate);
 
-    useEffect(() => {
-        const handleOpenLocationGate = () => {
-            setIsManual(false);
-            setGettingLocation(false);
-            setShowModal(true);
-            setChecking(false);
+    return () => {
+      window.removeEventListener("open-location-gate", handleOpenLocationGate);
+      // Cleanup geolocation watch on unmount
+      if (geolocationWatch) {
+        navigator.geolocation.clearWatch(geolocationWatch);
+      }
+    };
+  }, [geolocationWatch]);
+
+  function validateSession() {
+    const time = Number(sessionStorage.getItem("locationChoiceTime"));
+
+    if (!time) return;
+
+    const THIRTY_MIN = 1000 * 60 * 30;
+
+    if (Date.now() - time > THIRTY_MIN) {
+      sessionStorage.clear();
+    }
+  }
+
+  async function checkPermission() {
+    const saved = sessionStorage.getItem("locationChoice");
+    if (saved) {
+      const coords = JSON.parse(sessionStorage.getItem("userCoords"));
+      saveTempAddress(coords);
+      setChecking(false);
+      return;
+    }
+
+    setShowModal(true);
+    setChecking(false);
+  }
+
+  function getLocation() {
+    setGettingLocation(true);
+    setIsGPS(true);
+    setMapLoading(true);
+
+    const watchId = navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
         };
-
-        window.addEventListener("open-location-gate", handleOpenLocationGate);
-
-        return () => {
-            window.removeEventListener("open-location-gate", handleOpenLocationGate);
-        };
-    }, []);
-
-    function validateSession() {
-        const time = Number(sessionStorage.getItem("locationChoiceTime"));
-
-        if (!time) return;
-
-        const THIRTY_MIN = 1000 * 60 * 30;
-
-        if (Date.now() - time > THIRTY_MIN) {
-            sessionStorage.clear();
-        }
-    }
-
-    async function checkPermission() {
-        const saved = sessionStorage.getItem("locationChoice");
-        if (saved) {
-            const coords = JSON.parse(sessionStorage.getItem("userCoords"));
-            saveTempAddress(coords);
-            setChecking(false);
-            return;
-        }
-
-        setShowModal(true);
-        setChecking(false);
-    }
-
-    function getLocation() {
-        setGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-
-                const coords = {
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                };
-                setTimeout(() => {
-                    setGettingLocation(false);
-                    setShowModal(false);
-                }, 1000);
-                setUserMarkerPos([coords.lat, coords.lng]);
-                saveTempAddress(coords);
-                sessionStorage.setItem("userCoords", JSON.stringify(coords));
-                sessionStorage.setItem("locationChoice", "gps");
-                sessionStorage.setItem("locationChoiceTime", Date.now());
-
-            },
-            (err) => {
-                setGettingLocation(false);
-                if (err.code === 1)
-                    alert("Location permission denied");
-
-                else if (err.code === 2)
-                    alert("Location unavailable. Try moving outside.");
-
-                else if (err.code === 3)
-                    alert("Location request timed out");
-
-                else
-                    alert("Unable to get location");
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 20000, // ⬅ increase
-                maximumAge: 0,
-            },
-        );
-    }
-
-    function handleManual() {
-        setIsManual(true);
-        setMapLoading(true);
-    }
-
-    if (checking) return null;
-
-    return (
-        <>
-            {children}
-
-            {showModal && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 min-h-screen">
-                    <div className={`${isManual ? "w-[80vw] max-w-[600px] max-w-4xl h-[500px] sm:h-[600px]" : "w-[350px] h-76"} rounded-2xl bg-white px-6 py-8 text-center shadow-[0_20px_40px_rgba(0,0,0,0.15)] ${gettingLocation ? "flex items-center justify-center" : ""}`}>
-                        {!gettingLocation && !isManual ? (
-                            <>
-                                <h2 className="text-xl font-semibold">Select your location</h2>
-                                <p className="mt-2 text-sm text-neutral-600">
-                                    We need your location to show deliverable items and delivery options
-                                </p>
-
-                                <button
-                                    className="mt-4 w-full rounded-xl bg-orange-500 px-4 py-3 text-base text-white hover:brightness-110 flex items-center justify-center gap-2"
-                                    onClick={getLocation}
-                                >
-                                    <MapPin size={18} /> Allow Location
-                                </button>
-
-                                <div className="my-4 text-xs text-neutral-500 flex items-center">
-                                    <span className="flex-1 h-[2px] bg-orange-100 rounded-full"></span>
-                                    <span className="mx-2">OR</span>
-                                    <span className="flex-1 h-[2px] bg-orange-100 rounded-full"></span>
-                                </div>
-
-                                <button
-                                    className="w-full rounded-xl border border-orange-400 bg-orange-50 px-4 py-3 text-sm hover:bg-orange-100"
-                                    onClick={handleManual}
-                                >
-                                    Select location manually
-                                </button>
-                            </>
-                        ) : !isManual ? (
-                            <Loader className="animate-spin" size={48} color="#f97316" />
-                        ) : null}
-                        {isManual && (
-                            <div className="flex flex-col h-full relative"  >
-                                {/* Header */}
-                                <div className="flex items-center justify-between self-center mb-4 ">
-                                    <div>
-                                        <h2 className="text-lg font-semibold text-slate-900">Pin Your Location</h2>
-                                        <p className="text-xs text-slate-500 mt-0.5">Drag the pin to set your delivery address</p>
-                                    </div>
-                                    <button
-                                        onClick={() => setIsManual(false)}
-                                        className=" absolute top-0 right-0 text-slate-400 hover:text-slate-600 transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                {/* Map Container */}
-                                <div className="flex-1 relative rounded-xl overflow-hidden border-2 border-orange-100 shadow-inner">
-                                    {mapLoading && (
-                                        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex items-center justify-center rounded-xl">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Loader className="animate-spin" size={32} color="#f97316" />
-                                                <p className="text-xs text-slate-600">Loading map...</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <MapContainer
-                                        center={userMarkerPos}
-                                        zoom={18}
-                                        scrollWheelZoom={true}
-                                        attributionControl={false}
-                                        style={{
-                                            width: "100%",
-                                            height: "100%",
-                                            background: "rgba(255,255,255,0.6)",
-                                            borderRadius: 6,
-                                        }}
-                                        whenCreated={() => {
-                                            setMapLoading(false)
-                                        }}
-                                    >
-                                        <TileLayer
-                                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                                            attribution="© Esri"
-                                        />
-                                        <MapController center={userMarkerPos} zoom={18} />
-                                        {markers.map((m) => (
-                                            <Marker key={m.id} position={m.position} icon={shopIcon}>
-                                                <Popup>
-                                                    <div className="text-center">
-                                                        <p className="font-semibold text-sm text-orange-600">{m.name}</p>
-                                                        <p className="text-xs text-slate-500 mt-1">Our Kitchen</p>
-                                                    </div>
-                                                </Popup>
-                                            </Marker>
-                                        ))}
-                                        <Marker
-                                            position={userMarkerPos}
-                                            icon={mapPin}
-                                            draggable={true}
-                                            eventHandlers={{
-                                                dragend: (e) => {
-                                                    const pos = e.target.getLatLng();
-                                                    const newPos = [pos.lat, pos.lng];
-                                                    setUserMarkerPos(newPos);
-                                                    setSelectedCoords(newPos);
-                                                },
-                                            }}
-                                        >
-                                            <Popup>
-                                                <div className="text-center">
-                                                    <p className="font-semibold text-sm text-blue-600">📍 Delivery Here</p>
-                                                    <p className="text-xs text-slate-500 mt-1">Drag to adjust</p>
-                                                </div>
-                                            </Popup>
-                                        </Marker>
-                                    </MapContainer>
-
-                                    {/* Floating Locate Button */}
-                                    <button
-                                        onClick={getLocation}
-                                        className="absolute bottom-4 right-4 z-[500] bg-white hover:bg-orange-50 text-orange-600 p-3 rounded-full shadow-lg border border-orange-100 transition-all hover:scale-105"
-                                        title="Use my current location"
-                                    >
-                                        <MapPin size={20} />
-                                    </button>
-                                </div>
-
-                                {user && isAuthenticated && user.addresses.length > 0 && (
-                                    <div className="mt-4">
-                                        <p className="text-sm text-neutral-600 mb-4">Select from saved addresses:</p>
-                                        {/* Render user's saved addresses here */}
-                                        {user.addresses.map((addr, index) => (
-                                            <button
-                                                key={index}
-                                                className="w-full rounded-xl border border-orange-400 bg-orange-50 px-4 py-3 text-sm hover:bg-orange-100"
-                                                onClick={() => {
-                                                    setUserMarkerPos(addr.coordinates);
-                                                    setSelectedCoords(addr.coordinates);
-                                                    saveTempAddress(addr.coordinates);
-                                                }}
-                                            >
-                                                {addr.formattedAddress}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Confirm Button */}
-                                <button
-                                    onClick={() => {
-                                        sessionStorage.setItem("userCoords", JSON.stringify(selectedCoords || userMarkerPos));
-                                        sessionStorage.setItem("locationChoice", "manual");
-                                        sessionStorage.setItem("locationChoiceTime", Date.now());
-                                        saveTempAddress(selectedCoords || userMarkerPos);
-                                        setShowModal(false);
-                                    }}
-                                    className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Confirm Location
-                                </button>
-
-
-
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-        </>
+        // Store GPS coords separately, don't immediately update marker position
+        setGpsCoords([coords.lat, coords.lng]);
+        // Only store coordinates, don't move marker until confirmation
+        setSelectedCoords([coords.lat, coords.lng]);
+        setGettingLocation(false);
+        setMapLoading(false);
+      },
+      (err) => {
+        setIsGPS(false);
+        setGettingLocation(false);
+        setMapLoading(false);
+        if (err.code === 1) alert("Location permission denied");
+        else if (err.code === 2)
+          alert("Location unavailable. Try moving outside.");
+        else if (err.code === 3) alert("Location request timed out");
+        else alert("Unable to get location");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0,
+      },
     );
+    setGeolocationWatch(watchId);
+  }
+
+  function cancelLocationRequest() {
+    if (geolocationWatch) {
+      navigator.geolocation.clearWatch(geolocationWatch);
+      setGeolocationWatch(null);
+    }
+    setGettingLocation(false);
+    setIsGPS(false);
+    setMapLoading(false);
+    // Reset to default shop location when cancelling GPS
+    setUserMarkerPos(defaultShopLocation);
+    setSelectedCoords(null);
+    setGpsCoords(null);
+  }
+
+  function handleManual() {
+    setIsManual(true);
+    setMapLoading(true);
+    // Reset to default shop location for manual selection
+    setUserMarkerPos(defaultShopLocation);
+    setSelectedCoords(null);
+    setGpsCoords(null);
+  }
+
+  function handleSavedAddressSelection(address) {
+    sessionStorage.setItem("userCoords", JSON.stringify(address.coordinates));
+    sessionStorage.setItem("locationChoice", "saved");
+    sessionStorage.setItem("locationChoiceTime", Date.now());
+    saveTempAddress(address.coordinates);
+    setShowModal(false);
+  }
+
+  async function confirmLocation() {
+    setConfirmingLocation(true);
+    try {
+      const finalCoords = selectedCoords || userMarkerPos;
+
+      // If GPS mode, update marker position now
+      if (isGPS && gpsCoords) {
+        setUserMarkerPos(gpsCoords);
+      }
+
+      sessionStorage.setItem("userCoords", JSON.stringify(finalCoords));
+      sessionStorage.setItem("locationChoice", isGPS ? "gps" : "manual");
+      sessionStorage.setItem("locationChoiceTime", Date.now());
+
+      await saveTempAddress(finalCoords);
+
+      // Add small delay to ensure redux state is updated
+      setTimeout(() => {
+        setShowModal(false);
+        setConfirmingLocation(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error confirming location:", error);
+      setConfirmingLocation(false);
+    }
+  }
+
+  if (checking) return null;
+
+  return (
+    <>
+      {children}
+
+      {showModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm min-h-screen">
+          <div
+            className={`w-[90vw] max-w-[500px] rounded-2xl h-fit bg-white p-6 text-center shadow-2xl transform transition-all`}
+          >
+            {!isGPS && !isManual && !fromSavedAddress ? (
+              <>
+                <div className="mb-6">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin size={32} className="text-orange-500" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    Select your location
+                  </h2>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    We need your location to show deliverable items and delivery
+                    options in your area
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 text-white font-medium hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                    onClick={getLocation}
+                  >
+                    <MapPin size={20} />
+                    Allow Location Access
+                  </button>
+
+                  <div className="my-6 flex items-center">
+                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                    <span className="mx-4 text-xs text-gray-500 bg-white px-2">
+                      OR
+                    </span>
+                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                  </div>
+
+                  <button
+                    className="w-full rounded-xl border border-orange-300 bg-orange-50 px-6 py-4 text-orange-700 font-medium hover:bg-orange-100 hover:border-orange-400 transition-all duration-200 flex items-center justify-center gap-3"
+                    onClick={handleManual}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Select location manually
+                  </button>
+
+                  {isAuthenticated &&
+                    user &&
+                    user.addresses &&
+                    user.addresses.length > 0 && (
+                      <button
+                        className="w-full rounded-xl border border-blue-300 bg-blue-50 px-6 py-4 text-blue-700 font-medium hover:bg-blue-100 hover:border-blue-400 transition-all duration-200 flex items-center justify-center gap-3"
+                        onClick={() => setFromSavedAddress(true)}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                          />
+                        </svg>
+                        Choose from saved addresses
+                      </button>
+                    )}
+                </div>
+              </>
+            ) : null}
+            {(isManual || isGPS) && !fromSavedAddress ? (
+              <div className="flex flex-1 flex-col h-full relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="text-left">
+                    <h2 className="text-xl font-bold text-gray-800">
+                      {isGPS
+                        ? "📍 Finding Your Location"
+                        : "🗺️ Pin Your Location"}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {isGPS
+                        ? "Please wait while we locate you..."
+                        : "Drag the pin to set your delivery address"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (isGPS) {
+                        cancelLocationRequest();
+                      }
+                      if (isManual) {
+                        setIsManual(false);
+                        setMapLoading(false);
+                      }
+                    }}
+                    className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-all duration-200"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Map Container */}
+                <div className="flex-1 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                  {mapLoading || gettingLocation ? (
+                    <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center rounded-xl">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader
+                          className="animate-spin"
+                          size={40}
+                          color="#f97316"
+                        />
+                        <p className="text-sm text-gray-600 font-medium">
+                          {gettingLocation
+                            ? "Getting your location..."
+                            : "Loading map..."}
+                        </p>
+                        {gettingLocation && (
+                          <button
+                            onClick={cancelLocationRequest}
+                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                  <MapContainer
+                    center={
+                      isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
+                    }
+                    zoom={18}
+                    scrollWheelZoom={true}
+                    attributionControl={false}
+                    style={{
+                      width: "100%",
+                      height: "320px",
+                      background: "rgba(255,255,255,0.6)",
+                      borderRadius: 6,
+                    }}
+                    whenCreated={() => {
+                      if (!gettingLocation) {
+                        setMapLoading(false);
+                      }
+                    }}
+                  >
+                    <TileLayer
+                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                      attribution="© Esri"
+                    />
+                    <MapController
+                      center={
+                        isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
+                      }
+                      zoom={18}
+                    />
+                    {markers.map((m) => (
+                      <Marker key={m.id} position={m.position} icon={shopIcon}>
+                        <Popup>
+                          <div className="text-center">
+                            <p className="font-semibold text-sm text-orange-600">
+                              {m.name}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Our Kitchen
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    <Marker
+                      position={
+                        isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
+                      }
+                      icon={mapPin}
+                      draggable={isManual}
+                      eventHandlers={
+                        isManual
+                          ? {
+                              dragend: (e) => {
+                                const pos = e.target.getLatLng();
+                                const newPos = [pos.lat, pos.lng];
+                                setUserMarkerPos(newPos);
+                                setSelectedCoords(newPos);
+                              },
+                            }
+                          : {}
+                      }
+                    >
+                      <Popup>
+                        <div className="text-center">
+                          <p className="font-semibold text-sm text-blue-600">
+                            📍 Delivery Here
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {isManual ? "Drag to adjust" : "Your location"}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+
+                {/* Confirm Button */}
+                <button
+                  onClick={confirmLocation}
+                  disabled={gettingLocation || confirmingLocation}
+                  className="mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                >
+                  {confirmingLocation ? (
+                    <Loader className="animate-spin" size={20} />
+                  ) : (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                  {gettingLocation
+                    ? "Please wait..."
+                    : confirmingLocation
+                      ? "Confirming..."
+                      : "Confirm Location"}
+                </button>
+              </div>
+            ) : null}
+            {fromSavedAddress &&
+              user &&
+              isAuthenticated &&
+              user.addresses.length > 0 && (
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="text-left">
+                      <h2 className="text-xl font-bold text-gray-800">
+                        📍 Saved Addresses
+                      </h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Choose from your saved locations
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setFromSavedAddress(false)}
+                      className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-all duration-200"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {user.addresses.map((addr, index) => (
+                      <button
+                        key={index}
+                        className="w-full text-left rounded-xl border border-gray-200 bg-white px-4 py-4 hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md"
+                        onClick={() => handleSavedAddressSelection(addr)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                            <svg
+                              className="w-5 h-5 text-orange-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">
+                              {addr.label || `Address ${index + 1}`}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                              {addr.formattedAddress}
+                            </p>
+                          </div>
+                          <svg
+                            className="w-5 h-5 text-orange-500 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
