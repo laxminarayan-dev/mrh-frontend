@@ -142,7 +142,7 @@ function App() {
   }, [tempAddress]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#FFFBE9]">
+    <div className="min-h-dvh flex flex-col bg-[#FFFBE9]">
       <Navbar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}

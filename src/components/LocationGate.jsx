@@ -450,7 +450,7 @@ export default function LocationGate({ children }) {
       {children}
 
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm min-h-screen">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm min-h-screen">
           <div
             className={`w-[90vw] max-w-[500px] rounded-2xl h-fit bg-white p-6 text-center shadow-2xl transform transition-all`}
           >
