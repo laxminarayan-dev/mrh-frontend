@@ -9,5 +9,8 @@ export const socket = io(
     {
         path: "/mrh-backend/socket.io",
         autoConnect: false,
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true
     }
 );
