@@ -55,7 +55,6 @@ function Checkout() {
 
   useEffect(() => {
     if (user && user.addresses && user.addresses.length > 0) {
-      console.log("User addresses:", user.addresses);
       const defaultAddress = user.addresses.find((addr) => addr.isDefault);
       setSelectedAddress(defaultAddress ? defaultAddress : user.addresses[0]);
     }

@@ -48,7 +48,7 @@ export const getStreetName = async (lat, lon) => {
   const data = await res.json();
 
   return data.display_name;
-}
+};
 
 function Map({ setGettingLocation }) {
   const markers = [
@@ -100,18 +100,6 @@ function Map({ setGettingLocation }) {
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }
-
-  useEffect(() => {
-    if (userPos) {
-      console.log("User position:", userPos);
-    }
-  }, [userPos]);
-
-  useEffect(() => {
-    getStreetName(mapCenter[0], mapCenter[1]).then((data) => {
-      console.log("Map centered to street:", data);
-    });
-  }, [mapCenter]);
 
   useEffect(() => {
     const timer = setTimeout(() => setMapLoading(false), 1000);
@@ -219,7 +207,6 @@ function Map({ setGettingLocation }) {
               key={m.id}
               onClick={() => {
                 setMapCenter(m.position);
-                console.log("Centered map to:", m.position);
               }}
               className={`${mapCenter.every((val, i) => val === m.position[i]) ? "bg-orange-600 text-white" : "text-orange-600 border border-orange-600 "} px-2 py-1 rounded-full`}
             >
@@ -230,7 +217,6 @@ function Map({ setGettingLocation }) {
             <button
               onClick={() => {
                 setMapCenter(userPos);
-                console.log("Centered map to user:", userPos);
               }}
               className={` ${mapCenter.every((val, i) => val === userPos[i]) ? "bg-blue-600 text-white" : "text-blue-600 border border-blue-600"}  px-2 py-1 rounded-full`}
             >

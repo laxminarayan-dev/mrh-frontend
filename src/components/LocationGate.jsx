@@ -67,28 +67,13 @@ export default function LocationGate({ children }) {
 
   useEffect(() => {
     if (!shopsData) {
-      console.log("No shopsData available");
       return;
     }
-
-    console.log("shopsData from Redux:", shopsData);
 
     // FIX: ensure array
     const shopsArray = Array.isArray(shopsData)
       ? shopsData
       : shopsData.shops || [];
-
-    console.log("shopsArray:", shopsArray);
-
-    // Log detailed shopLocation structure
-    shopsArray.forEach((shop, index) => {
-      console.log(`Shop ${index + 1} (${shop.name}):`, {
-        shopLocation: shop.shopLocation,
-        coordinates: shop.shopLocation?.coordinates,
-        lat: shop.shopLocation?.lat,
-        lng: shop.shopLocation?.lng,
-      });
-    });
 
     const validMarkers = shopsArray
       .filter((shop) => {
@@ -97,12 +82,7 @@ export default function LocationGate({ children }) {
           typeof shop.shopLocation === "object" &&
           (shop.shopLocation.coordinates ||
             (shop.shopLocation.lat && shop.shopLocation.lng));
-        console.log(
-          "Shop location check:",
-          shop.name,
-          hasLocation,
-          shop.shopLocation,
-        );
+
         return hasLocation;
       })
       .map((shop) => {
@@ -124,7 +104,6 @@ export default function LocationGate({ children }) {
           return null;
         }
 
-        console.log("Transforming shop:", shop.name, "position:", position);
         return {
           ...shop,
           position,
@@ -133,7 +112,6 @@ export default function LocationGate({ children }) {
       })
       .filter(Boolean);
 
-    console.log("validMarkers:", validMarkers);
     setMarkers(validMarkers);
   }, [shopsData]);
 
@@ -200,7 +178,6 @@ export default function LocationGate({ children }) {
           if (result.meta.requestStatus === "fulfilled") {
             // Update temp address to mark it as saved
             dispatch(updateTempAddressSaved());
-            console.log("Address saved successfully");
           }
         } catch (err) {
           console.error("Error saving address:", err);
@@ -281,7 +258,6 @@ export default function LocationGate({ children }) {
           .unwrap()
           .then(() => {
             dispatch(updateTempAddressSaved());
-            console.log("Address saved after login");
           })
           .catch((err) => {
             console.error("Error saving address after login:", err);
@@ -479,7 +455,6 @@ export default function LocationGate({ children }) {
                     saved: true,
                   }),
                 );
-                console.log("Address saved successfully");
               }
             } catch (err) {
               console.error("Error saving address:", err);
@@ -548,7 +523,6 @@ export default function LocationGate({ children }) {
     if (userPos && Array.isArray(userPos) && userPos.length === 2)
       positions.push(userPos);
 
-    console.log("Setting map bounds with positions:", positions);
     if (positions.length > 0) {
       setMapBounds(positions);
     }
@@ -739,38 +713,32 @@ export default function LocationGate({ children }) {
                       zoom={14}
                       bounds={mapBounds}
                     />
-                    {console.log("Rendering markers:", markers) ||
-                      markers
-                        .filter((m) => {
-                          const isValid =
-                            m?.position &&
-                            Array.isArray(m.position) &&
-                            m.position.length === 2;
-                          console.log(
-                            "Marker filter check:",
-                            m,
-                            "isValid:",
-                            isValid,
-                          );
-                          return isValid;
-                        })
-                        .map((m) => (
-                          <div key={m.id || Math.random()}>
-                            <Marker
-                              position={m.position}
-                              icon={shopIcon}
-                              zIndexOffset={1000}
-                            >
-                              <Popup>
-                                <div className="text-center">
-                                  <p className="font-semibold text-sm text-orange-600">
-                                    {m.name}
-                                  </p>
-                                </div>
-                              </Popup>
-                            </Marker>
-                          </div>
-                        ))}
+                    {markers
+                      .filter((m) => {
+                        const isValid =
+                          m?.position &&
+                          Array.isArray(m.position) &&
+                          m.position.length === 2;
+
+                        return isValid;
+                      })
+                      .map((m) => (
+                        <div key={m.id || Math.random()}>
+                          <Marker
+                            position={m.position}
+                            icon={shopIcon}
+                            zIndexOffset={1000}
+                          >
+                            <Popup>
+                              <div className="text-center">
+                                <p className="font-semibold text-sm text-orange-600">
+                                  {m.name}
+                                </p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        </div>
+                      ))}
                     <Marker
                       position={
                         isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
