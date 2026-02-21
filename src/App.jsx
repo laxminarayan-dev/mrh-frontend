@@ -14,7 +14,6 @@ import {
 import Cookies from "js-cookie";
 import { socket } from "./socket";
 import {
-  getShopData,
   setInRange,
   setDeliveryShop,
   updateShopsData,

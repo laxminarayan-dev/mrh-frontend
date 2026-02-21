@@ -1,12 +1,6 @@
 import { Copyright, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  CircleMarker,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
@@ -125,26 +119,10 @@ export default function LocationGate({ children }) {
         ? userMarkerPos
         : defaultShopLocation;
 
+  // Save address to backend when tempAddress changes and is not saved, but only if user is authenticated
   const saveTempAddress = async (coords, shouldSaveToBackend = false) => {
     const lat = Array.isArray(coords) ? coords[0] : coords.lat;
     const lng = Array.isArray(coords) ? coords[1] : coords.lng;
-
-    // Check if this address already exists in user's saved addresses
-    if (isAuthenticated && user && user.addresses) {
-      const existingAddress = user.addresses.find((addr) => {
-        const [savedLat, savedLng] = addr.coordinates;
-        // Check if coordinates are very close (within ~100 meters)
-        const latDiff = Math.abs(savedLat - lat);
-        const lngDiff = Math.abs(savedLng - lng);
-        return latDiff < 0.001 && lngDiff < 0.001;
-      });
-
-      if (existingAddress) {
-        // Use existing saved address
-        dispatch(setTempAddress(existingAddress));
-        return;
-      }
-    }
 
     try {
       const res = await fetch(
@@ -157,6 +135,32 @@ export default function LocationGate({ children }) {
 
       const data = await res.json();
       const formattedAddress = data.display_name || "Unknown location";
+
+      // Check if this address already exists in user's saved addresses (by coordinates OR formatted address)
+      if (isAuthenticated && user && user.addresses) {
+        const existingAddress = user.addresses.find((addr) => {
+          const [savedLat, savedLng] = addr.coordinates;
+          // Check if coordinates are very close (within ~100 meters)
+          const latDiff = Math.abs(savedLat - lat);
+          const lngDiff = Math.abs(savedLng - lng);
+          const coordinatesMatch = latDiff < 0.001 && lngDiff < 0.001;
+
+          // Check if formatted address name is the same
+          const addressNameMatch =
+            addr.formattedAddress &&
+            addr.formattedAddress.trim().toLowerCase() ===
+              formattedAddress.trim().toLowerCase();
+
+          return coordinatesMatch || addressNameMatch;
+        });
+
+        if (existingAddress) {
+          // Use existing saved address
+          dispatch(setTempAddress(existingAddress));
+          return;
+        }
+      }
+
       const addressData = {
         formattedAddress,
         coordinates: [lat, lng],
@@ -238,13 +242,22 @@ export default function LocationGate({ children }) {
   useEffect(() => {
     // Save tempAddress if user just became authenticated and has an unsaved address
     if (isAuthenticated && user && tempAddress && !tempAddress.saved) {
-      // Check if this address already exists in user's saved addresses
+      // Check if this address already exists in user's saved addresses (by coordinates OR formatted address)
       const addressExists = user.addresses?.find((addr) => {
         const [savedLat, savedLng] = addr.coordinates;
         const [tempLat, tempLng] = tempAddress.coordinates;
         const latDiff = Math.abs(savedLat - tempLat);
         const lngDiff = Math.abs(savedLng - tempLng);
-        return latDiff < 0.001 && lngDiff < 0.001;
+        const coordinatesMatch = latDiff < 0.001 && lngDiff < 0.001;
+
+        // Check if formatted address name is the same
+        const addressNameMatch =
+          addr.formattedAddress &&
+          tempAddress.formattedAddress &&
+          addr.formattedAddress.trim().toLowerCase() ===
+            tempAddress.formattedAddress.trim().toLowerCase();
+
+        return coordinatesMatch || addressNameMatch;
       });
 
       if (!addressExists) {
@@ -410,18 +423,26 @@ export default function LocationGate({ children }) {
         coordinates: finalCoords,
       };
 
-      // Check if this address already exists in user's saved addresses
+      // Check if this address already exists in user's saved addresses (by coordinates OR formatted address)
       if (isAuthenticated && user && user.addresses) {
         const existingAddress = user.addresses.find((addr) => {
           const [savedLat, savedLng] = addr.coordinates;
           const [tempLat, tempLng] = finalCoords;
           const latDiff = Math.abs(savedLat - tempLat);
           const lngDiff = Math.abs(savedLng - tempLng);
-          return latDiff < 0.001 && lngDiff < 0.001;
+          const coordinatesMatch = latDiff < 0.001 && lngDiff < 0.001;
+
+          // Check if formatted address name is the same
+          const addressNameMatch =
+            addr.formattedAddress &&
+            addr.formattedAddress.trim().toLowerCase() ===
+              addressData.formattedAddress.trim().toLowerCase();
+
+          return coordinatesMatch || addressNameMatch;
         });
 
         if (existingAddress) {
-          // Update existing address with new text if different
+          // If coordinates match but address text is different, update the existing address text
           if (
             existingAddress.formattedAddress !== addressData.formattedAddress
           ) {
@@ -435,7 +456,7 @@ export default function LocationGate({ children }) {
             dispatch(setTempAddress(existingAddress));
           }
         } else {
-          // Set temp address and save if user is authenticated
+          // Only save if NO existing address found by coordinates OR address name
           dispatch(setTempAddress(addressData));
 
           if (isAuthenticated && user) {
