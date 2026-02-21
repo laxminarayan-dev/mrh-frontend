@@ -31,7 +31,7 @@ const ImageWithLoader = ({ src, alt, className }) => {
       {!error && (
         <img
           ref={imgRef}
-          src={src}
+          src={`${import.meta.env.VITE_BACKEND_API}${src}`}
           alt={alt}
           loading="lazy"
           onLoad={() => setLoaded(true)}

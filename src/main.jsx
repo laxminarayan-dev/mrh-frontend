@@ -6,6 +6,7 @@ import { fetchReviews } from "./store/reviewSlice.js";
 import { loadItems } from "./store/itemsSlice.js";
 import { fetchCartItems, fetchOrders } from "./store/cartSlice.js";
 import { startInitialAuth } from "./store/authSlice.js";
+import { getShopData } from "./store/shopSlice.js";
 import Routing from "./Routing.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import LocationGate from "./components/LocationGate.jsx";
@@ -17,6 +18,7 @@ store.dispatch(fetchReviews());
 store.dispatch(loadItems());
 store.dispatch(fetchCartItems());
 store.dispatch(fetchOrders());
+store.dispatch(getShopData()); // Fetching data for the first shop by default
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>

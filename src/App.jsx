@@ -13,7 +13,12 @@ import {
 } from "./store/cartSlice";
 import Cookies from "js-cookie";
 import { socket } from "./socket";
-import { getShopData, setInRange } from "./store/shopSlice";
+import {
+  getShopData,
+  setInRange,
+  setDeliveryShop,
+  updateShopsData,
+} from "./store/shopSlice";
 import LoaderComp from "./components/Loader";
 import { getDistanceKm } from "./components/Direction";
 
@@ -32,25 +37,32 @@ function App() {
     { name: "Contact Us", url: "/contact-us", icon: <Phone /> },
   ];
 
-  // useEffect(() => {
-  //   if (!socket.connected) {
-  //     socket.connect();
-  //   }
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, []);
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     if (isAuthenticated && user?._id) {
-  //       console.log("Joining private room:", user._id);
-  //       socket.emit("join-user-room", user._id);
-  //     } else {
-  //       console.log("Leaving private room");
-  //       socket.emit("leave-user-room");
-  //     }
-  //   });
-  // }, [isAuthenticated, user]);
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  useEffect(() => {
+    socket.on("connect", () => {
+      if (isAuthenticated && user?._id) {
+        console.log("Joining private room:", user._id);
+        socket.emit("join-user-room", user._id);
+      } else {
+        console.log("Leaving private room");
+        socket.emit("leave-user-room");
+      }
+    });
+    socket.on("shop-updated", (updatedShop) => {
+      dispatch(updateShopsData(updatedShop));
+    });
+    return () => {
+      socket.off("connect");
+      socket.off("shop-updated");
+    };
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (isAuthenticated && user?._id) {
@@ -111,21 +123,30 @@ function App() {
   }, [isAuthenticated, user, dispatch]);
 
   const { tempAddress } = useSelector((state) => state.auth);
-  const { loading: ShopLoading } = useSelector((state) => state.shop);
-  const shopCoords = [
-    { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
-    { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
-    { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
-  ];
+  const { loading: ShopLoading, shopsData } = useSelector(
+    (state) => state.shop,
+  );
+
+  const [shopCoords, setShopCoords] = useState([]);
+  useEffect(() => {
+    if (shopsData.length > 0) {
+      setShopCoords(shopsData);
+    }
+  }, [shopsData]);
+
   const range = 10; // km
 
   // Finding nearest shop and verifying range
   useEffect(() => {
     if (tempAddress) {
+      if (shopCoords.length === 0) return;
       let nearest = shopCoords[0];
       let min = Infinity;
       for (const o of shopCoords) {
-        const d = getDistanceKm(tempAddress.coordinates, o.position);
+        const d = getDistanceKm(tempAddress.coordinates, [
+          o.shopLocation.coordinates[1],
+          o.shopLocation.coordinates[0],
+        ]);
         if (d < min) {
           min = d;
           nearest = o;
@@ -136,10 +157,9 @@ function App() {
       } else {
         dispatch(setInRange(true));
       }
-      console.log("nearest outlet ", nearest.name);
-      dispatch(getShopData(nearest.position.join(",")));
+      dispatch(setDeliveryShop(nearest));
     }
-  }, [tempAddress]);
+  }, [tempAddress, shopCoords]);
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#FFFBE9]">

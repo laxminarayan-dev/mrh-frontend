@@ -1,18 +1,17 @@
-import { Captions, Copyright, Loader, X } from "lucide-react";
+import { Copyright, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
-import { getStreetName, MapController } from "./Map";
-import { useSelector } from "react-redux";
+import { MapController } from "./Map";
 import { getDistanceKm } from "./Direction";
 import {
   setTempAddress,
   saveAddress,
   updateTempAddressSaved,
 } from "../store/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 function ShopPin(color = "#f97316", size = 36) {
   return L.divIcon({
@@ -56,17 +55,20 @@ export default function LocationGate({ children }) {
   const { user, isAuthenticated, tempAddress } = useSelector(
     (state) => state.auth,
   );
-  const markers = [
-    { id: 1, name: "Narora Outlet", position: [28.203822, 78.374228] },
-    { id: 2, name: "Debai Outlet 1", position: [28.203326, 78.267783] },
-    { id: 3, name: "Debai Outlet 2", position: [28.207438, 78.253838] },
-  ];
+  const { shopsData } = useSelector((state) => state.shop);
+  const [markers, setMarkers] = useState([]);
+
+  useEffect(() => {
+    if (shopsData.length > 0) {
+      setMarkers(shopsData);
+    }
+  }, [shopsData]);
+
   const mapPin = UserPin("#2563eb", 28);
   const shopIcon = ShopPin("#f97316", 24);
   const defaultShopLocation = [28.203326, 78.267783];
 
   const saveTempAddress = async (coords, shouldSaveToBackend = false) => {
-    console.log(coords);
     const lat = Array.isArray(coords) ? coords[0] : coords.lat;
     const lng = Array.isArray(coords) ? coords[1] : coords.lng;
 

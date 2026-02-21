@@ -63,7 +63,7 @@ function Cart() {
                 <div className="flex gap-4">
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-400 text-xs">
                     <img
-                      src={item.images.url}
+                      src={`${import.meta.env.VITE_BACKEND_API}${item.images.url}`}
                       alt={item.name}
                       className="w-full h-full object-contain rounded-xl p-2"
                     />

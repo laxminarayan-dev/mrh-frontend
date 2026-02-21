@@ -1,21 +1,38 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { Check, Loader, ShoppingBasket, Star } from "lucide-react";
 import ImageWithLoader from "./ImageWithLoader";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addItem } from "../store/cartSlice";
 
 function CardOne({ item }) {
   const dispatch = useDispatch();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const { deliveryShop } = useSelector((state) => state.shop);
+
   return (
-    <div className="mx-auto min-w-[75vw] max-w-[75vw] min-[440px]:min-w-[210px] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ">
+    <div
+      className={`mx-auto min-w-[75vw] max-w-[75vw] min-[440px]:min-w-[210px] min-[440px]:max-w-[210px] group relative bg-white rounded-3xl px-5 py-2 m-1 flex flex-col items-center w-full shadow-sm border border-orange-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ${deliveryShop?.shopOpen && deliveryShop?.menuItems?.includes(item._id) ? "opacity-100" : "opacity-40 pointer-events-none"}`}
+    >
+      {deliveryShop && !deliveryShop.shopOpen ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <span className="bg-black/70 text-white text-sm md:text-lg font-bold px-4 py-2 rounded-full transform -rotate-12 shadow-lg uppercase tracking-wider">
+            Shop Closed
+          </span>
+        </div>
+      ) : !deliveryShop?.menuItems?.includes(item._id) ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <span className="bg-black/70 text-white text-sm md:text-lg font-bold px-4 py-2 rounded-full transform -rotate-12 shadow-lg uppercase tracking-wider">
+            Not Available
+          </span>
+        </div>
+      ) : null}
       {/* Background Gradient on Hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"></div>
 
       {/* Badge */}
       {item.isSale ? (
-        <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-semibold z-10 shadow-md z-20">
+        <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-md z-20">
           % Sale
         </span>
       ) : (

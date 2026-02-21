@@ -78,7 +78,6 @@ const Account = () => {
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [addressList, setAddressList] = useState([]);
   const [gettingLocation, setGettingLocation] = useState(false);
-  const watchId = useRef(null);
 
   const [profile, setProfile] = useState({
     fullName: user?.fullName || "",

@@ -12,7 +12,6 @@ import {
   Shield,
   Loader,
 } from "lucide-react";
-import { ListAddresses } from "./Account";
 import { useSelector } from "react-redux";
 import { clearCart } from "../store/cartSlice";
 
@@ -22,11 +21,15 @@ function Checkout() {
   const [formData, setFormData] = useState({
     paymentMethod: "cash",
   });
-  const { user } = useSelector((state) => state.auth);
+  const { user, tempAddress } = useSelector((state) => state.auth);
+  const { shopsData } = useSelector((state) => state.shop);
+
   const { items, placingOrder, orderPlaced } = useSelector(
     (state) => state.cart,
   );
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const { deliveryShop } = useSelector((state) => state.shop);
+
   const tax = 6;
   const delivery = 30;
   const subTotal = useMemo(() => {
@@ -42,6 +45,7 @@ function Checkout() {
     orderItems: [],
     totalAmount: total,
     subtotal: subTotal,
+    shopId: deliveryShop?._id || null,
     deliveryFee: delivery,
     discount: 0,
     tax: tax,
@@ -51,10 +55,9 @@ function Checkout() {
 
   useEffect(() => {
     if (user && user.addresses && user.addresses.length > 0) {
+      console.log("User addresses:", user.addresses);
       const defaultAddress = user.addresses.find((addr) => addr.isDefault);
-      setSelectedAddress(
-        defaultAddress ? defaultAddress._id : user.addresses[0]._id,
-      );
+      setSelectedAddress(defaultAddress ? defaultAddress : user.addresses[0]);
     }
   }, [user]);
 
@@ -71,8 +74,9 @@ function Checkout() {
           price: item.isSale ? item.discountPrice : item.originalPrice,
           quantity: item.quantity,
         })),
+        shopId: deliveryShop?._id || null,
         paymentMethod: formData.paymentMethod,
-        deliveryAddress: selectedAddr,
+        deliveryAddress: tempAddress || "",
         subtotal: subTotal,
         deliveryFee: delivery,
         tax: tax,
@@ -80,7 +84,7 @@ function Checkout() {
         totalAmount: total,
       });
     }
-  }, [selectedAddress, items]);
+  }, [selectedAddress, items, deliveryShop]);
 
   return (
     <div className="w-full bg-gradient-to-b from-[#FFFBE9] to-orange-100 min-h-[90vh]">
@@ -112,12 +116,11 @@ function Checkout() {
                     {user?.phone || "Phone Number"}
                   </p>
                 </div>
-                <ListAddresses
-                  onChekout={true}
-                  addressList={user?.addresses}
-                  setSelectedAddress={setSelectedAddress}
-                  selectedAddress={selectedAddress}
-                />
+                {tempAddress && (
+                  <p className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all">
+                    {tempAddress.formattedAddress || "Delivery Address"}
+                  </p>
+                )}
               </div>
             </div>
 

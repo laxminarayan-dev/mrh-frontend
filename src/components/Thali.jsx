@@ -26,7 +26,7 @@ function Thali() {
         <div className="relative overflow-hidden p-8 px-10 mt-2 text-left  gap-6 h-80 md:h-86 ">
           {/* image */}
           <img
-            src={thaliDetails?.images?.url}
+            src={`${import.meta.env.VITE_BACKEND_API}${thaliDetails?.images?.url}`}
             alt="thali"
             loading="lazy"
             decoding="async"
@@ -41,14 +41,18 @@ function Thali() {
             {/* description */}
             <div className="relative flex gap-2 z-10 ">
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails?.includes?.slice(0, 3).map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
+                {JSON.parse(thaliDetails?.includes || "[]")
+                  ?.slice(0, 3)
+                  .map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
               </ul>
               <ul className="list-disc list-inside text-white space-y-2">
-                {thaliDetails?.includes?.slice(3).map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
+                {JSON.parse(thaliDetails?.includes || "[]")
+                  ?.slice(3)
+                  .map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
               </ul>
             </div>
             {/* price */}
@@ -57,7 +61,7 @@ function Thali() {
                 <span className="line-through text-white mr-2">
                   ₹{thaliDetails?.originalPrice}
                 </span>
-                <span className="text-xl text-white font-semibold text-yellow-200">
+                <span className="text-xl  font-semibold text-yellow-200">
                   ₹{thaliDetails?.discountPrice}
                 </span>
               </p>

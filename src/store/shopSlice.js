@@ -3,14 +3,12 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 export const getShopData = createAsyncThunk(
     "shop/getShopData",
     async (shopCoordinates, { rejectWithValue }) => {
-        console.log("getShopData", shopCoordinates)
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_API}/api/shop/${shopCoordinates}`);
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_API}/api/shop`);
             if (!response.ok) {
                 throw new Error("Failed to fetch shop data");
             }
             const data = await response.json();
-            console.log(data)
             return data;
         } catch (error) {
             return rejectWithValue(error.message);
@@ -22,13 +20,22 @@ const shopSlice = createSlice({
     name: "shop",
     initialState: {
         loading: false,
-        shopsData: {},
+        shopsData: [],
+        deliveryShop: null,
         error: null,
         inRange: null,
     },
     reducers: {
         setInRange: (state, action) => {
             state.inRange = action.payload;
+        },
+        setDeliveryShop: (state, action) => {
+            state.deliveryShop = action.payload;
+        },
+        updateShopsData: (state, action) => {
+            state.shopsData = state.shopsData.map((shop) =>
+                shop._id === action.payload._id ? action.payload : shop
+            );
         },
     },
     extraReducers: (builder) => {
@@ -52,5 +59,5 @@ const shopSlice = createSlice({
 });
 
 
-export const { setSelectedShop, setShops, setInRange } = shopSlice.actions;
+export const { setSelectedShop, setShops, setInRange, setDeliveryShop, updateShopsData } = shopSlice.actions;
 export default shopSlice.reducer;
