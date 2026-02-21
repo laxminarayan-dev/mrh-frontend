@@ -32,7 +32,7 @@ export function MapController({ center, zoom }) {
 
   useEffect(() => {
     if (center) {
-      map.flyTo(center, zoom, {
+      map.flyTo(center, 18, {
         animate: true,
         duration: 1,
       });

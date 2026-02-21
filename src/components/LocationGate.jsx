@@ -1,6 +1,12 @@
 import { Copyright, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  CircleMarker,
+} from "react-leaflet";
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
@@ -57,16 +63,89 @@ export default function LocationGate({ children }) {
   );
   const { shopsData } = useSelector((state) => state.shop);
   const [markers, setMarkers] = useState([]);
+  const [mapBounds, setMapBounds] = useState(null);
 
   useEffect(() => {
-    if (shopsData.length > 0) {
-      setMarkers(shopsData);
+    if (!shopsData) {
+      console.log("No shopsData available");
+      return;
     }
+
+    console.log("shopsData from Redux:", shopsData);
+
+    // FIX: ensure array
+    const shopsArray = Array.isArray(shopsData)
+      ? shopsData
+      : shopsData.shops || [];
+
+    console.log("shopsArray:", shopsArray);
+
+    // Log detailed shopLocation structure
+    shopsArray.forEach((shop, index) => {
+      console.log(`Shop ${index + 1} (${shop.name}):`, {
+        shopLocation: shop.shopLocation,
+        coordinates: shop.shopLocation?.coordinates,
+        lat: shop.shopLocation?.lat,
+        lng: shop.shopLocation?.lng,
+      });
+    });
+
+    const validMarkers = shopsArray
+      .filter((shop) => {
+        const hasLocation =
+          shop?.shopLocation &&
+          typeof shop.shopLocation === "object" &&
+          (shop.shopLocation.coordinates ||
+            (shop.shopLocation.lat && shop.shopLocation.lng));
+        console.log(
+          "Shop location check:",
+          shop.name,
+          hasLocation,
+          shop.shopLocation,
+        );
+        return hasLocation;
+      })
+      .map((shop) => {
+        // Extract coordinates from shopLocation
+        let position;
+        if (
+          shop.shopLocation.coordinates &&
+          Array.isArray(shop.shopLocation.coordinates)
+        ) {
+          // If coordinates is [lng, lat] (MongoDB format), reverse it to [lat, lng] (Leaflet format)
+          position = [
+            shop.shopLocation.coordinates[1],
+            shop.shopLocation.coordinates[0],
+          ];
+        } else if (shop.shopLocation.lat && shop.shopLocation.lng) {
+          // If lat/lng properties exist
+          position = [shop.shopLocation.lat, shop.shopLocation.lng];
+        } else {
+          return null;
+        }
+
+        console.log("Transforming shop:", shop.name, "position:", position);
+        return {
+          ...shop,
+          position,
+          id: shop._id,
+        };
+      })
+      .filter(Boolean);
+
+    console.log("validMarkers:", validMarkers);
+    setMarkers(validMarkers);
   }, [shopsData]);
 
   const mapPin = UserPin("#2563eb", 28);
   const shopIcon = ShopPin("#f97316", 24);
   const defaultShopLocation = [28.203326, 78.267783];
+  const safeUserPosition =
+    Array.isArray(gpsCoords) && gpsCoords.length === 2
+      ? gpsCoords
+      : Array.isArray(userMarkerPos) && userMarkerPos.length === 2
+        ? userMarkerPos
+        : defaultShopLocation;
 
   const saveTempAddress = async (coords, shouldSaveToBackend = false) => {
     const lat = Array.isArray(coords) ? coords[0] : coords.lat;
@@ -424,26 +503,56 @@ export default function LocationGate({ children }) {
   }
 
   const verifyDistance = (coordinates = userMarkerPos) => {
+    if (!coordinates || !Array.isArray(coordinates)) return;
+    if (!markers || markers.length === 0) return;
+
     let range = 10;
-    let nearest = markers[0];
     let min = Infinity;
+
     for (const o of markers) {
+      if (!o?.position || !Array.isArray(o.position)) continue;
+
       const d = getDistanceKm(coordinates, o.position);
+
       if (d < min) {
         min = d;
-        nearest = o;
       }
     }
-    if (min > range) {
-      setIsDeliverable(false);
-    } else {
-      setIsDeliverable(true);
-    }
+
+    setIsDeliverable(min <= range);
   };
 
   useEffect(() => {
-    verifyDistance();
-  }, [userMarkerPos, selectedCoords]);
+    if (markers.length > 0) {
+      verifyDistance(selectedCoords || userMarkerPos);
+    }
+  }, [userMarkerPos, selectedCoords, markers]);
+
+  // Recompute map bounds whenever markers or user position change
+  useEffect(() => {
+    if (!markers || markers.length === 0) {
+      setMapBounds(null);
+      return;
+    }
+
+    const positions = markers
+      .filter(
+        (m) =>
+          m?.position && Array.isArray(m.position) && m.position.length === 2,
+      )
+      .map((m) => m.position);
+
+    const userPos = isGPS
+      ? gpsCoords || userMarkerPos
+      : selectedCoords || userMarkerPos;
+    if (userPos && Array.isArray(userPos) && userPos.length === 2)
+      positions.push(userPos);
+
+    console.log("Setting map bounds with positions:", positions);
+    if (positions.length > 0) {
+      setMapBounds(positions);
+    }
+  }, [markers, gpsCoords, userMarkerPos, selectedCoords, isGPS]);
 
   if (checking) return null;
 
@@ -600,17 +709,18 @@ export default function LocationGate({ children }) {
                     </div>
                   ) : null}
                   <MapContainer
-                    center={
-                      isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
-                    }
-                    zoom={18}
+                    center={safeUserPosition}
+                    zoom={14}
                     scrollWheelZoom={true}
+                    dragging={true}
+                    touchZoom={true}
+                    doubleClickZoom={true}
                     attributionControl={false}
                     style={{
                       width: "100%",
                       height: "320px",
-                      background: "rgba(255,255,255,0.6)",
                       borderRadius: 6,
+                      cursor: "grab",
                     }}
                     whenCreated={() => {
                       if (!gettingLocation) {
@@ -626,22 +736,41 @@ export default function LocationGate({ children }) {
                       center={
                         isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
                       }
-                      zoom={18}
+                      zoom={14}
+                      bounds={mapBounds}
                     />
-                    {markers.map((m) => (
-                      <Marker key={m.id} position={m.position} icon={shopIcon}>
-                        <Popup>
-                          <div className="text-center">
-                            <p className="font-semibold text-sm text-orange-600">
-                              {m.name}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Our Kitchen
-                            </p>
+                    {console.log("Rendering markers:", markers) ||
+                      markers
+                        .filter((m) => {
+                          const isValid =
+                            m?.position &&
+                            Array.isArray(m.position) &&
+                            m.position.length === 2;
+                          console.log(
+                            "Marker filter check:",
+                            m,
+                            "isValid:",
+                            isValid,
+                          );
+                          return isValid;
+                        })
+                        .map((m) => (
+                          <div key={m.id || Math.random()}>
+                            <Marker
+                              position={m.position}
+                              icon={shopIcon}
+                              zIndexOffset={1000}
+                            >
+                              <Popup>
+                                <div className="text-center">
+                                  <p className="font-semibold text-sm text-orange-600">
+                                    {m.name}
+                                  </p>
+                                </div>
+                              </Popup>
+                            </Marker>
                           </div>
-                        </Popup>
-                      </Marker>
-                    ))}
+                        ))}
                     <Marker
                       position={
                         isGPS ? gpsCoords || defaultShopLocation : userMarkerPos
