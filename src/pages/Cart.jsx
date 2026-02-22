@@ -3,6 +3,7 @@ import { Trash2, Plus, Minus, Handshake, CloudUpload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addItem, removeItem, deleteItem } from "../store/cartSlice";
+import ImageWithLoader from "../components/ImageWithLoader";
 
 function Cart() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ function Cart() {
       if (!shopClose) {
         setIsUnavailable({
           status: true,
-          message: `Your nearest shop is currently closed. Please select another shop or try again later.`
+          message: `Your nearest shop is currently closed. Sorry for the inconvenience. Please try again later.`
         });
         return;
       }
@@ -106,11 +107,7 @@ function Cart() {
                 )}
                 <div className="flex gap-4">
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-400 text-xs">
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_API}${item.images.url}`}
-                      alt={item.name}
-                      className="w-full h-full object-contain rounded-xl p-2"
-                    />
+                    <ImageWithLoader src={`${item.images.url}`} alt={item.name} className={'w-18'} />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">

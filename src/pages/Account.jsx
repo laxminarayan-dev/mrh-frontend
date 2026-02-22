@@ -50,13 +50,14 @@ function formatOrderDate(value) {
 }
 
 const STATUS_STYLES = {
-  delivered: { cls: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
-  placed: { cls: "bg-blue-100 text-blue-700", icon: ShoppingBag },
-  accepted: { cls: "bg-indigo-100 text-indigo-700", icon: Package },
-  ready: { cls: "bg-amber-100 text-amber-700", icon: Package },
-  "out-for-delivery": { cls: "bg-purple-100 text-purple-700", icon: Package },
-  canceled: { cls: "bg-red-100 text-red-600", icon: Clock },
-  rejected: { cls: "bg-red-100 text-red-600", icon: Clock },
+  placed: { cls: "bg-blue-100 text-blue-700 border border-blue-500", icon: ShoppingBag },
+  accepted: { cls: "bg-emerald-100 text-emerald-700 border border-emerald-500", icon: Package },
+  delivered: { cls: "bg-emerald-100 text-emerald-700 border border-emerald-500", icon: CheckCircle2 },
+  ready: { cls: "bg-amber-100 text-amber-700 border border-amber-500", icon: Package },
+  "out_for_delivery": { cls: "bg-purple-100 text-purple-700 border border-purple-500", icon: Package },
+  "out-for-delivery": { cls: "bg-purple-100 text-purple-700 border border-purple-500", icon: Package },
+  canceled: { cls: "bg-red-100 text-red-600 border border-red-500", icon: Clock },
+  rejected: { cls: "bg-red-100 text-red-600 border border-red-500", icon: Clock },
 };
 
 function getStatusStyle(status) {
@@ -66,7 +67,7 @@ function getStatusStyle(status) {
 // ─── Skeleton loaders ─────────────────────────────────────────────────────────
 function OrderSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-orange-100 bg-white p-4 space-y-3">
+    <div className="animate-pulse rounded-xl border border-orange-100 bg-white p-4 space-y-3">
       <div className="flex justify-between">
         <div className="h-3 w-20 bg-slate-200 rounded-full" />
         <div className="h-5 w-16 bg-slate-200 rounded-full" />
@@ -162,21 +163,19 @@ const Account = () => {
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-[#FFFBE9] to-orange-50">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
 
         {/* ── Header ── */}
-        <div className="mb-8 rounded-3xl bg-white border border-orange-100 shadow-sm overflow-hidden">
+        <div className="mb-8 rounded-xl bg-white border border-orange-100 shadow-sm overflow-hidden">
           {/* Top stripe */}
-          <div className="h-2 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500" />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6">
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-xl font-bold shadow-md">
+                <div className="w-16 h-16 rounded-xl tracking-[2px] bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-xl font-bold shadow-md">
                   {initials}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white" />
               </div>
 
               <div>
@@ -209,7 +208,7 @@ const Account = () => {
           <div className="space-y-6 mb-6">
 
             {/* Personal Info */}
-            <div className=" rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
+            <div className=" rounded-xl bg-white border border-orange-100 shadow-sm p-6">
               <h2 className="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
                 <User size={16} className="text-orange-400" /> Personal Information
               </h2>
@@ -232,14 +231,14 @@ const Account = () => {
             </div>
 
             {/* Addresses */}
-            <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
+            <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
               <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
                 <MapPin size={16} className="text-orange-400" /> Saved Addresses
               </h2>
               <p className="text-xs text-slate-400 mb-5">Tap an address to use it for delivery</p>
 
               {newAddress && !gettingLocation && (
-                <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
                   <label className="text-xs font-semibold text-orange-600 uppercase tracking-wider">
                     New address detected
                   </label>
@@ -263,7 +262,7 @@ const Account = () => {
           </div>
 
           {/* ── bottom column: Orders ── */}
-          <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
+          <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
               <ShoppingBag size={16} className="text-orange-400" /> Order History
             </h2>
@@ -277,8 +276,8 @@ const Account = () => {
                   <OrderSkeleton />
                 </>
               ) : orders.length === 0 ? (
-                <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-8 text-center">
-                  <div className="mx-auto w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-3">
+                <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-8 text-center">
+                  <div className="mx-auto w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3">
                     <UtensilsCrossed size={22} className="text-orange-400" />
                   </div>
                   <h3 className="font-semibold text-slate-800 mb-1">No orders yet</h3>
@@ -306,7 +305,7 @@ const Account = () => {
                         key={order._id || shortId}
                         type="button"
                         onClick={() => id && navigate(`/orders/${id}`)}
-                        className="group w-full text-left rounded-2xl border border-slate-200 bg-slate-50 hover:bg-orange-50 hover:border-orange-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm"
+                        className="group w-full text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50 hover:border-orange-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm h-fit"
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div>
@@ -409,7 +408,7 @@ export const ListAddresses = ({
 
   if (!addressList.length && !newAddress) {
     return (
-      <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/40 p-6 text-center">
+      <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 p-6 text-center">
         <div className="mx-auto w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-3">
           <MapPin size={18} className="text-orange-500" />
         </div>
@@ -459,7 +458,7 @@ export const ListAddresses = ({
                 sessionStorage.setItem("locationChoiceTime", Date.now());
               }
             }}
-            className={`relative rounded-2xl border-2 p-4 cursor-pointer transition-all duration-150
+            className={`relative rounded-xl border-2 p-4 cursor-pointer transition-all duration-150
               ${isSelected
                 ? "border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-sm"
                 : "border-slate-100 bg-white hover:border-orange-200 hover:bg-orange-50/40"

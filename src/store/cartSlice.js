@@ -182,6 +182,63 @@ export const placeOrder = createAsyncThunk(
     }
 );
 
+export const cancelOrder = createAsyncThunk("cart/cancelOrder", async (order, thunkAPI) => {
+    try {
+        const token = Cookies.get("token");
+        if (!token) {
+            return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+        }
+        const response = await fetch(
+            `${import.meta.env.VITE_BACKEND_API}/api/orders/update/${order._id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ ...order, status: "cancelled" }),
+            }
+        );
+        if (!response.ok) {
+            const err = await response.json();
+            return thunkAPI.rejectWithValue(err);
+        }
+        const data = await response.json();
+        return data.order;
+    } catch (error) {
+        return thunkAPI.rejectWithValue({ message: error.message });
+    }
+})
+
+export const addReview = createAsyncThunk("cart/addReview", async (order, thunkAPI) => {
+    try {
+        const token = Cookies.get("token");
+        if (!token) {
+            return thunkAPI.rejectWithValue({ message: "Missing auth token" });
+        }
+        console.log("Submitting review for order:", order, "with data:", order.review);
+        const response = await fetch(
+            `${import.meta.env.VITE_BACKEND_API}/api/orders/review/${order._id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(order.review),
+            }
+        );
+        if (!response.ok) {
+            const err = await response.json();
+            return thunkAPI.rejectWithValue(err);
+        }
+        const data = await response.json();
+        return data.order;
+    } catch (error) {
+        return thunkAPI.rejectWithValue({ message: error.message });
+    }
+})
+
 
 const initialState = {
     items: [],
@@ -342,6 +399,19 @@ const cartSlice = createSlice({
                 state.placingOrder = false;
                 state.orderPlaced = false;
                 state.error = action.payload?.message || "Failed to place order";
+            });
+        builder
+            .addCase(addReview.pending, (state) => {
+                state.error = null;
+            })
+            .addCase(addReview.fulfilled, (state, action) => {
+                const updatedOrder = action.payload;
+                state.orders = state.orders.map(order =>
+                    order._id === updatedOrder._id ? updatedOrder : order
+                );
+            })
+            .addCase(addReview.rejected, (state, action) => {
+                state.error = action.payload?.message || "Failed to submit review";
             });
 
     },
