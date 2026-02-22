@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2, Plus, Minus, Handshake, CloudUpload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -7,8 +7,45 @@ import { addItem, removeItem, deleteItem } from "../store/cartSlice";
 function Cart() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const { items } = useSelector((state) => state.cart);
   const { isLoggedIn } = useSelector((state) => state.auth);
+  const { shopsData, deliveryShop } = useSelector((state) => state.shop);
+  const [shop, setShop] = useState(null);
+  const [isUnavailable, setIsUnavailable] = useState({ status: false, message: "" });
+
+
+  useEffect(() => {
+    Array.isArray(shopsData) && shopsData.forEach((shop) => {
+      if (shop._id === deliveryShop?._id) {
+        setShop(shop);
+      }
+    });
+  }, [shopsData, deliveryShop]);
+
+
+  useEffect(() => {
+    if (shop) {
+      const shopClose = shop.shopOpen
+      if (!shopClose) {
+        setIsUnavailable({
+          status: true,
+          message: `Your nearest shop is currently closed. Please select another shop or try again later.`
+        });
+        return;
+      }
+
+      const unavailableItems = items.filter(item => !shop.menuItems.includes(item._id));
+      if (unavailableItems.length > 0) {
+        setIsUnavailable({
+          status: true,
+          message: `Some items in your cart are not available at your nearest shop. Please remove them to proceed.`
+        });
+      } else {
+        setIsUnavailable({ status: false, message: "" });
+      }
+    }
+  }, [shop, items]);
 
   const subtotal = items.reduce((sum, item) => {
     if (item.isSale) {
@@ -58,8 +95,15 @@ function Cart() {
             {items.map((item) => (
               <div
                 key={item._id}
-                className="rounded-2xl border border-orange-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+                className={`relative rounded-2xl border  p-4 shadow-sm hover:shadow-md transition-shadow ${!shop?.menuItems.includes(item._id) ? 'opacity-70 bg-red-100/40 border-red-500' : 'bg-white border-orange-200'}`}
               >
+                {!shop?.menuItems.includes(item._id) && (
+                  <>
+                    <div className="absolute -rotate-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-99 bg-red-500 text-white text-md px-2 py-1 rounded-full">
+                      Not Available
+                    </div>
+                  </>
+                )}
                 <div className="flex gap-4">
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-400 text-xs">
                     <img
@@ -82,12 +126,12 @@ function Cart() {
                       </div>
                       <button
                         onClick={() => dispatch(deleteItem(item._id))}
-                        className="text-slate-400 hover:text-red-600 transition"
+                        className={` hover:text-red-600 transition ${!shop?.menuItems.includes(item._id) ? 'text-red-600' : 'text-slate-400'}`}
                       >
                         <Trash2 size={18} />
                       </button>
                     </div>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className={`mt-4 flex items-center justify-between ${!shop?.menuItems.includes(item._id) ? 'pointer-events-none' : ''}`}>
                       <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 p-1">
                         <button
                           onClick={() => dispatch(removeItem(item._id))}
@@ -146,32 +190,41 @@ function Cart() {
                   ₹{total}
                 </span>
               </div>
-              {isLoggedIn ? (
-                <button
-                  onClick={() => {
-                    navigate("/checkout");
-                  }}
-                  className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
-                >
-                  Proceed to Checkout
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    navigate("/auth");
-                  }}
-                  className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
-                >
-                  Login to Checkout
-                </button>
-              )}
+              {isUnavailable.status ? (
+                <p className="mt-4 text-red-600 px-3 py-2 text-sm  gap-1 ">
+                  {isUnavailable.message}
+                </p>
+              ) : <>
 
-              <Link
-                to="/"
-                className="mt-3 block w-full text-center rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"
-              >
-                Continue Shopping
-              </Link>
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      navigate("/checkout");
+                    }}
+                    className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+                  >
+                    Proceed to Checkout
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      navigate("/auth");
+                    }}
+                    className="mt-6 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+                  >
+                    Login to Checkout
+                  </button>
+                )}
+                <Link
+                  to="/"
+                  className="mt-3 block w-full text-center rounded-lg border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"
+                >
+                  Continue Shopping
+                </Link>
+              </>}
+
+
+
               {subtotal <= 500 && (
                 <p className="mt-4 text-orange-700 px-3 py-2 text-sm flex items-center justify-start gap-1 ">
                   <Handshake size={20} /> Add ₹{500 - subtotal} more for free
