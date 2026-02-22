@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { placeOrder } from "../store/cartSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +18,7 @@ import { clearCart } from "../store/cartSlice";
 function Checkout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     paymentMethod: "cash",
   });
@@ -170,11 +171,10 @@ function Checkout() {
                 ].map((method) => (
                   <label
                     key={method.id}
-                    className={`group relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 ${
-                      formData.paymentMethod === method.id
-                        ? `border-orange-500 bg-orange-50 shadow-md scale-[1.02]`
-                        : "border-slate-300 bg-white "
-                    } ${!method.available ? "opacity-50 !cursor-not-allowed" : "hover:border-slate-300 hover:shadow-sm hover:scale-[1.01]"}`}
+                    className={`group relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 ${formData.paymentMethod === method.id
+                      ? `border-orange-500 bg-orange-50 shadow-md scale-[1.02]`
+                      : "border-slate-300 bg-white "
+                      } ${!method.available ? "opacity-50 !cursor-not-allowed" : "hover:border-slate-300 hover:shadow-sm hover:scale-[1.01]"}`}
                   >
                     <input
                       type="radio"
@@ -201,11 +201,10 @@ function Checkout() {
                         </div>
                       </div>
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                          formData.paymentMethod === method.id
-                            ? "border-orange-500 bg-orange-500"
-                            : "border-slate-300 bg-white"
-                        }`}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.paymentMethod === method.id
+                          ? "border-orange-500 bg-orange-500"
+                          : "border-slate-300 bg-white"
+                          }`}
                       >
                         {formData.paymentMethod === method.id && (
                           <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -282,8 +281,8 @@ function Checkout() {
                   onClick={() => {
                     dispatch(placeOrder(orderDetail))
                       .unwrap()
-                      .then(() => {
-                        navigate("/account");
+                      .then((res) => {
+                        navigate(`/orders/${res.order._id}`);
                       })
                       .catch(() => {
                         console.error(
@@ -314,7 +313,7 @@ function Checkout() {
               </div>
             </div>
           ) : (
-            <div className="md:col-span-1 flex flex-col items-center gap-4 p-8 border border-slate-200 rounded-3xl bg-white">
+            <div className="md:col-span-1 flex flex-col items-center gap-4 p-8 border border-slate-200 rounded-3xl bg-white h-fit sticky top-20">
               <CheckCircle2 className="text-green-500" size={48} />
               <h3 className="text-lg font-semibold text-slate-900">
                 Your cart is empty

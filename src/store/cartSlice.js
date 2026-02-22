@@ -270,6 +270,12 @@ const cartSlice = createSlice({
             state.synced = false;
             clearCartStorage();
         },
+        updateOrderInStore: (state, action) => {
+            const updatedOrder = action.payload;
+            state.orders = state.orders.map(order =>
+                order._id === updatedOrder._id ? updatedOrder : order
+            );
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -341,7 +347,7 @@ const cartSlice = createSlice({
     },
 });
 
-export const { addItem, addBulkItems, removeItem, deleteItem, clearCart } =
+export const { addItem, addBulkItems, removeItem, deleteItem, clearCart, updateOrderInStore } =
     cartSlice.actions;
 
 export default cartSlice.reducer;

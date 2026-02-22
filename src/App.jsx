@@ -1,24 +1,26 @@
+import { useRef } from "react";
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
-import { Outlet, useLocation } from "react-router-dom";
 import { Book, House, Info, Phone } from "lucide-react";
-import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   updateCartData,
   fetchCartItems,
   addBulkItems,
+  updateOrderInStore,
 } from "./store/cartSlice";
-import Cookies from "js-cookie";
-import { socket } from "./socket";
 import {
   setInRange,
   setDeliveryShop,
   updateShopsData,
 } from "./store/shopSlice";
+
+import Cookies from "js-cookie";
+import { socket } from "./socket";
 import LoaderComp from "./components/Loader";
+import { Outlet, useLocation } from "react-router-dom";
 import { getDistanceKm } from "./components/Direction";
 
 function App() {
@@ -57,9 +59,14 @@ function App() {
     socket.on("shop-updated", (updatedShop) => {
       dispatch(updateShopsData(updatedShop));
     });
+    socket.on("order-updated", (updatedOrder) => {
+      dispatch(updateOrderInStore(updatedOrder));
+    });
+
     return () => {
       socket.off("connect");
       socket.off("shop-updated");
+      socket.off("order-updated");
     };
   }, [isAuthenticated, user]);
 

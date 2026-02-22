@@ -1,15 +1,25 @@
-import { Logs, X, ChefHat, UserRound, ShoppingBasket, ChevronDown, ChevronDownCircle, ChevronsDown, MapPin } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Logs, X, ChefHat, UserRound, ShoppingBasket, ChevronDown, MapPin } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 
 function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, tempAddress } = useSelector((state) => state.auth);
   const { items } = useSelector((state) => state.cart);
   const [address, setAddress] = useState(null);
-  const { inRange } = useSelector((state) => state.shop);
+  const [showLocationGate, setShowLocationGate] = useState(true);
   const displayAddress = address || "Set delivery location";
+
+
+  useEffect(() => {
+    if (location.pathname === "/cart" || location.pathname === "/checkout" || location.pathname.startsWith("/orders/") || location.pathname === "/account") {
+      setShowLocationGate(false);
+    } else {
+      setShowLocationGate(true);
+    }
+  }, [location.pathname]);
 
   const handleLocationChange = (event) => {
     if (event.target.value !== "change") return;
@@ -105,7 +115,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
           </div>
         </div>
       </nav>
-      <div className="mx-6 mt-2 flex flex-col gap-1">
+      {showLocationGate && (<div className=" mt-2 flex flex-col gap-1 md:w-[90vw] max-w-[1100px] mx-6 md:mx-auto pb-2">
         <div className="flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <MapPin size={16} className="text-orange-500 flex-shrink-0" />
@@ -124,16 +134,9 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
             <ChevronDown size={14} className="pointer-events-none absolute right-1 text-orange-600" />
           </div>
         </div>
-        {inRange === false && (
-          <div className="px-3 py-1 flex items-center gap-2">
-            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <span className="text-xs text-red-600 font-medium">Sorry, we don't deliver to your location yet.</span>
-          </div>
-        )}
-      </div>
 
+      </div>
+      )}
     </>
   );
 }
