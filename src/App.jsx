@@ -16,6 +16,7 @@ import {
   setDeliveryShop,
   updateShopsData,
 } from "./store/shopSlice";
+import { loadItems } from "./store/itemsSlice";
 
 import Cookies from "js-cookie";
 import { socket } from "./socket";
@@ -62,11 +63,19 @@ function App() {
     socket.on("order-updated", (updatedOrder) => {
       dispatch(updateOrderInStore(updatedOrder));
     });
+    socket.on("item-updated", () => {
+      dispatch(loadItems());
+    })
+    socket.on("item-deleted", () => {
+      dispatch(loadItems());
+    })
 
     return () => {
       socket.off("connect");
       socket.off("shop-updated");
       socket.off("order-updated");
+      socket.off("item-updated");
+      socket.off("item-deleted");
     };
   }, [isAuthenticated, user]);
 
