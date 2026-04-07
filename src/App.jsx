@@ -46,7 +46,8 @@ function App() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [isAuthenticated, user]);
+
   useEffect(() => {
     socket.on("connect", () => {
       if (isAuthenticated && user?._id) {
@@ -65,10 +66,10 @@ function App() {
     });
     socket.on("item-updated", () => {
       dispatch(loadItems());
-    })
+    });
     socket.on("item-deleted", () => {
       dispatch(loadItems());
-    })
+    });
 
     return () => {
       socket.off("connect");
