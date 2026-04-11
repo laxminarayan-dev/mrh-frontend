@@ -34,7 +34,7 @@ const shopSlice = createSlice({
         },
         updateShopsData: (state, action) => {
             state.shopsData = state.shopsData.map((shop) =>
-                shop._id === action.payload._id ? action.payload : shop
+                shop._id === action.payload?._id ? action.payload : shop
             );
         },
     },

@@ -31,6 +31,13 @@ function App() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { items, synced } = useSelector((state) => state.cart);
   const timerRef = useRef(null);
+  const { tempAddress } = useSelector((state) => state.auth);
+  const {
+    loading: ShopLoading,
+    shopsData,
+    deliveryShop,
+  } = useSelector((state) => state.shop);
+  const [shopCoords, setShopCoords] = useState([]);
 
   const links = [
     { name: "Home", url: "/", icon: <House /> },
@@ -78,7 +85,7 @@ function App() {
       socket.off("item-updated");
       socket.off("item-deleted");
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, dispatch]);
 
   useEffect(() => {
     if (isAuthenticated && user?._id) {
@@ -96,10 +103,10 @@ function App() {
       dispatch(updateCartData())
         .unwrap()
         .then(() => {
-          dispatch(fetchCartItems()); // 👈 THIS IS MISSING
+          dispatch(fetchCartItems());
         });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, dispatch]);
 
   useEffect(() => {
     if (isSidebarOpen) {
@@ -138,19 +145,15 @@ function App() {
     }
   }, [isAuthenticated, user, dispatch]);
 
-  const { tempAddress } = useSelector((state) => state.auth);
-  const { loading: ShopLoading, shopsData } = useSelector(
-    (state) => state.shop,
-  );
-
-  const [shopCoords, setShopCoords] = useState([]);
   useEffect(() => {
-    if (shopsData.length > 0) {
-      setShopCoords(shopsData);
+    // Handle both array and { shops: Array } structure
+    const shops = Array.isArray(shopsData)
+      ? shopsData
+      : (shopsData?.shops ?? []);
+    if (shops.length > 0) {
+      setShopCoords(shops);
     }
   }, [shopsData]);
-
-  const range = 10; // km
 
   // Finding nearest shop and verifying range
   useEffect(() => {
@@ -159,23 +162,29 @@ function App() {
       let nearest = shopCoords[0];
       let min = Infinity;
       for (const o of shopCoords) {
-        const d = getDistanceKm(tempAddress.coordinates, [
-          o.shopLocation.coordinates[1],
-          o.shopLocation.coordinates[0],
-        ]);
+        const loc = o?.shopLocation;
+        if (!loc?.coordinates && !(loc?.lat && loc?.lng)) continue;
+
+        const coords = loc.coordinates
+          ? [loc.coordinates[1], loc.coordinates[0]]
+          : [loc.lat, loc.lng];
+
+        const d = getDistanceKm(tempAddress.coordinates, coords);
         if (d < min) {
           min = d;
           nearest = o;
         }
       }
-      if (min > range) {
+
+      const shopRange = nearest.shopDeliveryRange || DELIVERY_RANGE_KM;
+      if (min > parseInt(shopRange)) {
         dispatch(setInRange(false));
       } else {
         dispatch(setInRange(true));
       }
       dispatch(setDeliveryShop(nearest));
     }
-  }, [tempAddress, shopCoords]);
+  }, [tempAddress, shopCoords, dispatch]);
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#FFFBE9]">
