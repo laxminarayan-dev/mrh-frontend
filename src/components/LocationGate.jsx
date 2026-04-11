@@ -440,17 +440,6 @@ export default function LocationGate({ children }) {
     sessionStorage.setItem("formattedAddress", addr.formattedAddress || "");
     dispatch(setTempAddress(addr));
     dispatch(setDeliveryShop(nearest.shop));
-
-    if (isAuthenticated && user) {
-      console.log("User selected saved address:", {
-        label: addr.label,
-        address: addr.formattedAddress,
-        coordinates: addr.coordinates,
-        nearestShop: nearest.shop.name,
-        distance: nearest.distance.toFixed(2),
-        userId: user._id,
-      });
-    }
     setShowModal(false);
   }
 
