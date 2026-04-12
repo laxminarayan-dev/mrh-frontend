@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import {
   Mail,
   Clock,
@@ -185,17 +186,21 @@ const Inquiries = () => {
   const fetchMyInquiries = async () => {
     try {
       setLoadingInquiries(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/inquiry/my-inquiries", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const token = Cookies.get("token");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/api/inquiry/my-inquiries`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-
+      );
+      console.log(response);
       if (response.ok) {
         const data = await response.json();
+        console.log("ok hai ji", data);
         setInquiries(data.inquiries || []);
       } else {
         console.error("Failed to fetch inquiries");

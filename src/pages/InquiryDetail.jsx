@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import Cookies from "js-cookie";
 import {
   Mail,
   Clock,
@@ -72,16 +73,19 @@ const InquiryDetail = () => {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
 
       // Fetch all user inquiries and find the one matching the ID
-      const response = await fetch("/api/inquiry/my-inquiries", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/api/inquiry/my-inquiries`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();

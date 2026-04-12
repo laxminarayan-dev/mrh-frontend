@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import {
   Mail,
   Phone,
@@ -18,13 +19,22 @@ function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAlert, setSuccessAlert] = useState(false);
   const [errorAlert, setErrorAlert] = useState(false);
+  const [errorType, setErrorType] = useState(null); // 'empty', 'no-token', 'submit-failed'
   const [inquiry, setInquiry] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate inquiry field
-    if (!inquiry.trim()) {
+    // Validate inquiry field - empty check
+    if (inquiry.trim() === "") {
+      setErrorType("empty");
+      setErrorAlert(true);
+      return;
+    }
+
+    // Validate inquiry field - minimum length check
+    if (inquiry.trim().length < 10) {
+      setErrorType("too-short");
       setErrorAlert(true);
       return;
     }
@@ -32,10 +42,11 @@ function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Get auth token from localStorage
-      const token = localStorage.getItem("token");
+      // Get auth token from cookies
+      const token = Cookies.get("token");
 
       if (!token) {
+        setErrorType("no-token");
         setErrorAlert(true);
         setIsSubmitting(false);
         return;
@@ -54,15 +65,16 @@ function Contact() {
             fullName: user?.fullName,
             email: user?.email,
             inquiry: inquiry.trim(),
-            category: "inquiry", // You can make this dynamic if needed
+            category: "other",
           }),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         console.error("Error:", data.message);
+        setErrorType("submit-failed");
         setErrorAlert(true);
         setIsSubmitting(false);
         return;
@@ -74,13 +86,12 @@ function Contact() {
       e.target.reset();
     } catch (error) {
       console.error("Failed to submit inquiry:", error);
+      setErrorType("submit-failed");
       setErrorAlert(true);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  console.log(user);
 
   return (
     <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200 relative">
@@ -94,19 +105,35 @@ function Contact() {
               </div>
               <div className="flex-1 pt-1">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Message Required
+                  {errorType === "empty"
+                    ? "Message Required"
+                    : errorType === "too-short"
+                      ? "Message Too Short"
+                      : errorType === "no-token"
+                        ? "Authentication Required"
+                        : "Submission Failed"}
                 </h3>
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Please enter your inquiry or message before submitting. We need to
-              understand what you'd like to tell us!
+              {errorType === "empty"
+                ? "Please enter your inquiry or message before submitting. We need to understand what you'd like to tell us!"
+                : errorType === "too-short"
+                  ? "Your inquiry must be at least 10 characters long. Please provide more details so we can better assist you."
+                  : errorType === "no-token"
+                    ? "Your session has expired. Please logout and login again to submit an inquiry."
+                    : "Failed to submit your inquiry. Please try again later."}
             </p>
             <button
-              onClick={() => setErrorAlert(false)}
+              onClick={() => {
+                setErrorAlert(false);
+                if (errorType === "no-token") {
+                  navigate("/auth/login");
+                }
+              }}
               className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
             >
-              Got it
+              {errorType === "no-token" ? "Go to Login" : "Got it"}
             </button>
           </div>
         </div>
@@ -266,9 +293,30 @@ function Contact() {
                     rows="4"
                     placeholder="Share your inquiry about our menu, catering services, or bulk orders..."
                     value={inquiry}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
+                    className={`mt-2 w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400 transition-colors ${
+                      inquiry.trim().length < 10 && inquiry.trim().length > 0
+                        ? "border-yellow-300 focus:ring-2 focus:ring-yellow-200"
+                        : "border-slate-200"
+                    }`}
                     onChange={(e) => setInquiry(e.target.value)}
                   ></textarea>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p
+                      className={`text-xs font-medium ${
+                        inquiry.trim().length < 10 && inquiry.trim().length > 0
+                          ? "text-yellow-600"
+                          : inquiry.trim().length >= 10
+                            ? "text-green-600"
+                            : "text-slate-500"
+                      }`}
+                    >
+                      {inquiry.trim().length < 10 && inquiry.trim().length > 0
+                        ? `Minimum 10 characters required (${inquiry.trim().length}/10)`
+                        : inquiry.trim().length >= 10
+                          ? `✓ Ready to send (${inquiry.trim().length} characters)`
+                          : "Minimum 10 characters required"}
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="submit"
