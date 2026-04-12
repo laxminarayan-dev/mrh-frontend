@@ -16,7 +16,6 @@ function Contact() {
   const navigate = useNavigate();
   const { isAuthenticated } = useSelector((s) => s.auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [gettingLocation, setGettingLocation] = useState(false);
   const [successAlert, setSuccessAlert] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -61,19 +60,6 @@ function Contact() {
         </div>
       )}
 
-      {gettingLocation && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500"></div>
-            <p className="text-slate-700 font-semibold text-lg">
-              Getting your location...
-            </p>
-            <p className="text-slate-500 text-sm">
-              Please allow location access
-            </p>
-          </div>
-        </div>
-      )}
       <section className="relative max-w-6xl mx-auto px-6 py-12 md:py-16 z-20">
         <div className="grid md:grid-cols-2 gap-8">
           <div>
@@ -217,10 +203,7 @@ function Contact() {
           </div>
         </div>
 
-        <Map
-          gettingLocation={gettingLocation}
-          setGettingLocation={setGettingLocation}
-        />
+        <Map />
       </section>
     </div>
   );
