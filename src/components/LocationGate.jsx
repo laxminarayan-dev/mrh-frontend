@@ -72,10 +72,12 @@ export default function LocationGate({ children }) {
   const [shopMarkers, setShopMarkers] = useState([]);
   const [mapBounds, setMapBounds] = useState(null);
   const [nearestShop, setNearestShop] = useState(null);
+  const [gpsErrorCode, setGpsErrorCode] = useState(null);
 
   // Prevent double-save on login
   const savedOnLoginRef = useRef(false);
   const gpsWatchRef = useRef(null);
+  const gpsFallbackRef = useRef(false);
 
   // ─── Shop deletion listener ───────────────────────────────────────────
   useEffect(() => {
@@ -320,6 +322,8 @@ export default function LocationGate({ children }) {
     setGettingGPS(true);
     setMapLoading(true);
     setView("map");
+    setGpsErrorCode(null);
+    gpsFallbackRef.current = false;
 
     gpsWatchRef.current = navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -327,21 +331,69 @@ export default function LocationGate({ children }) {
         setMarkerPos(coords);
         setGettingGPS(false);
         setMapLoading(false);
+        setGpsErrorCode(null);
       },
       (err) => {
-        setGettingGPS(false);
-        setMapLoading(false);
-        setView("picker");
-        const msgs = {
-          1: "Location permission denied",
-          2: "Location unavailable",
-          3: "Location request timed out",
-        };
-        setAlertMessage(msgs[err.code] || "Unable to get location");
-        setShowAlert(true);
+        // First attempt failed - try fallback without high accuracy
+        if (!gpsFallbackRef.current && (err.code === 1 || err.code === 2)) {
+          gpsFallbackRef.current = true;
+          gpsWatchRef.current = navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const coords = [pos.coords.latitude, pos.coords.longitude];
+              setMarkerPos(coords);
+              setGettingGPS(false);
+              setMapLoading(false);
+              setGpsErrorCode(null);
+            },
+            (fallbackErr) => {
+              // Fallback also failed - now display error
+              handleGPSError(fallbackErr.code, true);
+            },
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 },
+          );
+          return;
+        }
+
+        // Fallback already attempted or different error - show error
+        handleGPSError(err.code, gpsFallbackRef.current);
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 },
     );
+  }
+
+  function handleGPSError(errorCode, isFallback) {
+    setGettingGPS(false);
+    setMapLoading(false);
+
+    // If fallback attempt also failed with code 1, it means GPS is unavailable on device, not permission denied
+    let finalErrorCode = errorCode;
+    if (isFallback && errorCode === 1) {
+      finalErrorCode = 2; // Convert to "location unavailable" since permission was just checked
+    }
+
+    setGpsErrorCode(finalErrorCode);
+    setView("picker");
+
+    let msg = "";
+    switch (finalErrorCode) {
+      case 1:
+        msg =
+          "Location permission was denied. Please enable location access:\n\n1. Click the lock icon in address bar\n2. Find 'Location' and set to 'Allow'\n3. Reload page and try again";
+        break;
+      case 2:
+        msg =
+          "Location data is unavailable. Make sure:\n\n1. GPS is enabled on your device\n2. Location services are active\n3. You're in an area with GPS signal\n\nOr use the map to pin your location manually.";
+        break;
+      case 3:
+        msg =
+          "Location request timed out. This might be due to poor network or GPS signal. Please try again or enable high accuracy mode.";
+        break;
+      default:
+        msg = "Unable to get your location. Please try again.";
+    }
+
+    setAlertMessage(msg);
+    setShowAlert(true);
   }
 
   function cancelGPS() {
@@ -469,7 +521,7 @@ export default function LocationGate({ children }) {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed whitespace-pre-line">
               {alertMessage}
             </p>
             <div className="flex gap-3">
@@ -477,6 +529,7 @@ export default function LocationGate({ children }) {
                 onClick={() => {
                   setShowAlert(false);
                   setAlertMessage(null);
+                  setGpsErrorCode(null);
                 }}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
               >
@@ -497,14 +550,26 @@ export default function LocationGate({ children }) {
                   onClick={() => {
                     setShowAlert(false);
                     setAlertMessage(null);
-                    setView("picker");
-                    setShowModal(true);
+                    if (gpsErrorCode === 1) {
+                      // Permission denied - show instructions then retry
+                      setView("picker");
+                      setShowModal(true);
+                    } else if (gpsErrorCode === 3 || gpsErrorCode === 2) {
+                      // Timeout or unavailable - try again with map picker as fallback
+                      startGPS();
+                    } else {
+                      setView("picker");
+                      setShowModal(true);
+                    }
+                    setGpsErrorCode(null);
                   }}
                   className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
                 >
                   {alertMessage.includes("in your current delivery range")
                     ? "Change Location"
-                    : "Try Again"}
+                    : gpsErrorCode === 1
+                      ? "Try Again"
+                      : "Retry"}
                 </button>
               )}
             </div>
@@ -530,6 +595,24 @@ export default function LocationGate({ children }) {
                   <p className="text-sm text-gray-500">
                     We need your location to show delivery options in your area
                   </p>
+                  {gpsErrorCode === 1 && (
+                    <p className="text-xs text-blue-600 mt-2 p-2 bg-blue-50 rounded-lg">
+                      💡 Make sure location permission is enabled in your
+                      browser settings
+                    </p>
+                  )}
+                  {gpsErrorCode === 2 && (
+                    <p className="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded-lg">
+                      💡 GPS is not available. Make sure GPS is enabled on your
+                      device, or use the map to pin your location
+                    </p>
+                  )}
+                  {gpsErrorCode === 3 && (
+                    <p className="text-xs text-amber-600 mt-2 p-2 bg-amber-50 rounded-lg">
+                      💡 Location took too long. Try again or use the map to pin
+                      your location
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -609,7 +692,7 @@ export default function LocationGate({ children }) {
                       />
                       <p className="text-sm text-gray-500">
                         {gettingGPS
-                          ? "Getting your location..."
+                          ? "Getting your location...\n(Keep GPS enabled)"
                           : "Loading map..."}
                       </p>
                       {gettingGPS && (
@@ -703,19 +786,46 @@ export default function LocationGate({ children }) {
                 <button
                   onClick={confirmLocation}
                   disabled={!isDeliverable || gettingGPS || confirming}
-                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-medium text-white transition-all shadow-lg
+                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-medium text-white transition-all shadow-lg min-h-[56px]
                     ${
-                      isDeliverable
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                        : "bg-gray-400 cursor-not-allowed"
+                      gettingGPS
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : isDeliverable
+                          ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                          : "bg-gray-400 cursor-not-allowed"
                     }`}
                 >
-                  {confirming ? (
-                    <Loader className="animate-spin" size={18} />
-                  ) : isDeliverable ? (
-                    "✓ Confirm Location"
-                  ) : (
-                    "Not in delivery range"
+                  {gettingGPS && (
+                    <>
+                      <Loader
+                        className="animate-spin flex-shrink-0"
+                        size={18}
+                      />
+                      <span className="text-sm font-semibold">
+                        Getting location...
+                      </span>
+                    </>
+                  )}
+                  {!gettingGPS && confirming && (
+                    <>
+                      <Loader
+                        className="animate-spin flex-shrink-0"
+                        size={18}
+                      />
+                      <span className="text-sm font-semibold">
+                        Confirming...
+                      </span>
+                    </>
+                  )}
+                  {!gettingGPS && !confirming && isDeliverable && (
+                    <span className="text-sm font-semibold">
+                      ✓ Confirm Location
+                    </span>
+                  )}
+                  {!gettingGPS && !confirming && !isDeliverable && (
+                    <span className="text-sm font-semibold">
+                      Not in delivery range
+                    </span>
                   )}
                 </button>
               </div>

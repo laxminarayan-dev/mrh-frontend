@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import Direction from "../components/Direction";
 import L, { map } from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MapPin, Store } from "lucide-react";
+import { MapPin, Store, AlertCircle } from "lucide-react";
 
 function UserPin(color = "#f97316", size = 36) {
   return L.divIcon({
@@ -63,6 +63,7 @@ function Map({ setGettingLocation }) {
   const [userPos, setUserPos] = useState(null);
   const [distance, setDistance] = useState(null);
   const [mapLoading, setMapLoading] = useState(true);
+  const [errorAlert, setErrorAlert] = useState(null);
 
   const shopIcon = ShopPin("#f97316", 24); // orange
   const userIcon = UserPin("#2563eb", 24); // blue
@@ -71,7 +72,7 @@ function Map({ setGettingLocation }) {
   function LocateMe() {
     setGettingLocation(true);
     if (!navigator.geolocation) {
-      alert("Geolocation not supported");
+      setErrorAlert("Geolocation not supported on this browser");
       setGettingLocation(false);
       return;
     }
@@ -89,12 +90,14 @@ function Map({ setGettingLocation }) {
         }
       },
       (err) => {
-        alert("Please turn on GPS / High accuracy mode");
+        setErrorAlert(
+          "Please turn on GPS / High accuracy mode from your device and try again.",
+        );
         setGettingLocation(false);
       },
       {
         enableHighAccuracy: true,
-        timeout: 20000, // ⬅ increase
+        timeout: 20000,
         maximumAge: 0,
       },
     );
@@ -107,6 +110,44 @@ function Map({ setGettingLocation }) {
   }, []);
   return (
     <div className="relative mt-10 rounded-3xl border border-orange-200 bg-white p-6 shadow-sm">
+      {/* Error Alert Modal */}
+      {errorAlert && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
+                <AlertCircle size={24} className="text-red-500" />
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Location Error
+                </h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              {errorAlert}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setErrorAlert(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => {
+                  setErrorAlert(null);
+                  LocateMe();
+                }}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
