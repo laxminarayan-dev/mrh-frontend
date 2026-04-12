@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { logout, setTempAddress } from "../store/authSlice";
 import { useEffect, useState } from "react";
 import { fetchCartItems } from "../store/cartSlice";
+import { setDeliveryShop } from "../store/shopSlice";
 import {
   UtensilsCrossed,
   MapPin,
@@ -15,8 +16,10 @@ import {
   Clock,
   Package,
   ShoppingBag,
+  AlertCircle,
 } from "lucide-react";
 import { getStreetName } from "../components/Map";
+import { getDistanceKm } from "../components/Direction";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function distanceInMeters([lat1, lon1], [lat2, lon2]) {
@@ -33,13 +36,21 @@ function distanceInMeters([lat1, lon1], [lat2, lon2]) {
 function formatAddressForDisplay(formattedAddress) {
   if (typeof formattedAddress !== "string" || !formattedAddress.trim())
     return { house: "", line1: "", line2: "", country: "" };
-  const parts = formattedAddress.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = formattedAddress
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (!parts.length) return { house: "", line1: "", line2: "", country: "" };
   const country = parts[parts.length - 1];
   const hasPostcode = /^[0-9]{4,10}$/.test(parts[parts.length - 2]);
   const tail = hasPostcode ? parts.length - 2 : parts.length - 1;
   const body = parts.slice(0, tail);
-  return { house: body[0] || "", line1: body[1] || "", line2: body.slice(2).join(", "), country };
+  return {
+    house: body[0] || "",
+    line1: body[1] || "",
+    line2: body.slice(2).join(", "),
+    country,
+  };
 }
 
 function formatOrderDate(value) {
@@ -50,18 +61,47 @@ function formatOrderDate(value) {
 }
 
 const STATUS_STYLES = {
-  placed: { cls: "bg-blue-100 text-blue-700 border border-blue-500", icon: ShoppingBag },
-  accepted: { cls: "bg-emerald-100 text-emerald-700 border border-emerald-500", icon: Package },
-  delivered: { cls: "bg-emerald-100 text-emerald-700 border border-emerald-500", icon: CheckCircle2 },
-  ready: { cls: "bg-amber-100 text-amber-700 border border-amber-500", icon: Package },
-  "out_for_delivery": { cls: "bg-purple-100 text-purple-700 border border-purple-500", icon: Package },
-  "out-for-delivery": { cls: "bg-purple-100 text-purple-700 border border-purple-500", icon: Package },
-  canceled: { cls: "bg-red-100 text-red-600 border border-red-500", icon: Clock },
-  rejected: { cls: "bg-red-100 text-red-600 border border-red-500", icon: Clock },
+  placed: {
+    cls: "bg-blue-100 text-blue-700 border border-blue-500",
+    icon: ShoppingBag,
+  },
+  accepted: {
+    cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
+    icon: Package,
+  },
+  delivered: {
+    cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
+    icon: CheckCircle2,
+  },
+  ready: {
+    cls: "bg-amber-100 text-amber-700 border border-amber-500",
+    icon: Package,
+  },
+  out_for_delivery: {
+    cls: "bg-purple-100 text-purple-700 border border-purple-500",
+    icon: Package,
+  },
+  "out-for-delivery": {
+    cls: "bg-purple-100 text-purple-700 border border-purple-500",
+    icon: Package,
+  },
+  canceled: {
+    cls: "bg-red-100 text-red-600 border border-red-500",
+    icon: Clock,
+  },
+  rejected: {
+    cls: "bg-red-100 text-red-600 border border-red-500",
+    icon: Clock,
+  },
 };
 
 function getStatusStyle(status) {
-  return STATUS_STYLES[status?.toLowerCase()] || { cls: "bg-slate-100 text-slate-600", icon: Clock };
+  return (
+    STATUS_STYLES[status?.toLowerCase()] || {
+      cls: "bg-slate-100 text-slate-600",
+      icon: Clock,
+    }
+  );
 }
 
 // ─── Skeleton loaders ─────────────────────────────────────────────────────────
@@ -88,6 +128,7 @@ const Account = () => {
   const navigate = useNavigate();
   const { user, tempAddress } = useSelector((s) => s.auth);
   const { orders, loadingOrders } = useSelector((s) => s.cart);
+  const { shopsData } = useSelector((state) => state.shop);
 
   const [accuracy, setAccuracy] = useState(null);
   const [newAddress, setNewAddress] = useState("");
@@ -96,6 +137,8 @@ const Account = () => {
   const [addressList, setAddressList] = useState([]);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [ordersReady, setOrdersReady] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(null);
 
   const profile = {
     fullName: user?.fullName || "",
@@ -103,21 +146,28 @@ const Account = () => {
     phone: user?.phone || "",
   };
 
-  const initials = profile.fullName
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2) || "U";
+  const initials =
+    profile.fullName
+      .split(" ")
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2) || "U";
 
   // ── Fix: fetch orders on mount if not loaded ──────────────────────────────
   useEffect(() => {
     if (!user) return;
-    const timer = setTimeout(() => setOrdersReady(true), 400);
     if (!orders.length && !loadingOrders) {
       dispatch(fetchCartItems());
     }
-    return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, dispatch]);
+
+  // ── Mark orders ready after initial load ────────────────────────────────────
+  useEffect(() => {
+    // Once orders are loaded (not loading and have data or confirmed empty), mark as ready
+    if (!loadingOrders) {
+      setOrdersReady(true);
+    }
+  }, [loadingOrders]);
 
   // ── Hydrate address list ──────────────────────────────────────────────────
   useEffect(() => {
@@ -136,7 +186,7 @@ const Account = () => {
     let cancelled = false;
 
     const existing = addressList.find(
-      (a) => distanceInMeters(coords, a.coordinates) < 100
+      (a) => distanceInMeters(coords, a.coordinates) < 100,
     );
     if (existing) {
       alert("This location is already saved.");
@@ -147,7 +197,11 @@ const Account = () => {
     setGettingLocation(true);
     getStreetName(coords[0], coords[1], accuracy).then((street) => {
       if (cancelled) return;
-      if (street && !street.toLowerCase().startsWith("unnamed") && !street.toLowerCase().startsWith("unknown")) {
+      if (
+        street &&
+        !street.toLowerCase().startsWith("unnamed") &&
+        !street.toLowerCase().startsWith("unknown")
+      ) {
         setNewAddress(street);
       } else {
         alert("Unable to determine street name.");
@@ -156,7 +210,9 @@ const Account = () => {
       setGettingLocation(false);
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [coords, accuracy]);
 
   const showOrderSkeleton = loadingOrders || !ordersReady;
@@ -164,7 +220,6 @@ const Account = () => {
   return (
     <section className="min-h-screen bg-gradient-to-b from-[#FFFBE9] to-orange-50">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-
         {/* ── Header ── */}
         <div className="mb-8 rounded-xl bg-white border border-orange-100 shadow-sm overflow-hidden">
           {/* Top stripe */}
@@ -186,15 +241,23 @@ const Account = () => {
                   {profile.fullName || "Your Account"}
                 </h1>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Member since {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
-                    : "—"} · {orders.length} orders
+                  Member since{" "}
+                  {user?.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}{" "}
+                  · {orders.length} orders
                 </p>
               </div>
             </div>
 
             <button
-              onClick={() => { dispatch(logout()); navigate("/auth/login", { replace: true }); }}
+              onClick={() => {
+                dispatch(logout());
+                navigate("/auth/login", { replace: true });
+              }}
               className="self-start sm:self-auto inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-600 transition-all"
             >
               <LogOut size={14} /> Logout
@@ -203,27 +266,37 @@ const Account = () => {
         </div>
 
         <div className="mt-6">
-
           {/* ── top column ── */}
           <div className="space-y-6 mb-6">
-
             {/* Personal Info */}
             <div className=" rounded-xl bg-white border border-orange-100 shadow-sm p-6">
               <h2 className="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <User size={16} className="text-orange-400" /> Personal Information
+                <User size={16} className="text-orange-400" /> Personal
+                Information
               </h2>
 
               <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   { icon: User, label: "Full Name", value: profile.fullName },
                   { icon: Mail, label: "Email", value: profile.email },
-                  { icon: Phone, label: "Phone", value: profile.phone ? `+91 ${profile.phone}` : "—" },
+                  {
+                    icon: Phone,
+                    label: "Phone",
+                    value: profile.phone ? `+91 ${profile.phone}` : "—",
+                  },
                 ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                  >
                     <Icon size={14} className="text-orange-400 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
-                      <p className="text-sm font-medium text-slate-800 truncate">{value || "—"}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                        {label}
+                      </p>
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {value || "—"}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -235,7 +308,9 @@ const Account = () => {
               <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
                 <MapPin size={16} className="text-orange-400" /> Saved Addresses
               </h2>
-              <p className="text-xs text-slate-400 mb-5">Tap an address to use it for delivery</p>
+              <p className="text-xs text-slate-400 mb-5">
+                Tap an address to use it for delivery
+              </p>
 
               {newAddress && !gettingLocation && (
                 <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
@@ -248,7 +323,9 @@ const Account = () => {
                     rows={2}
                     className="mt-2 w-full rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-orange-300 resize-none"
                   />
-                  <p className="mt-1 text-[11px] text-slate-400">Edit to add house number, landmark, floor etc.</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Edit to add house number, landmark, floor etc.
+                  </p>
                 </div>
               )}
 
@@ -257,6 +334,11 @@ const Account = () => {
                 newAddress={newAddress}
                 isAlreadySaved={isAlreadySaved}
                 tempAddress={tempAddress}
+                shopsData={shopsData}
+                showAlert={showAlert}
+                setShowAlert={setShowAlert}
+                alertMessage={alertMessage}
+                setAlertMessage={setAlertMessage}
               />
             </div>
           </div>
@@ -264,7 +346,8 @@ const Account = () => {
           {/* ── bottom column: Orders ── */}
           <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-              <ShoppingBag size={16} className="text-orange-400" /> Order History
+              <ShoppingBag size={16} className="text-orange-400" /> Order
+              History
             </h2>
             <p className="text-xs text-slate-400 mb-5">Your recent orders</p>
 
@@ -280,8 +363,12 @@ const Account = () => {
                   <div className="mx-auto w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3">
                     <UtensilsCrossed size={22} className="text-orange-400" />
                   </div>
-                  <h3 className="font-semibold text-slate-800 mb-1">No orders yet</h3>
-                  <p className="text-xs text-slate-500 mb-4">Your first order is just a few clicks away</p>
+                  <h3 className="font-semibold text-slate-800 mb-1">
+                    No orders yet
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Your first order is just a few clicks away
+                  </p>
                   <button
                     onClick={() => navigate("/menu")}
                     className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
@@ -292,13 +379,23 @@ const Account = () => {
               ) : (
                 <div className="space-y-3  overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
                   {[...orders].reverse().map((order) => {
-                    const id = (order?._id || order?.orderId || "");
-                    const shortId = typeof id === "string" ? id.slice(-6).toUpperCase() : "ORDER";
-                    const items = Array.isArray(order.orderItems) ? order.orderItems : [];
-                    const itemCount = items.reduce((t, i) => t + (i.quantity || 0), 0);
+                    const id = order?._id || order?.orderId || "";
+                    const shortId =
+                      typeof id === "string"
+                        ? id.slice(-6).toUpperCase()
+                        : "ORDER";
+                    const items = Array.isArray(order.orderItems)
+                      ? order.orderItems
+                      : [];
+                    const itemCount = items.reduce(
+                      (t, i) => t + (i.quantity || 0),
+                      0,
+                    );
                     const top3 = items.slice(0, 3);
                     const extra = items.length - top3.length;
-                    const { cls, icon: StatusIcon } = getStatusStyle(order.status);
+                    const { cls, icon: StatusIcon } = getStatusStyle(
+                      order.status,
+                    );
 
                     return (
                       <button
@@ -313,11 +410,16 @@ const Account = () => {
                               #{shortId}
                             </p>
                             <p className="text-sm font-semibold text-slate-900 mt-1">
-                              {itemCount} item{itemCount !== 1 ? "s" : ""} · ₹{order.totalAmount}
+                              {itemCount} item{itemCount !== 1 ? "s" : ""} · ₹
+                              {order.totalAmount}
                             </p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">{formatOrderDate(order.createdAt)}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {formatOrderDate(order.createdAt)}
+                            </p>
                           </div>
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${cls}`}>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${cls}`}
+                          >
                             <StatusIcon size={10} />
                             {order.status || "Processing"}
                           </span>
@@ -358,7 +460,11 @@ const Account = () => {
 export default Account;
 
 // ─── Exported helpers ─────────────────────────────────────────────────────────
-export const getMyLocation = ({ setGettingLocation, setCoords, setAccuracy }) => {
+export const getMyLocation = ({
+  setGettingLocation,
+  setCoords,
+  setAccuracy,
+}) => {
   setGettingLocation(true);
   if (!navigator.geolocation) {
     alert("Geolocation not supported");
@@ -400,11 +506,35 @@ export const ListAddresses = ({
   newAddress = null,
   isAlreadySaved = null,
   tempAddress = null,
-  setSelectedAddress = () => { },
+  setSelectedAddress = () => {},
   selectedAddress = null,
+  shopsData = [],
+  showAlert = false,
+  setShowAlert = () => {},
+  alertMessage = null,
+  setAlertMessage = () => {},
 }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const DELIVERY_RANGE_KM = 3;
+
+  // Get shop markers
+  const shopMarkers = Array.isArray(shopsData)
+    ? shopsData
+    : (shopsData?.shops ?? []);
+
+  const shops = shopMarkers
+    .map((shop) => {
+      const loc = shop?.shopLocation;
+      if (!loc) return null;
+      const position = loc.coordinates
+        ? [loc.coordinates[1], loc.coordinates[0]]
+        : loc.lat && loc.lng
+          ? [loc.lat, loc.lng]
+          : null;
+      return position ? { ...shop, position, id: shop._id } : null;
+    })
+    .filter(Boolean);
 
   if (!addressList.length && !newAddress) {
     return (
@@ -412,8 +542,12 @@ export const ListAddresses = ({
         <div className="mx-auto w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-3">
           <MapPin size={18} className="text-orange-500" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-800 mb-1">No addresses saved</h3>
-        <p className="text-xs text-slate-500 mb-3">Add your first delivery address to get started.</p>
+        <h3 className="text-sm font-semibold text-slate-800 mb-1">
+          No addresses saved
+        </h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Add your first delivery address to get started.
+        </p>
         {onChekout && (
           <button
             onClick={() => navigate("/account")}
@@ -428,13 +562,57 @@ export const ListAddresses = ({
 
   return (
     <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Alert Modal */}
+      {showAlert && alertMessage && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm col-span-full">
+          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
+                <AlertCircle size={24} className="text-red-500" />
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="text-lg font-bold text-gray-900">
+                  No Delivery Available
+                </h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              {alertMessage}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowAlert(false);
+                  setAlertMessage(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => {
+                  setShowAlert(false);
+                  setAlertMessage(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {addressList.map((address, index) => {
-        const { house, line1, line2, country } = formatAddressForDisplay(address.formattedAddress);
+        const { house, line1, line2, country } = formatAddressForDisplay(
+          address.formattedAddress,
+        );
 
         const isCurrentTemp =
           tempAddress?.coordinates &&
           address.coordinates &&
-          Math.abs(tempAddress.coordinates[0] - address.coordinates[0]) < 0.001 &&
+          Math.abs(tempAddress.coordinates[0] - address.coordinates[0]) <
+            0.001 &&
           Math.abs(tempAddress.coordinates[1] - address.coordinates[1]) < 0.001;
 
         const isSelected = onChekout
@@ -448,27 +626,75 @@ export const ListAddresses = ({
               if (onChekout) {
                 setSelectedAddress(address._id);
               } else if (!isCurrentTemp) {
-                dispatch(setTempAddress({
-                  formattedAddress: address.formattedAddress,
-                  coordinates: address.coordinates,
-                  saved: true,
-                }));
-                sessionStorage.setItem("userCoords", JSON.stringify(address.coordinates));
+                // Verify shop availability for this address
+                if (!onChekout && shops.length > 0) {
+                  const nearest = shops.reduce((closest, shop) => {
+                    const distance = getDistanceKm(
+                      address.coordinates,
+                      shop.position,
+                    );
+                    return distance < (closest.distance || Infinity)
+                      ? { shop, distance }
+                      : closest;
+                  }, {});
+
+                  if (!nearest.shop) {
+                    setAlertMessage(
+                      "No restaurants available. Please try another location.",
+                    );
+                    setShowAlert(true);
+                    return;
+                  }
+
+                  const shopRange =
+                    nearest.shop.shopDeliveryRange || DELIVERY_RANGE_KM;
+                  if (nearest.distance > shopRange) {
+                    setAlertMessage(
+                      "Sorry, no restaurants available at this saved location. Please choose another address.",
+                    );
+                    setShowAlert(true);
+                    return;
+                  }
+
+                  // Address is valid and has a nearby shop - proceed
+                  dispatch(setDeliveryShop(nearest.shop));
+                }
+
+                dispatch(
+                  setTempAddress({
+                    formattedAddress: address.formattedAddress,
+                    coordinates: address.coordinates,
+                    saved: true,
+                  }),
+                );
+                sessionStorage.setItem(
+                  "userCoords",
+                  JSON.stringify(address.coordinates),
+                );
                 sessionStorage.setItem("locationChoice", "saved");
                 sessionStorage.setItem("locationChoiceTime", Date.now());
               }
             }}
             className={`relative rounded-xl border-2 p-4 cursor-pointer transition-all duration-150
-              ${isSelected
-                ? "border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-sm"
-                : "border-slate-100 bg-white hover:border-orange-200 hover:bg-orange-50/40"
+              ${
+                isSelected
+                  ? "border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-sm"
+                  : "border-slate-100 bg-white hover:border-orange-200 hover:bg-orange-50/40"
               }`}
           >
             {/* Selected indicator */}
             {isSelected && (
               <div className="absolute top-3 right-3 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
             )}
@@ -481,9 +707,19 @@ export const ListAddresses = ({
                 <p className="font-semibold text-slate-900 text-sm leading-snug">
                   {house || line1 || `Address ${index + 1}`}
                 </p>
-                {(line1 && house) && <p className="text-xs text-slate-500 mt-0.5">{line1}</p>}
-                {line2 && <p className="text-xs text-slate-400 mt-0.5 truncate">{line2}</p>}
-                {country && <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">{country}</p>}
+                {line1 && house && (
+                  <p className="text-xs text-slate-500 mt-0.5">{line1}</p>
+                )}
+                {line2 && (
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">
+                    {line2}
+                  </p>
+                )}
+                {country && (
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
+                    {country}
+                  </p>
+                )}
               </div>
             </div>
           </div>
