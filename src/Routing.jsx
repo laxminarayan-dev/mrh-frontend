@@ -10,7 +10,9 @@ import Menu from "./pages/Menu";
 import Login from "./components/Login";
 import SafeRoute from "./components/SafeRoute";
 import Account from "./pages/Account";
-
+import OrdersHistory from "./pages/OrdersHistory";
+import Inquiries from "./pages/Inquiries";
+import InquiryDetail from "./pages/InquiryDetail";
 
 const Signup = lazy(() => import("./components/Signup"));
 const OrderDetails = lazy(() => import("./pages/OrderDetails"));
@@ -22,8 +24,6 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 
 function Routing() {
-
-
   return (
     <Routes>
       <Route element={<App />}>
@@ -53,6 +53,30 @@ function Routing() {
           element={
             <SafeRoute>
               <Account />
+            </SafeRoute>
+          }
+        />
+        <Route
+          path="/account/orders"
+          element={
+            <SafeRoute>
+              <OrdersHistory />
+            </SafeRoute>
+          }
+        />
+        <Route
+          path="/account/inquiries"
+          element={
+            <SafeRoute>
+              <Inquiries />
+            </SafeRoute>
+          }
+        />
+        <Route
+          path="/account/inquiries/:id"
+          element={
+            <SafeRoute>
+              <InquiryDetail />
             </SafeRoute>
           }
         />

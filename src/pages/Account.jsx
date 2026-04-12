@@ -17,41 +17,12 @@ import {
   Package,
   ShoppingBag,
   AlertCircle,
+  ChevronDown,
+  HelpCircle,
 } from "lucide-react";
-import { getStreetName } from "../components/Map";
 import { getDistanceKm } from "../components/Direction";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function distanceInMeters([lat1, lon1], [lat2, lon2]) {
-  const R = 6371000;
-  const toRad = (v) => (v * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function formatAddressForDisplay(formattedAddress) {
-  if (typeof formattedAddress !== "string" || !formattedAddress.trim())
-    return { house: "", line1: "", line2: "", country: "" };
-  const parts = formattedAddress
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (!parts.length) return { house: "", line1: "", line2: "", country: "" };
-  const country = parts[parts.length - 1];
-  const hasPostcode = /^[0-9]{4,10}$/.test(parts[parts.length - 2]);
-  const tail = hasPostcode ? parts.length - 2 : parts.length - 1;
-  const body = parts.slice(0, tail);
-  return {
-    house: body[0] || "",
-    line1: body[1] || "",
-    line2: body.slice(2).join(", "),
-    country,
-  };
-}
 
 function formatOrderDate(value) {
   if (!value) return "Date unavailable";
@@ -139,6 +110,8 @@ const Account = () => {
   const [ordersReady, setOrdersReady] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
 
   const profile = {
     fullName: user?.fullName || "",
@@ -163,7 +136,6 @@ const Account = () => {
 
   // ── Mark orders ready after initial load ────────────────────────────────────
   useEffect(() => {
-    // Once orders are loaded (not loading and have data or confirmed empty), mark as ready
     if (!loadingOrders) {
       setOrdersReady(true);
     }
@@ -178,77 +150,119 @@ const Account = () => {
       isDefault: a.isDefault || false,
     }));
     setAddressList(next);
-  }, [user]);
-
-  // ── Geocode on coord change ───────────────────────────────────────────────
-  useEffect(() => {
-    if (!coords) return;
-    let cancelled = false;
-
-    const existing = addressList.find(
-      (a) => distanceInMeters(coords, a.coordinates) < 100,
-    );
-    if (existing) {
-      alert("This location is already saved.");
-      setIsAlreadySaved(existing._id);
-      return;
+    if (next.length > 0) {
+      setSelectedAddressId(next[0]._id);
     }
-
-    setGettingLocation(true);
-    getStreetName(coords[0], coords[1], accuracy).then((street) => {
-      if (cancelled) return;
-      if (
-        street &&
-        !street.toLowerCase().startsWith("unnamed") &&
-        !street.toLowerCase().startsWith("unknown")
-      ) {
-        setNewAddress(street);
-      } else {
-        alert("Unable to determine street name.");
-        setCoords(null);
-      }
-      setGettingLocation(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [coords, accuracy]);
+  }, [user]);
 
   const showOrderSkeleton = loadingOrders || !ordersReady;
 
+  // ── Helper: Verify if a shop is available for address ──────────────────────
+  const verifyShopAvailability = (coordinates) => {
+    const DELIVERY_RANGE_KM = 3;
+    const shopMarkers = Array.isArray(shopsData)
+      ? shopsData
+      : (shopsData?.shops ?? []);
+
+    const shops = shopMarkers
+      .map((shop) => {
+        const loc = shop?.shopLocation;
+        if (!loc) return null;
+        const position = loc.coordinates
+          ? [loc.coordinates[1], loc.coordinates[0]]
+          : loc.lat && loc.lng
+            ? [loc.lat, loc.lng]
+            : null;
+        return position ? { ...shop, position, id: shop._id } : null;
+      })
+      .filter(Boolean);
+
+    if (!shops.length) {
+      setAlertMessage("No restaurants available at this moment.");
+      setShowAlert(true);
+      return false;
+    }
+
+    const nearest = shops.reduce((closest, shop) => {
+      const distance = getDistanceKm(coordinates, shop.position);
+      return distance < (closest.distance || Infinity)
+        ? { shop, distance }
+        : closest;
+    }, {});
+
+    if (!nearest.shop) {
+      setAlertMessage(
+        "No restaurants available in your area. Please try another location.",
+      );
+      setShowAlert(true);
+      return false;
+    }
+
+    const shopRange = nearest.shop.shopDeliveryRange || DELIVERY_RANGE_KM;
+    if (nearest.distance > shopRange) {
+      setAlertMessage(
+        `Sorry, the nearest restaurant is ${nearest.distance.toFixed(1)}km away. Delivery range is ${shopRange}km. Please choose another address.`,
+      );
+      setShowAlert(true);
+      return false;
+    }
+
+    // Address is valid - set shop
+    dispatch(setDeliveryShop(nearest.shop));
+    return true;
+  };
+
   return (
     <section className="min-h-screen bg-gradient-to-b from-[#FFFBE9] to-orange-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        {/* ── Header ── */}
-        <div className="mb-8 rounded-xl bg-white border border-orange-100 shadow-sm overflow-hidden">
-          {/* Top stripe */}
+      {/* Alert Modal for Address Verification */}
+      {showAlert && alertMessage && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
+                <AlertCircle size={24} className="text-red-500" />
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Delivery Not Available
+                </h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              {alertMessage}
+            </p>
+            <button
+              onClick={() => {
+                setShowAlert(false);
+                setAlertMessage(null);
+              }}
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        {/* ── Header ── */}
+        <div className="mb-8 rounded-xl bg-white border border-orange-100 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 rounded-xl tracking-[2px] bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-xl font-bold shadow-md">
-                  {initials}
-                </div>
+              <div className="w-16 h-16 rounded-xl tracking-[2px] bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-xl font-bold shadow-md">
+                {initials}
               </div>
 
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-orange-500 mb-0.5">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-orange-500">
                   Account
                 </p>
-                <h1 className="text-xl font-bold text-slate-900 leading-tight">
+                <h1 className="text-2xl font-bold text-slate-900">
                   {profile.fullName || "Your Account"}
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Member since{" "}
-                  {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}{" "}
-                  · {orders.length} orders
+                <p className="text-xs text-slate-400 mt-1">
+                  {orders.length} orders
                 </p>
               </div>
             </div>
@@ -258,141 +272,219 @@ const Account = () => {
                 dispatch(logout());
                 navigate("/auth/login", { replace: true });
               }}
-              className="self-start sm:self-auto inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-600 transition-all"
+              className="self-start sm:self-auto inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-600 transition-all"
             >
               <LogOut size={14} /> Logout
             </button>
           </div>
         </div>
 
-        <div className="mt-6">
-          {/* ── top column ── */}
-          <div className="space-y-6 mb-6">
-            {/* Personal Info */}
-            <div className=" rounded-xl bg-white border border-orange-100 shadow-sm p-6">
-              <h2 className="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <User size={16} className="text-orange-400" /> Personal
-                Information
-              </h2>
+        {/* ── Personal Info ── */}
+        <div className="mb-6 rounded-xl bg-white border border-orange-100 shadow-sm p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <User size={16} className="text-orange-400" /> Personal Information
+          </h2>
 
-              <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  { icon: User, label: "Full Name", value: profile.fullName },
-                  { icon: Mail, label: "Email", value: profile.email },
-                  {
-                    icon: Phone,
-                    label: "Phone",
-                    value: profile.phone ? `+91 ${profile.phone}` : "—",
-                  },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                  >
-                    <Icon size={14} className="text-orange-400 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                        {label}
-                      </p>
-                      <p className="text-sm font-medium text-slate-800 truncate">
-                        {value || "—"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: User, label: "Full Name", value: profile.fullName },
+              { icon: Mail, label: "Email", value: profile.email },
+              {
+                icon: Phone,
+                label: "Phone",
+                value: profile.phone ? `+91 ${profile.phone}` : "—",
+              },
+            ].map(({ icon: Icon, label, value }) => (
+              <div
+                key={label}
+                className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                  {label}
+                </p>
+                <p className="text-sm font-medium text-slate-800 mt-1 truncate">
+                  {value || "—"}
+                </p>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            {/* Addresses */}
-            <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
-              <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                <MapPin size={16} className="text-orange-400" /> Saved Addresses
-              </h2>
-              <p className="text-xs text-slate-400 mb-5">
-                Tap an address to use it for delivery
-              </p>
+        {/* ── Addresses Dropdown ── */}
+        <div className="mb-6 rounded-xl bg-white border border-orange-100 shadow-sm p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <MapPin size={16} className="text-orange-400" /> Delivery Address
+          </h2>
 
-              {newAddress && !gettingLocation && (
-                <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
-                  <label className="text-xs font-semibold text-orange-600 uppercase tracking-wider">
-                    New address detected
-                  </label>
-                  <textarea
-                    value={newAddress}
-                    onChange={(e) => setNewAddress(e.target.value)}
-                    rows={2}
-                    className="mt-2 w-full rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-orange-300 resize-none"
-                  />
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Edit to add house number, landmark, floor etc.
+          {addressList.length > 0 ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
+                className="w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:border-orange-300 transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">
+                    {selectedAddressId &&
+                    addressList.find((a) => a._id === selectedAddressId)
+                      ?.isDefault
+                      ? "Default Address"
+                      : "Selected Address"}
                   </p>
+                  <p className="text-sm font-medium text-slate-800 mt-1 line-clamp-1">
+                    {selectedAddressId
+                      ? addressList.find((a) => a._id === selectedAddressId)
+                          ?.formattedAddress
+                      : "Select an address"}
+                  </p>
+                </div>
+                <ChevronDown
+                  size={18}
+                  className={`text-orange-500 transition-transform ${
+                    isAddressDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isAddressDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-orange-100 rounded-lg shadow-lg z-50 overflow-hidden">
+                  {addressList.map((addr) => (
+                    <button
+                      key={addr._id}
+                      onClick={() => {
+                        // Verify shop availability for this address
+                        if (verifyShopAvailability(addr.coordinates)) {
+                          setSelectedAddressId(addr._id);
+                          dispatch(
+                            setTempAddress({
+                              formattedAddress: addr.formattedAddress,
+                              coordinates: addr.coordinates,
+                              saved: true,
+                            }),
+                          );
+                          sessionStorage.setItem(
+                            "userCoords",
+                            JSON.stringify(addr.coordinates),
+                          );
+                          sessionStorage.setItem("locationChoice", "saved");
+                          sessionStorage.setItem(
+                            "locationChoiceTime",
+                            Date.now(),
+                          );
+                        }
+                        setIsAddressDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 border-b last:border-0 transition-colors ${
+                        selectedAddressId === addr._id
+                          ? "bg-orange-50 border-l-4 border-l-orange-500"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <p className="text-xs font-semibold text-slate-400 uppercase">
+                        {addr.isDefault ? "✓ Default" : "Address"}
+                      </p>
+                      <p className="text-sm text-slate-800 mt-1">
+                        {addr.formattedAddress}
+                      </p>
+                    </button>
+                  ))}
                 </div>
               )}
-
-              <ListAddresses
-                addressList={addressList}
-                newAddress={newAddress}
-                isAlreadySaved={isAlreadySaved}
-                tempAddress={tempAddress}
-                shopsData={shopsData}
-                showAlert={showAlert}
-                setShowAlert={setShowAlert}
-                alertMessage={alertMessage}
-                setAlertMessage={setAlertMessage}
-              />
             </div>
+          ) : (
+            <div className="rounded-lg border-2 border-dashed border-orange-200 bg-orange-50 p-4 text-center">
+              <MapPin size={20} className="mx-auto text-orange-400 mb-2" />
+              <p className="text-sm font-medium text-slate-700">
+                No addresses saved
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Add your first delivery address to get started
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <div className="mb-6 rounded-xl bg-white border border-orange-100 shadow-sm p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <ShoppingBag size={16} className="text-orange-400" /> Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={() => navigate("/account/orders")}
+              className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 hover:border-orange-400 hover:shadow-lg transition-all p-6 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <ShoppingBag size={24} className="text-orange-500" />
+                <ChevronRight
+                  size={18}
+                  className="text-orange-400 group-hover:translate-x-1 transition-transform"
+                />
+              </div>
+              <h3 className="font-semibold text-slate-900">My Orders</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                Track and manage your orders
+              </p>
+            </button>
+
+            <button
+              onClick={() => navigate("/account/inquiries")}
+              className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 hover:border-blue-400 hover:shadow-lg transition-all p-6 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <HelpCircle size={24} className="text-blue-500" />
+                <ChevronRight
+                  size={18}
+                  className="text-blue-400 group-hover:translate-x-1 transition-transform"
+                />
+              </div>
+              <h3 className="font-semibold text-slate-900">My Inquiries</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                View your submitted inquiries
+              </p>
+            </button>
           </div>
+        </div>
 
-          {/* ── bottom column: Orders ── */}
-          <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-              <ShoppingBag size={16} className="text-orange-400" /> Order
-              History
-            </h2>
-            <p className="text-xs text-slate-400 mb-5">Your recent orders</p>
+        {/* ── Order History ── */}
+        <div className="rounded-xl bg-white border border-orange-100 shadow-sm p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <ShoppingBag size={16} className="text-orange-400" /> Recent Orders
+          </h2>
 
-            <div className="space-y-3">
-              {showOrderSkeleton ? (
-                <>
-                  <OrderSkeleton />
-                  <OrderSkeleton />
-                  <OrderSkeleton />
-                </>
-              ) : orders.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-8 text-center">
-                  <div className="mx-auto w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3">
-                    <UtensilsCrossed size={22} className="text-orange-400" />
-                  </div>
-                  <h3 className="font-semibold text-slate-800 mb-1">
-                    No orders yet
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-4">
-                    Your first order is just a few clicks away
-                  </p>
-                  <button
-                    onClick={() => navigate("/menu")}
-                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
-                  >
-                    Browse Menu
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3  overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-                  {[...orders].reverse().map((order) => {
+          <div className="space-y-3">
+            {showOrderSkeleton ? (
+              <>
+                <OrderSkeleton />
+                <OrderSkeleton />
+              </>
+            ) : orders.length === 0 ? (
+              <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-8 text-center">
+                <UtensilsCrossed
+                  size={24}
+                  className="mx-auto text-orange-400 mb-2"
+                />
+                <h3 className="font-semibold text-slate-800">No orders yet</h3>
+                <p className="text-sm text-slate-500 mt-1 mb-4">
+                  Your first order is just a few clicks away
+                </p>
+                <button
+                  onClick={() => navigate("/menu")}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 text-sm font-semibold text-white hover:shadow-md transition-all"
+                >
+                  Browse Menu
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {[...orders]
+                  .reverse()
+                  .slice(0, 5)
+                  .map((order) => {
                     const id = order?._id || order?.orderId || "";
                     const shortId =
                       typeof id === "string"
                         ? id.slice(-6).toUpperCase()
                         : "ORDER";
-                    const items = Array.isArray(order.orderItems)
-                      ? order.orderItems
-                      : [];
-                    const itemCount = items.reduce(
-                      (t, i) => t + (i.quantity || 0),
-                      0,
-                    );
-                    const top3 = items.slice(0, 3);
-                    const extra = items.length - top3.length;
                     const { cls, icon: StatusIcon } = getStatusStyle(
                       order.status,
                     );
@@ -402,54 +494,38 @@ const Account = () => {
                         key={order._id || shortId}
                         type="button"
                         onClick={() => id && navigate(`/orders/${id}`)}
-                        className="group w-full text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50 hover:border-orange-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm h-fit"
+                        className="w-full text-left rounded-lg border border-slate-200 bg-slate-50 hover:bg-orange-50 hover:border-orange-200 p-4 transition-all group"
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500">
                               #{shortId}
                             </p>
-                            <p className="text-sm font-semibold text-slate-900 mt-1">
-                              {itemCount} item{itemCount !== 1 ? "s" : ""} · ₹
-                              {order.totalAmount}
+                            <p className="text-sm font-medium text-slate-900 mt-1">
+                              ₹{order.totalAmount}
                             </p>
                             <p className="text-[11px] text-slate-400 mt-0.5">
                               {formatOrderDate(order.createdAt)}
                             </p>
                           </div>
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${cls}`}
-                          >
-                            <StatusIcon size={10} />
-                            {order.status || "Processing"}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {top3.map((item) => (
+                          <div className="flex items-center gap-2">
                             <span
-                              key={`${order._id}-${item.name}`}
-                              className="rounded-full border border-orange-100 bg-white px-2.5 py-0.5 text-[11px] text-slate-600"
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${cls}`}
                             >
-                              {item.name} ×{item.quantity}
+                              <StatusIcon size={10} />
+                              {order.status || "Processing"}
                             </span>
-                          ))}
-                          {extra > 0 && (
-                            <span className="rounded-full border border-dashed border-orange-200 px-2.5 py-0.5 text-[11px] text-orange-500">
-                              +{extra} more
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-end mt-2 gap-1 text-[11px] font-medium text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                          View details <ChevronRight size={12} />
+                            <ChevronRight
+                              size={16}
+                              className="text-slate-400 group-hover:text-orange-500 transition-colors"
+                            />
+                          </div>
                         </div>
                       </button>
                     );
                   })}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -460,46 +536,6 @@ const Account = () => {
 export default Account;
 
 // ─── Exported helpers ─────────────────────────────────────────────────────────
-export const getMyLocation = ({
-  setGettingLocation,
-  setCoords,
-  setAccuracy,
-}) => {
-  setGettingLocation(true);
-  if (!navigator.geolocation) {
-    alert("Geolocation not supported");
-    setGettingLocation(false);
-    return;
-  }
-
-  let attempts = 0;
-  const MAX = 6;
-  const opts = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
-
-  const fetch = () => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude, longitude, accuracy } }) => {
-        setAccuracy(accuracy);
-        if (accuracy <= 400 || attempts >= MAX) {
-          setCoords([latitude, longitude]);
-          setGettingLocation(false);
-        } else {
-          attempts++;
-          setTimeout(fetch, 5000);
-        }
-      },
-      (err) => {
-        console.error(err);
-        alert("Please turn on GPS & keep screen ON");
-        setGettingLocation(false);
-      },
-      opts,
-    );
-  };
-
-  fetch();
-};
-
 export const ListAddresses = ({
   onChekout = false,
   addressList = [],
@@ -560,171 +596,5 @@ export const ListAddresses = ({
     );
   }
 
-  return (
-    <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {/* Alert Modal */}
-      {showAlert && alertMessage && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm col-span-full">
-          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
-                <AlertCircle size={24} className="text-red-500" />
-              </div>
-              <div className="flex-1 pt-1">
-                <h3 className="text-lg font-bold text-gray-900">
-                  No Delivery Available
-                </h3>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              {alertMessage}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowAlert(false);
-                  setAlertMessage(null);
-                }}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
-              >
-                Dismiss
-              </button>
-              <button
-                onClick={() => {
-                  setShowAlert(false);
-                  setAlertMessage(null);
-                }}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
-              >
-                Ok
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {addressList.map((address, index) => {
-        const { house, line1, line2, country } = formatAddressForDisplay(
-          address.formattedAddress,
-        );
-
-        const isCurrentTemp =
-          tempAddress?.coordinates &&
-          address.coordinates &&
-          Math.abs(tempAddress.coordinates[0] - address.coordinates[0]) <
-            0.001 &&
-          Math.abs(tempAddress.coordinates[1] - address.coordinates[1]) < 0.001;
-
-        const isSelected = onChekout
-          ? selectedAddress === address._id
-          : isAlreadySaved === address._id || isCurrentTemp;
-
-        return (
-          <div
-            key={`address-${index}`}
-            onClick={() => {
-              if (onChekout) {
-                setSelectedAddress(address._id);
-              } else if (!isCurrentTemp) {
-                // Verify shop availability for this address
-                if (!onChekout && shops.length > 0) {
-                  const nearest = shops.reduce((closest, shop) => {
-                    const distance = getDistanceKm(
-                      address.coordinates,
-                      shop.position,
-                    );
-                    return distance < (closest.distance || Infinity)
-                      ? { shop, distance }
-                      : closest;
-                  }, {});
-
-                  if (!nearest.shop) {
-                    setAlertMessage(
-                      "No restaurants available. Please try another location.",
-                    );
-                    setShowAlert(true);
-                    return;
-                  }
-
-                  const shopRange =
-                    nearest.shop.shopDeliveryRange || DELIVERY_RANGE_KM;
-                  if (nearest.distance > shopRange) {
-                    setAlertMessage(
-                      "Sorry, no restaurants available at this saved location. Please choose another address.",
-                    );
-                    setShowAlert(true);
-                    return;
-                  }
-
-                  // Address is valid and has a nearby shop - proceed
-                  dispatch(setDeliveryShop(nearest.shop));
-                }
-
-                dispatch(
-                  setTempAddress({
-                    formattedAddress: address.formattedAddress,
-                    coordinates: address.coordinates,
-                    saved: true,
-                  }),
-                );
-                sessionStorage.setItem(
-                  "userCoords",
-                  JSON.stringify(address.coordinates),
-                );
-                sessionStorage.setItem("locationChoice", "saved");
-                sessionStorage.setItem("locationChoiceTime", Date.now());
-              }
-            }}
-            className={`relative rounded-xl border-2 p-4 cursor-pointer transition-all duration-150
-              ${
-                isSelected
-                  ? "border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-sm"
-                  : "border-slate-100 bg-white hover:border-orange-200 hover:bg-orange-50/40"
-              }`}
-          >
-            {/* Selected indicator */}
-            {isSelected && (
-              <div className="absolute top-3 right-3 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-3 h-3 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3 pr-6">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <MapPin size={14} className="text-orange-500" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-900 text-sm leading-snug">
-                  {house || line1 || `Address ${index + 1}`}
-                </p>
-                {line1 && house && (
-                  <p className="text-xs text-slate-500 mt-0.5">{line1}</p>
-                )}
-                {line2 && (
-                  <p className="text-xs text-slate-400 mt-0.5 truncate">
-                    {line2}
-                  </p>
-                )}
-                {country && (
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
-                    {country}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <div className="space-y-3" />;
 };

@@ -14,24 +14,104 @@ import Map from "../components/Map";
 
 function Contact() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((s) => s.auth);
+  const { isAuthenticated, user } = useSelector((s) => s.auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAlert, setSuccessAlert] = useState(false);
+  const [errorAlert, setErrorAlert] = useState(false);
+  const [inquiry, setInquiry] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate inquiry field
+    if (!inquiry.trim()) {
+      setErrorAlert(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem("token");
 
-    setSuccessAlert(true);
-    setIsSubmitting(false);
-    e.target.reset();
+      if (!token) {
+        setErrorAlert(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Send inquiry to backend
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/api/inquiry/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fullName: user?.fullName,
+            email: user?.email,
+            inquiry: inquiry.trim(),
+            category: "inquiry", // You can make this dynamic if needed
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error:", data.message);
+        setErrorAlert(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log("Inquiry submitted successfully:", data);
+      setSuccessAlert(true);
+      setInquiry("");
+      e.target.reset();
+    } catch (error) {
+      console.error("Failed to submit inquiry:", error);
+      setErrorAlert(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  console.log(user);
 
   return (
     <div className="w-full bg-linear-to-b from-[#FFFBE9] via-orange-100 to-orange-200 relative">
+      {/* Error Alert Modal */}
+      {errorAlert && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
+                <AlertCircle size={24} className="text-red-500" />
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Message Required
+                </h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              Please enter your inquiry or message before submitting. We need to
+              understand what you'd like to tell us!
+            </p>
+            <button
+              onClick={() => setErrorAlert(false)}
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Success Alert Modal */}
       {successAlert && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -161,6 +241,8 @@ function Contact() {
                   <input
                     type="text"
                     placeholder="Your name"
+                    value={user?.fullName}
+                    readOnly
                     className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
                   />
                 </div>
@@ -171,6 +253,8 @@ function Contact() {
                   <input
                     type="email"
                     placeholder="you@example.com"
+                    value={user?.email}
+                    readOnly
                     className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
                   />
                 </div>
@@ -180,8 +264,10 @@ function Contact() {
                   </label>
                   <textarea
                     rows="4"
-                    placeholder="Tell us more..."
+                    placeholder="Share your inquiry about our menu, catering services, or bulk orders..."
+                    value={inquiry}
                     className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
+                    onChange={(e) => setInquiry(e.target.value)}
                   ></textarea>
                 </div>
                 <button
