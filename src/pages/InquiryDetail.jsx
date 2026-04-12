@@ -89,6 +89,7 @@ const InquiryDetail = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         const foundInquiry = data.inquiries?.find((inq) => inq._id === id);
         if (foundInquiry) {
           setInquiry(foundInquiry);
@@ -182,6 +183,8 @@ const InquiryDetail = () => {
         year: "numeric",
       })
     : null;
+
+  console.log(inquiry);
 
   const hasResponse =
     inquiry.adminResponse && inquiry.adminResponse.trim().length > 0;
