@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
+import { socket } from "../socket";
 import {
   Mail,
   Clock,
@@ -112,6 +113,69 @@ const InquiryDetail = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket.connected) socket.connect();
+
+    // Listen for admin response on this specific inquiry
+    socket.on("inquiry-responded", (data) => {
+      console.log("📬 Response received:", data);
+      if (data.inquiryId === id) {
+        setInquiry((prev) =>
+          prev
+            ? {
+                ...prev,
+                adminResponse: data.adminResponse,
+                respondedAt: data.respondedAt,
+                respondedBy: data.respondedBy,
+                status: data.status,
+              }
+            : prev,
+        );
+      }
+    });
+
+    // Listen for status changes
+    socket.on("inquiry-status-changed", (data) => {
+      console.log("🔄 Status changed:", data);
+      if (data.inquiryId === id) {
+        setInquiry((prev) =>
+          prev
+            ? { ...prev, status: data.status, updatedAt: data.updatedAt }
+            : prev,
+        );
+      }
+    });
+
+    // Listen for priority changes
+    socket.on("inquiry-priority-changed", (data) => {
+      console.log("⚡ Priority changed:", data);
+      if (data.inquiryId === id) {
+        setInquiry((prev) =>
+          prev
+            ? { ...prev, priority: data.priority, updatedAt: data.updatedAt }
+            : prev,
+        );
+      }
+    });
+
+    // Listen for deletion
+    socket.on("inquiry-deleted", (data) => {
+      console.log("🗑️ Inquiry deleted:", data);
+      if (data.inquiryId === id) {
+        setError("This inquiry has been deleted");
+        setTimeout(() => navigate("/account/inquiries"), 2000);
+      }
+    });
+
+    return () => {
+      socket.off("inquiry-responded");
+      socket.off("inquiry-status-changed");
+      socket.off("inquiry-priority-changed");
+      socket.off("inquiry-deleted");
+    };
+  }, [id, navigate]);
 
   if (loading) {
     return (

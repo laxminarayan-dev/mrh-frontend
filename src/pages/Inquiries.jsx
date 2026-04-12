@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import { socket } from "../socket";
 import {
   Mail,
   Clock,
@@ -182,6 +183,66 @@ const Inquiries = () => {
     }
     fetchMyInquiries();
   }, [user, navigate]);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket.connected) socket.connect();
+
+    // Listen for inquiry response
+    socket.on("inquiry-responded", (data) => {
+      console.log("📬 Inquiry responded:", data);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          inq._id === data.inquiryId
+            ? {
+                ...inq,
+                adminResponse: data.adminResponse,
+                respondedAt: data.respondedAt,
+                respondedBy: data.respondedBy,
+                status: data.status,
+              }
+            : inq,
+        ),
+      );
+    });
+
+    // Listen for status changes
+    socket.on("inquiry-status-changed", (data) => {
+      console.log("🔄 Status changed:", data);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          inq._id === data.inquiryId
+            ? { ...inq, status: data.status, updatedAt: data.updatedAt }
+            : inq,
+        ),
+      );
+    });
+
+    // Listen for priority changes
+    socket.on("inquiry-priority-changed", (data) => {
+      console.log("⚡ Priority changed:", data);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          inq._id === data.inquiryId
+            ? { ...inq, priority: data.priority, updatedAt: data.updatedAt }
+            : inq,
+        ),
+      );
+    });
+
+    // Listen for inquiry deletion
+    socket.on("inquiry-deleted", (data) => {
+      console.log("🗑️ Inquiry deleted:", data);
+      setInquiries((prev) => prev.filter((inq) => inq._id !== data.inquiryId));
+    });
+
+    return () => {
+      socket.off("inquiry-responded");
+      socket.off("inquiry-status-changed");
+      socket.off("inquiry-priority-changed");
+      socket.off("inquiry-deleted");
+    };
+  }, []);
 
   const fetchMyInquiries = async () => {
     try {
