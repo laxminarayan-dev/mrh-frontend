@@ -334,6 +334,7 @@ function RiderPanel({ status, rider }) {
   //     </div>
   //   );
   // }
+
   if (norm === "assigned" || norm === "out-for-delivery") {
     const isAssigned = norm === "assigned";
     const colorClass = isAssigned ? "cyan" : "purple";
@@ -443,14 +444,14 @@ function RiderPanel({ status, rider }) {
               {riderName}
             </p>
           </div>
-          {riderPhone && (
+          {/* {riderPhone && (
             <a
               href={`tel:${riderPhone}`}
               className="ml-auto text-xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
             >
               <Phone size={11} /> {riderPhone}
             </a>
-          )}
+          )} */}
         </div>
       </div>
     );
@@ -1206,9 +1207,12 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-              {["accepted", "out-for-delivery", "delivered"].includes(
-                status,
-              ) && (
+              {[
+                "accepted",
+                "assigned",
+                "out-for-delivery",
+                "delivered",
+              ].includes(status) && (
                 <div className="px-6 py-5">
                   <RiderPanel status={status} rider={riderWithLiveEta} />
                 </div>

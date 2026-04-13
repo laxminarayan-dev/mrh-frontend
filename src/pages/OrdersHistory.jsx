@@ -7,7 +7,7 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  // Package,
+  Package,
   Truck,
   X,
   ChevronRight,
@@ -27,6 +27,11 @@ const STATUS_CONFIG = {
     icon: CheckCircle2,
     color: "bg-emerald-100 text-emerald-700 border-emerald-300",
     label: "Accepted",
+  },
+  assigned: {
+    icon: Package,
+    color: "bg-cyan-100 text-cyan-700 border-cyan-300",
+    label: "Assigned",
   },
   // ready: {
   //   icon: Package,
@@ -93,8 +98,12 @@ function OrderCard({ order, onViewClick }) {
     minute: "2-digit",
   });
 
-  const statusConfig =
-    STATUS_CONFIG[getDisplayStatus(order.status)] || STATUS_CONFIG.placed;
+  const displayStatus = getDisplayStatus(order.status);
+  const statusConfig = STATUS_CONFIG[displayStatus] || {
+    icon: Clock,
+    color: "bg-slate-100 text-slate-700 border-slate-300",
+    label: toStatusLabel(displayStatus),
+  };
   const StatusIcon = statusConfig.icon;
 
   return (
@@ -173,6 +182,13 @@ const normalizeStatus = (status) => {
 const getDisplayStatus = (status) => {
   const normalized = normalizeStatus(status);
   return normalized === "ready" ? "accepted" : normalized;
+};
+
+const toStatusLabel = (status) => {
+  if (!status) return "Processing";
+  return String(status)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -270,6 +286,7 @@ const OrdersHistory = () => {
                 <option value="all">All Orders</option>
                 <option value="placed">Placed</option>
                 <option value="accepted">Accepted</option>
+                <option value="assigned">Assigned</option>
                 <option value="out_for_delivery">Out for Delivery</option>
                 <option value="delivered">Delivered</option>
                 <option value="canceled">Canceled</option>
