@@ -155,7 +155,7 @@ function InquiryCard({ inquiry, onViewClick }) {
         </div>
         <button
           onClick={() => onViewClick(inquiry._id)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all opacity-0 group-hover:opacity-100"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all opacity-100 md:opacity-0 group-hover:opacity-100"
         >
           View Details
         </button>
@@ -190,7 +190,6 @@ const Inquiries = () => {
 
     // Listen for inquiry response
     socket.on("inquiry-responded", (data) => {
-      console.log("📬 Inquiry responded:", data);
       setInquiries((prev) =>
         prev.map((inq) =>
           inq._id === data.inquiryId
@@ -258,7 +257,6 @@ const Inquiries = () => {
           },
         },
       );
-      console.log(response);
       if (response.ok) {
         const data = await response.json();
         console.log("ok hai ji", data);
@@ -305,19 +303,32 @@ const Inquiries = () => {
   const respondedCount = inquiries.filter(
     (i) => normalizeStatus(i.status) === "responded",
   ).length;
+  const resolvedCount = inquiries.filter((i) => {
+    const status = normalizeStatus(i.status);
+    return status === "resolved" || status === "closed";
+  }).length;
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-[#FFFBE9] to-orange-50">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            <Mail size={32} className="text-orange-500" />
-            My Inquiries
-          </h1>
-          <p className="text-slate-600">
-            Track all your inquiries and admin responses
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+              <Mail size={32} className="text-orange-500" />
+              My Inquiries
+            </h1>
+            <p className="text-slate-600">
+              Track all your inquiries and admin responses
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/contact-us")}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all"
+          >
+            <Mail size={16} />
+            New Inquiry
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -344,13 +355,11 @@ const Inquiries = () => {
               Responded
             </p>
           </div>
-          <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 text-center">
-            <button
-              onClick={() => navigate("/contact")}
-              className="w-full text-center text-orange-600 hover:text-orange-700 font-semibold text-sm"
-            >
-              New Inquiry
-            </button>
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-center">
+            <p className="text-2xl font-bold text-slate-700">{resolvedCount}</p>
+            <p className="text-xs text-slate-600 uppercase font-semibold">
+              Resolved
+            </p>
           </div>
         </div>
 

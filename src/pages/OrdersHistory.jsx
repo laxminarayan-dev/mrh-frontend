@@ -155,7 +155,7 @@ function OrderCard({ order, onViewClick }) {
         </div>
         <button
           onClick={() => onViewClick(id)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all opacity-0 group-hover:opacity-100"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all opacity-100 md:opacity-0 group-hover:opacity-100"
         >
           View <ChevronRight size={14} />
         </button>
