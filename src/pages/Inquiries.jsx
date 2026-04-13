@@ -259,7 +259,6 @@ const Inquiries = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        console.log("ok hai ji", data);
         setInquiries(data.inquiries || []);
       } else {
         console.error("Failed to fetch inquiries");

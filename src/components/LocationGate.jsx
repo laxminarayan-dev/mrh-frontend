@@ -180,7 +180,6 @@ export default function LocationGate({ children }) {
       })
       .filter(Boolean);
     setShopMarkers(markers);
-    console.log("shopData changed");
   }, [shopsData]);
 
   // ─── Map bounds ────────────────────────────────────────────────────────────
