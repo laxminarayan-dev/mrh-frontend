@@ -1,14 +1,31 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { reviewData } from "./helper/reviews.js";
 
 export const fetchReviews = createAsyncThunk(
     "reviews/fetchReviews",
-    async () => {
+    async (_, { rejectWithValue }) => {
         try {
-            const response = reviewData;
-            return response;
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_API}/api/orders/reviews`
+            );
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                return rejectWithValue(err.message || "Failed to load reviews");
+            }
+
+            const data = await response.json();
+            const normalizedReviews = (data?.reviews || []).map((item) => ({
+                id: item.orderId,
+                name: item.userName || "Anonymous User",
+                rating: Number(item.rating) || 0,
+                review: item.comment || "",
+                createdAt: item.updatedAt || item.createdAt,
+                likedBy: [],
+            }));
+
+            return normalizedReviews;
         } catch (error) {
-            return error.message || "Failed to load reviews";
+            return rejectWithValue(error.message || "Failed to load reviews");
         }
     }
 );
