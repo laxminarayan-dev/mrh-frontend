@@ -40,13 +40,13 @@ const STATUS_STYLES = {
     cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
     icon: Package,
   },
+  // ready: {
+  //   cls: "bg-amber-100 text-amber-700 border border-amber-500",
+  //   icon: Package,
+  // },
   delivered: {
     cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
     icon: CheckCircle2,
-  },
-  ready: {
-    cls: "bg-amber-100 text-amber-700 border border-amber-500",
-    icon: Package,
   },
   out_for_delivery: {
     cls: "bg-purple-100 text-purple-700 border border-purple-500",
@@ -73,6 +73,11 @@ function getStatusStyle(status) {
       icon: Clock,
     }
   );
+}
+
+function getDisplayStatus(status) {
+  const normalized = String(status || "").toLowerCase();
+  return normalized === "ready" ? "accepted" : normalized;
 }
 
 // ─── Skeleton loaders ─────────────────────────────────────────────────────────
@@ -485,9 +490,9 @@ const Account = () => {
                       typeof id === "string"
                         ? id.slice(-6).toUpperCase()
                         : "ORDER";
-                    const { cls, icon: StatusIcon } = getStatusStyle(
-                      order.status,
-                    );
+                    const displayStatus = getDisplayStatus(order.status);
+                    const { cls, icon: StatusIcon } =
+                      getStatusStyle(displayStatus);
 
                     return (
                       <button
@@ -513,7 +518,7 @@ const Account = () => {
                               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${cls}`}
                             >
                               <StatusIcon size={10} />
-                              {order.status || "Processing"}
+                              {displayStatus || "Processing"}
                             </span>
                             <ChevronRight
                               size={16}

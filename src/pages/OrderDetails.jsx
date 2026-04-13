@@ -68,6 +68,11 @@ function normalizeStatus(raw) {
     .replace(/[\s_]+/g, "-");
 }
 
+function getDisplayStatus(raw) {
+  const normalized = normalizeStatus(raw);
+  return normalized === "ready" ? "accepted" : normalized;
+}
+
 function toLatLng(input) {
   if (!input) return null;
 
@@ -128,8 +133,8 @@ function buildEtaLabel(distanceKm, speedKmph) {
 const PIPELINE = [
   { key: "placed", label: "Order Placed", icon: ShoppingBag },
   { key: "accepted", label: "Accepted", icon: CheckCircle },
-  { key: "ready", label: "Ready for Pickup", icon: Package },
   { key: "assigned", label: "Rider Assigned", icon: Bike },
+  // { key: "ready", label: "Ready for Pickup", icon: Package },
   { key: "out-for-delivery", label: "Out for Delivery", icon: Bike },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
@@ -147,12 +152,12 @@ const STATUS_META = {
     border: "border-green-200",
     dot: "bg-green-500",
   },
-  ready: {
-    color: "text-amber-700",
-    bg: "bg-amber-100",
-    border: "border-amber-200",
-    dot: "bg-amber-500",
-  },
+  // ready: {
+  //   color: "text-amber-700",
+  //   bg: "bg-amber-100",
+  //   border: "border-amber-200",
+  //   dot: "bg-amber-500",
+  // },
   assigned: {
     color: "text-cyan-700",
     bg: "bg-cyan-100",
@@ -206,7 +211,7 @@ function formatStatusLabel(status) {
   const map = {
     placed: "Order Placed",
     accepted: "Accepted",
-    ready: "Ready for Pickup",
+    // ready: "Ready for Pickup",
     assigned: "Rider Assigned",
     "out-for-delivery": "Out for Delivery",
     delivered: "Delivered",
@@ -310,25 +315,25 @@ function RiderPanel({ status, rider }) {
       </div>
     );
   }
-  if (norm === "ready") {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center">
-            <Bike size={16} className="text-amber-600" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
-              Delivery Partner
-            </p>
-            <p className="text-sm font-semibold text-slate-800 mt-0.5">
-              Order ready — assigning rider
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (norm === "ready") {
+  //   return (
+  //     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+  //       <div className="flex items-center gap-3">
+  //         <div className="w-9 h-9 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center">
+  //           <Bike size={16} className="text-amber-600" />
+  //         </div>
+  //         <div>
+  //           <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
+  //             Delivery Partner
+  //           </p>
+  //           <p className="text-sm font-semibold text-slate-800 mt-0.5">
+  //             Order ready - assigning rider
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
   if (norm === "assigned" || norm === "out-for-delivery") {
     const isAssigned = norm === "assigned";
     const colorClass = isAssigned ? "cyan" : "purple";
@@ -1067,7 +1072,7 @@ const OrderDetails = () => {
   const subtotal = Number(order.subtotal || totalAmount);
   const deliveryFee = Number(order.deliveryFee || 0);
   const discount = Number(order.discount || 0);
-  const status = normalizeStatus(order.status);
+  const status = getDisplayStatus(order.status);
   const meta = getStatusMeta(status);
   const statusLabel = formatStatusLabel(status);
   const rider = order.rider || order.riderInfo || order.deliveryPartner || {};
@@ -1201,7 +1206,7 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-              {["accepted", "ready", "out-for-delivery", "delivered"].includes(
+              {["accepted", "out-for-delivery", "delivered"].includes(
                 status,
               ) && (
                 <div className="px-6 py-5">

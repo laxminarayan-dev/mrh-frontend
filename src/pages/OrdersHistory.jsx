@@ -7,7 +7,7 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Package,
+  // Package,
   Truck,
   X,
   ChevronRight,
@@ -28,11 +28,11 @@ const STATUS_CONFIG = {
     color: "bg-emerald-100 text-emerald-700 border-emerald-300",
     label: "Accepted",
   },
-  ready: {
-    icon: Package,
-    color: "bg-amber-100 text-amber-700 border-amber-300",
-    label: "Ready",
-  },
+  // ready: {
+  //   icon: Package,
+  //   color: "bg-amber-100 text-amber-700 border-amber-300",
+  //   label: "Ready",
+  // },
   out_for_delivery: {
     icon: Truck,
     color: "bg-purple-100 text-purple-700 border-purple-300",
@@ -94,7 +94,7 @@ function OrderCard({ order, onViewClick }) {
   });
 
   const statusConfig =
-    STATUS_CONFIG[order.status?.toLowerCase()] || STATUS_CONFIG.placed;
+    STATUS_CONFIG[getDisplayStatus(order.status)] || STATUS_CONFIG.placed;
   const StatusIcon = statusConfig.icon;
 
   return (
@@ -170,6 +170,11 @@ const normalizeStatus = (status) => {
   return status.toLowerCase().replace(/[\s\-\/]/g, "_"); // Replace spaces, hyphens, and slashes with underscore
 };
 
+const getDisplayStatus = (status) => {
+  const normalized = normalizeStatus(status);
+  return normalized === "ready" ? "accepted" : normalized;
+};
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 const OrdersHistory = () => {
   const navigate = useNavigate();
@@ -200,7 +205,7 @@ const OrdersHistory = () => {
     if (statusFilter !== "all") {
       result = result.filter(
         (order) =>
-          normalizeStatus(order.status) === normalizeStatus(statusFilter),
+          getDisplayStatus(order.status) === normalizeStatus(statusFilter),
       );
     }
 
@@ -265,7 +270,6 @@ const OrdersHistory = () => {
                 <option value="all">All Orders</option>
                 <option value="placed">Placed</option>
                 <option value="accepted">Accepted</option>
-                <option value="ready">Ready</option>
                 <option value="out_for_delivery">Out for Delivery</option>
                 <option value="delivered">Delivered</option>
                 <option value="canceled">Canceled</option>
