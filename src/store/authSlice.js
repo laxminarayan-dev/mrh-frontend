@@ -391,6 +391,12 @@ const authSlice = createSlice({
             state.user = null;
             state.token = null;
             state.isLoggedIn = false;
+            state.isAuthenticated = false;
+            state.otpSent = false;
+            state.forgetOtpSent = false;
+            state.forgetOtpVerified = false;
+            state.forgetPasswordSuccess = false;
+            state.error = null;
         },
     },
     extraReducers: (builder) => {
@@ -422,6 +428,7 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
+                state.otpSent = false;
                 const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
                 Cookies.set("token", action.payload.token, cookieOptions);
             })
@@ -454,6 +461,7 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.token = action.payload.token;
+                state.otpSent = false;
                 const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
                 Cookies.set("token", action.payload.token, cookieOptions);
             })

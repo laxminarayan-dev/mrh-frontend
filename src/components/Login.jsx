@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import {
   sendLoginOtp,
+  resetOtpState,
   setRememberMe,
   verifyLoginOtp,
 } from "../store/authSlice";
@@ -23,6 +24,10 @@ const LoginForm = () => {
   const { error, loading, otpSent } = useSelector((state) => state.auth);
   const [validationErrors, setValidationErrors] = useState({});
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(resetOtpState());
+  }, [dispatch]);
 
   return (
     <div className="space-y-6 ">
