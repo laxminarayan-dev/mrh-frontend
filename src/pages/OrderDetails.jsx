@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
+import { socket } from "../socket";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function capitalizeWords(text) {
@@ -924,6 +925,22 @@ const OrderDetails = () => {
     setOrder(found || null);
   }, [orderId, orders]);
 
+  // Listen for real-time payment updates via socket
+  useEffect(() => {
+    if (!socket || !order?._id) return;
+
+    socket.on("payment-updated", (updatedOrder) => {
+      if (String(updatedOrder._id) === String(order._id)) {
+        console.log("💳 Payment updated:", updatedOrder.paymentStatus);
+        setOrder(updatedOrder);
+      }
+    });
+
+    return () => {
+      socket.off("payment-updated");
+    };
+  }, [order?._id]);
+
   if (!order) {
     return (
       <section className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-orange-50 to-orange-100 flex items-center justify-center">
@@ -1215,13 +1232,16 @@ const OrderDetails = () => {
                       Payment Status
                     </span>
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-widest rounded-full px-2 py-0.5 border
+                      className={`text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-1 border inline-flex items-center gap-1.5
                       ${
                         order.paymentStatus.toLowerCase() === "paid"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : "bg-amber-50 text-amber-600 border-amber-300"
                       }`}
                     >
+                      {order.paymentStatus.toLowerCase() === "paid" && (
+                        <CheckCircle size={10} />
+                      )}
                       {order.paymentStatus}
                     </span>
                   </div>

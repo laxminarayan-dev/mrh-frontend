@@ -71,6 +71,10 @@ function App() {
     socket.on("order-updated", (updatedOrder) => {
       dispatch(updateOrderInStore(updatedOrder));
     });
+    socket.on("payment-updated", (updatedOrder) => {
+      console.log("💳 Payment updated globally:", updatedOrder.paymentStatus);
+      dispatch(updateOrderInStore(updatedOrder));
+    });
     socket.on("item-updated", () => {
       dispatch(loadItems());
     });
@@ -82,6 +86,7 @@ function App() {
       socket.off("connect");
       socket.off("shop-updated");
       socket.off("order-updated");
+      socket.off("payment-updated");
       socket.off("item-updated");
       socket.off("item-deleted");
     };
