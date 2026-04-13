@@ -48,10 +48,10 @@ const STATUS_CONFIG = {
     color: "bg-green-100 text-green-700 border-green-300",
     label: "Delivered",
   },
-  canceled: {
+  cancelled: {
     icon: X,
     color: "bg-red-100 text-red-600 border-red-300",
-    label: "Canceled",
+    label: "Cancelled",
   },
   rejected: {
     icon: X,

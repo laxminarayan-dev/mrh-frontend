@@ -56,7 +56,7 @@ const STATUS_STYLES = {
     cls: "bg-purple-100 text-purple-700 border border-purple-500",
     icon: Package,
   },
-  canceled: {
+  cancelled: {
     cls: "bg-red-100 text-red-600 border border-red-500",
     icon: Clock,
   },

@@ -18,6 +18,9 @@ import {
   CircleOff,
   Star,
   Send,
+  ChevronRight,
+  Zap,
+  MessageCircle,
 } from "lucide-react";
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
@@ -75,27 +78,20 @@ function getDisplayStatus(raw) {
 
 function toLatLng(input) {
   if (!input) return null;
-
   if (Array.isArray(input) && input.length >= 2) {
     const a = Number(input[0]);
     const b = Number(input[1]);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-
-    // Most app snapshots use [lat, lng].
     if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return [a, b];
-    // Fallback for [lng, lat].
     if (Math.abs(a) <= 180 && Math.abs(b) <= 90) return [b, a];
     return null;
   }
-
   if (typeof input === "object") {
     const lat = Number(input.lat ?? input.latitude);
     const lng = Number(input.lng ?? input.lon ?? input.long ?? input.longitude);
     if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
-
     if (Array.isArray(input.coordinates)) return toLatLng(input.coordinates);
   }
-
   return null;
 }
 
@@ -131,108 +127,80 @@ function buildEtaLabel(distanceKm, speedKmph) {
 }
 
 const PIPELINE = [
-  { key: "placed", label: "Order Placed", icon: ShoppingBag },
+  { key: "placed", label: "Placed", icon: ShoppingBag },
   { key: "accepted", label: "Accepted", icon: CheckCircle },
   { key: "assigned", label: "Rider Assigned", icon: Bike },
-  // { key: "ready", label: "Ready for Pickup", icon: Package },
   { key: "out-for-delivery", label: "Out for Delivery", icon: Bike },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
 
-const STATUS_META = {
+// ─── STATUS CONFIG ─────────────────────────────────────────────────────────────
+const STATUS_CONFIG = {
   placed: {
-    color: "text-blue-700",
-    bg: "bg-blue-100",
-    border: "border-blue-200",
+    label: "Order Placed",
+    pill: "bg-blue-500/10 text-blue-600 border-blue-200",
     dot: "bg-blue-500",
   },
   accepted: {
-    color: "text-emerald-700",
-    bg: "bg-emerald-100",
-    border: "border-green-200",
-    dot: "bg-green-500",
-  },
-  // ready: {
-  //   color: "text-amber-700",
-  //   bg: "bg-amber-100",
-  //   border: "border-amber-200",
-  //   dot: "bg-amber-500",
-  // },
-  assigned: {
-    color: "text-cyan-700",
-    bg: "bg-cyan-100",
-    border: "border-cyan-200",
-    dot: "bg-cyan-500",
-  },
-  "out-for-delivery": {
-    color: "text-purple-700",
-    bg: "bg-purple-100",
-    border: "border-purple-200",
-    dot: "bg-purple-500",
-  },
-  out_for_delivery: {
-    color: "text-purple-700",
-    bg: "bg-purple-100",
-    border: "border-purple-200",
-    dot: "bg-purple-500",
-  },
-  delivered: {
-    color: "text-emerald-700",
-    bg: "bg-emerald-100",
-    border: "border-emerald-200",
+    label: "Accepted",
+    pill: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
     dot: "bg-emerald-500",
   },
+  assigned: {
+    label: "Rider Assigned",
+    pill: "bg-violet-500/10 text-violet-600 border-violet-200",
+    dot: "bg-violet-500",
+  },
+  "out-for-delivery": {
+    label: "Out for Delivery",
+    pill: "bg-orange-500/10 text-orange-600 border-orange-200",
+    dot: "bg-orange-500",
+  },
+  out_for_delivery: {
+    label: "Out for Delivery",
+    pill: "bg-orange-500/10 text-orange-600 border-orange-200",
+    dot: "bg-orange-500",
+  },
+  delivered: {
+    label: "Delivered",
+    pill: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  cancelled: {
+    label: "Cancelled",
+    pill: "bg-red-500/10 text-red-400 border-red-200",
+    dot: "bg-red-400",
+  },
   canceled: {
-    color: "text-red-700",
-    bg: "bg-red-100",
-    border: "border-red-200",
-    dot: "bg-red-500",
+    label: "Cancelled",
+    pill: "bg-red-500/10 text-red-400 border-red-200",
+    dot: "bg-red-400",
   },
   rejected: {
-    color: "text-red-700",
-    bg: "bg-red-100",
-    border: "border-red-200",
-    dot: "bg-red-500",
+    label: "Rejected",
+    pill: "bg-red-500/10 text-red-400 border-red-200",
+    dot: "bg-red-400",
   },
 };
 
-function getStatusMeta(status) {
+function getStatusConfig(status) {
   return (
-    STATUS_META[status] || {
-      color: "text-slate-600",
-      bg: "bg-slate-50",
-      border: "border-slate-200",
+    STATUS_CONFIG[status] || {
+      label: capitalizeWords(status.replace(/-/g, " ")),
+      pill: "bg-slate-100 text-slate-600 border-slate-200",
       dot: "bg-slate-400",
     }
   );
 }
 
-function formatStatusLabel(status) {
-  const map = {
-    placed: "Order Placed",
-    accepted: "Accepted",
-    // ready: "Ready for Pickup",
-    assigned: "Rider Assigned",
-    "out-for-delivery": "Out for Delivery",
-    delivered: "Delivered",
-    canceled: "Canceled",
-    rejected: "Rejected",
-  };
-  return (
-    map[status] ||
-    String(status)
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-  );
-}
-
-// ─── Sub-components (screen only) ─────────────────────────────────────────────
+// ─── StatusPipeline ───────────────────────────────────────────────────────────
 function StatusPipeline({ status }) {
-  const isCanceled = ["canceled", "rejected"].includes(status);
+  const isCanceled = ["canceled", "cancelled", "rejected"].includes(status);
   if (isCanceled) return null;
   const currentIdx = PIPELINE.findIndex((s) => s.key === status);
+
   return (
-    <div className="flex items-center gap-0 w-full">
+    <div className="flex items-center w-full gap-0">
       {PIPELINE.map((step, idx) => {
         const done =
           currentIdx === PIPELINE.length - 1 ? true : idx < currentIdx;
@@ -243,21 +211,21 @@ function StatusPipeline({ status }) {
             key={step.key}
             className="flex items-center flex-1 last:flex-none"
           >
-            <div className="flex flex-col items-center gap-1.5">
+            <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
-                ${
-                  done
-                    ? "bg-slate-800 border-slate-800 text-white"
-                    : active
-                      ? "bg-white border-slate-800 text-slate-800"
-                      : "bg-white border-slate-200 text-slate-300"
-                }`}
+                className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-300
+                  ${
+                    done
+                      ? "bg-slate-900 text-white shadow-sm shadow-slate-900/20"
+                      : active
+                        ? "bg-white border-2 border-slate-900 text-slate-900 shadow-sm"
+                        : "bg-slate-100 text-slate-300 border border-slate-200"
+                  }`}
               >
-                <Icon size={14} />
+                <Icon size={15} />
               </div>
               <span
-                className={`text-[10px] font-semibold uppercase tracking-wider text-center leading-tight max-w-[60px]
+                className={`text-[9px] font-semibold uppercase tracking-widest text-center leading-tight max-w-[54px]
                 ${done || active ? "text-slate-700" : "text-slate-300"}`}
               >
                 {step.label}
@@ -265,7 +233,8 @@ function StatusPipeline({ status }) {
             </div>
             {idx < PIPELINE.length - 1 && (
               <div
-                className={`flex-1 h-px mx-1 mb-5 transition-all ${done ? "bg-slate-800" : "bg-slate-200"}`}
+                className={`flex-1 h-px mx-1 mb-5 transition-all duration-500
+                ${done ? "bg-slate-900" : "bg-slate-200"}`}
               />
             )}
           </div>
@@ -275,155 +244,131 @@ function StatusPipeline({ status }) {
   );
 }
 
+// ─── RiderPanel ──────────────────────────────────────────────────────────────
 function RiderPanel({ status, rider }) {
   const norm = normalizeStatus(status);
   const riderName = rider?.name || rider?.fullName || "Rajesh Kumar";
   const riderPhone = rider?.phone || rider?.mobile || "9876543210";
-  const riderVehicle = rider?.vehicleNumber || rider?.vehicle || "bike";
+  const riderVehicle =
+    rider?.vehicleNumber || rider?.vehicle || "DL 5S BC 9234";
   const riderEta = rider?.eta || rider?.estimatedArrival || "10 mins";
 
   if (norm === "accepted") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
             <Bike size={16} className="text-slate-400" />
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          <div className="flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Delivery Partner
             </p>
-            <p className="text-sm font-semibold text-slate-700 mt-0.5">
-              Rider will be assigned soon
+            <p className="text-sm font-semibold text-slate-600 mt-0.5">
+              Finding you a rider…
             </p>
           </div>
-          <div className="ml-auto flex gap-1">
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
-              style={{ animationDelay: "0ms" }}
-            />
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
-              style={{ animationDelay: "150ms" }}
-            />
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
-              style={{ animationDelay: "300ms" }}
-            />
+          <div className="flex gap-1">
+            {[0, 150, 300].map((d) => (
+              <span
+                key={d}
+                className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
+                style={{ animationDelay: `${d}ms` }}
+              />
+            ))}
           </div>
         </div>
       </div>
     );
   }
-  // if (norm === "ready") {
-  //   return (
-  //     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-  //       <div className="flex items-center gap-3">
-  //         <div className="w-9 h-9 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center">
-  //           <Bike size={16} className="text-amber-600" />
-  //         </div>
-  //         <div>
-  //           <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
-  //             Delivery Partner
-  //           </p>
-  //           <p className="text-sm font-semibold text-slate-800 mt-0.5">
-  //             Order ready - assigning rider
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   if (norm === "assigned" || norm === "out-for-delivery") {
-    const isAssigned = norm === "assigned";
-    const colorClass = isAssigned ? "cyan" : "purple";
-    const borderColor = isAssigned ? "border-cyan-200" : "border-purple-200";
-    const bgColor = isAssigned ? "bg-cyan-50" : "bg-purple-50";
-    const statusText = isAssigned ? "Rider Assigned" : "On the way to you";
-    const badgeColorClass = isAssigned
-      ? "text-cyan-700 bg-cyan-100 border-cyan-200"
-      : "text-purple-700 bg-purple-100 border-purple-200";
-    const textColorClass = isAssigned ? "text-cyan-600" : "text-purple-600";
-    const borderVariant = isAssigned ? "border-cyan-300" : "border-purple-300";
-    const borderTopColor = isAssigned ? "border-cyan-100" : "border-purple-100";
-
+    const isOFD = norm === "out-for-delivery";
     return (
-      <div className={`rounded-xl border p-4 ${borderColor} ${bgColor}`}>
-        <div className="flex items-center justify-between gap-3 mb-4">
+      <div
+        className={`rounded-2xl border p-4 ${isOFD ? "border-orange-200 bg-orange-50/40" : "border-violet-200 bg-violet-50/40"}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div
-              className={`w-9 h-9 rounded-lg flex items-center justify-center border ${isAssigned ? "bg-cyan-100 border-cyan-200" : "bg-purple-100 border-purple-200"}`}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${isOFD ? "bg-orange-100 border-orange-200" : "bg-violet-100 border-violet-200"}`}
             >
               <Bike
                 size={16}
-                className={isAssigned ? "text-cyan-600" : "text-purple-600"}
+                className={isOFD ? "text-orange-600" : "text-violet-600"}
               />
             </div>
             <div>
               <p
-                className={`text-xs font-semibold uppercase tracking-widest ${textColorClass}`}
+                className={`text-[10px] font-bold uppercase tracking-widest ${isOFD ? "text-orange-500" : "text-violet-500"}`}
               >
                 Delivery Partner
               </p>
-              <p className="text-sm font-semibold text-slate-800 mt-0.5">
-                {statusText}
+              <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                {isOFD ? "On the way to you" : "Rider Assigned"}
               </p>
             </div>
           </div>
           <span
-            className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ${badgeColorClass} rounded-full px-2.5 py-1 border`}
+            className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 border
+            ${isOFD ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-violet-100 text-violet-700 border-violet-200"}`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${isAssigned ? "bg-cyan-500" : "bg-purple-500"} animate-pulse`}
+              className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOFD ? "bg-orange-500" : "bg-violet-500"}`}
             />
-            {isAssigned ? "Assigned" : "Live"}
+            {isOFD ? "Live" : "Assigned"}
           </span>
         </div>
+
+        {/* Grid */}
         <div
-          className={`grid grid-cols-2 gap-2 border-t ${borderTopColor} pt-4`}
+          className={`grid grid-cols-2 gap-2 border-t pt-4 ${isOFD ? "border-orange-100" : "border-violet-100"}`}
         >
-          {riderName && (
-            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                <User size={10} /> Rider
-              </div>
-              <p className="text-sm font-semibold text-slate-900">
-                {riderName}
-              </p>
-            </div>
-          )}
-          {riderPhone && (
-            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                <Phone size={10} /> Contact
-              </div>
-              <a
-                href={`tel:${riderPhone}`}
-                className={`text-sm font-semibold hover:underline ${isAssigned ? "text-cyan-700" : "text-purple-700"}`}
+          {[
+            { icon: User, label: "Rider", val: riderName, link: null },
+            {
+              icon: Phone,
+              label: "Contact",
+              val: riderPhone,
+              link: `tel:${riderPhone}`,
+            },
+            { icon: Bike, label: "Vehicle", val: riderVehicle, link: null },
+            {
+              icon: Clock,
+              label: "ETA",
+              val: riderEta,
+              link: null,
+              isEta: true,
+            },
+          ].map(({ icon: Icon, label, val, link, isEta }) => (
+            <div
+              key={label}
+              className={`rounded-xl bg-white border p-3
+              ${isEta ? "border-amber-200" : isOFD ? "border-orange-100" : "border-violet-100"}`}
+            >
+              <div
+                className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest mb-1
+                ${isEta ? "text-amber-500" : "text-slate-400"}`}
               >
-                {riderPhone}
-              </a>
-            </div>
-          )}
-          {riderVehicle && (
-            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                <Bike size={10} /> Vehicle
+                <Icon size={10} /> {label}
               </div>
-              <p className="text-sm font-semibold text-slate-900">
-                {riderVehicle}
-              </p>
+              {link ? (
+                <a
+                  href={link}
+                  className={`text-sm font-semibold hover:underline ${isOFD ? "text-orange-700" : "text-violet-700"}`}
+                >
+                  {val}
+                </a>
+              ) : (
+                <p
+                  className={`text-sm font-semibold ${isEta ? "text-amber-700" : "text-slate-900"}`}
+                >
+                  {val}
+                </p>
+              )}
             </div>
-          )}
-          {riderEta && (
-            <div className="rounded-lg bg-amber-50 border border-amber-300 p-3">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 mb-1">
-                <Clock size={10} /> ETA
-              </div>
-              <p className="text-sm font-semibold text-slate-900">{riderEta}</p>
-            </div>
-          )}
+          ))}
         </div>
       </div>
     );
@@ -431,27 +376,17 @@ function RiderPanel({ status, rider }) {
 
   if (norm === "delivered" && riderName) {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center">
-            <CheckCircle size={16} className="text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
-              Delivered by
-            </p>
-            <p className="text-sm font-semibold text-slate-800 mt-0.5">
-              {riderName}
-            </p>
-          </div>
-          {/* {riderPhone && (
-            <a
-              href={`tel:${riderPhone}`}
-              className="ml-auto text-xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
-            >
-              <Phone size={11} /> {riderPhone}
-            </a>
-          )} */}
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center">
+          <CheckCircle size={16} className="text-emerald-600" />
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+            Delivered by
+          </p>
+          <p className="text-sm font-semibold text-slate-900 mt-0.5">
+            {riderName}
+          </p>
         </div>
       </div>
     );
@@ -459,28 +394,43 @@ function RiderPanel({ status, rider }) {
   return null;
 }
 
+// ─── CanceledBanner ───────────────────────────────────────────────────────────
 function CanceledBanner({ status }) {
-  if (!["canceled", "rejected"].includes(status)) return null;
+  if (!["canceled", "cancelled", "rejected"].includes(status)) return null;
+  const isRejected = status === "rejected";
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-      <XCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-semibold text-red-600 capitalize">
-          {status === "rejected" ? "Order Rejected" : "Order Canceled"}
-        </p>
-        <p className="text-xs text-red-600 mt-0.5 leading-relaxed">
-          {status === "rejected"
-            ? "The restaurant was unable to accept your order. You will receive a full refund if payment was made."
-            : "You have canceled this order. If you were charged, a refund will be processed within 3–5 business days."}
-        </p>
+    <div
+      className={`relative overflow-hidden rounded-2xl border p-5
+      ${isRejected ? "border-red-200 bg-red-50/60" : "border-rose-200 bg-rose-50/60"}`}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className={`w-10 h-10 rounded-2xl border flex items-center justify-center flex-shrink-0
+          ${isRejected ? "bg-red-100 border-red-200 text-red-600" : "bg-rose-100 border-rose-200 text-rose-600"}`}
+        >
+          <XCircle size={18} />
+        </div>
+        <div className="min-w-0">
+          <p
+            className={`text-[10px] font-bold uppercase tracking-widest ${isRejected ? "text-red-500" : "text-rose-500"}`}
+          >
+            Order Closed
+          </p>
+          <p className="text-sm font-semibold text-slate-900 mt-1">
+            {isRejected ? "Order Rejected by Restaurant" : "Order Cancelled"}
+          </p>
+          <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+            {isRejected
+              ? "The restaurant could not accept this order. Any successful payment will be fully refunded."
+              : "This order was cancelled. If payment was completed, a refund has been initiated."}
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Print Invoice (only visible when printing) ───────────────────────────────
-
-// Review Panel (delivered orders only)
+// ─── ReviewPanel ──────────────────────────────────────────────────────────────
 function ReviewPanel({ order }) {
   const dispatch = useDispatch();
   const [hovered, setHovered] = useState(0);
@@ -499,29 +449,30 @@ function ReviewPanel({ order }) {
   }, [order]);
 
   const handleSubmit = () => {
-    if (!rating) return;
+    if (!rating || !comment.trim()) return;
     setSubmitting(true);
     dispatch(addReview({ ...order, review: { rating, comment } }));
     setTimeout(() => {
       setSubmitting(false);
+      setSubmitted(true);
     }, 800);
   };
 
   if (submitted) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 flex flex-col items-center gap-3 text-center">
-        <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-          <CheckCircle size={20} className="text-emerald-500" />
+      <div className="rounded-2xl bg-white border border-slate-100 shadow-sm p-5 flex flex-col items-center gap-3 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <CheckCircle size={22} className="text-emerald-500" />
         </div>
         <div>
           <p className="text-sm font-bold text-slate-900">
             Thanks for your feedback!
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Your review helps us improve.
+            Your review helps us serve you better.
           </p>
         </div>
-        <div className="flex  items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {[1, 2, 3, 4, 5].map((s) => (
             <Star
               key={s}
@@ -535,7 +486,7 @@ function ReviewPanel({ order }) {
           ))}
         </div>
         {comment && (
-          <p className="text-xs text-slate-500 italic mt-2">
+          <p className="text-xs text-slate-500 italic bg-slate-50 rounded-xl px-4 py-2 w-full">
             "{capitalizeWords(comment)}"
           </p>
         )}
@@ -543,19 +494,24 @@ function ReviewPanel({ order }) {
     );
   }
 
+  const activeLabel = LABELS[hovered || rating] || "Tap to rate";
+  const canSubmit = !!rating && comment.trim().length > 0;
+
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-        <Star size={14} className="text-amber-400 fill-amber-400" />
-        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+    <div className="rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center">
+          <Star size={13} className="text-amber-400 fill-amber-400" />
+        </div>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
           Rate Your Order
         </h2>
       </div>
 
-      <div className="px-5 py-4 space-y-4">
-        {/* Star selector */}
+      <div className="px-5 py-5 space-y-4">
+        {/* Stars */}
         <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((s) => (
               <button
                 key={s}
@@ -563,11 +519,11 @@ function ReviewPanel({ order }) {
                 onMouseEnter={() => setHovered(s)}
                 onMouseLeave={() => setHovered(0)}
                 onClick={() => setRating(s)}
-                className="transition-transform hover:scale-110 active:scale-95"
+                className="transition-all hover:scale-110 active:scale-95"
                 aria-label={`Rate ${s} star`}
               >
                 <Star
-                  size={28}
+                  size={30}
                   className={`transition-colors duration-100 ${
                     s <= (hovered || rating)
                       ? "text-amber-400 fill-amber-400"
@@ -578,37 +534,41 @@ function ReviewPanel({ order }) {
             ))}
           </div>
           <span
-            className={`text-xs font-semibold transition-all duration-150 ${rating ? "text-amber-500" : "text-slate-300"}`}
+            className={`text-xs font-semibold transition-all ${rating ? "text-amber-500" : "text-slate-300"}`}
           >
-            {LABELS[hovered || rating] || "Tap to rate"}
+            {activeLabel}
           </span>
         </div>
 
-        {/* Comment box */}
+        {/* Comment */}
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={3}
-          placeholder="Tell us about your experience... "
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300 transition-all"
+          placeholder="Tell us about your experience…"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700
+            placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300
+            focus:border-amber-300 transition-all leading-relaxed"
         />
 
         {/* Submit */}
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!rating || !comment.trim() || submitting}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-[14px]  font-light text-white transition-all"
+          disabled={!canSubmit || submitting}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900
+            hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-3
+            text-sm font-semibold text-white transition-all"
         >
-          {!rating ? (
-            "Please select a rating"
-          ) : !comment.trim() ? (
-            "Please add a comment"
-          ) : submitting ? (
+          {submitting ? (
             <>
-              <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
-              Submitting...
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Submitting…
             </>
+          ) : !rating ? (
+            "Select a rating first"
+          ) : !comment.trim() ? (
+            "Add a comment to submit"
           ) : (
             <>
               <Send size={13} /> Submit Review
@@ -620,6 +580,7 @@ function ReviewPanel({ order }) {
   );
 }
 
+// ─── PrintInvoice ─────────────────────────────────────────────────────────────
 function PrintInvoice({
   order,
   items,
@@ -637,34 +598,13 @@ function PrintInvoice({
     <div id="print-invoice">
       <style>{`
         @media print {
-          /* Hide the entire React root */
           body * { visibility: hidden; }
-
-          /* Show only the invoice and everything inside it */
-          #print-invoice,
-          #print-invoice * { visibility: visible; }
-
-          /* Pull invoice to top-left of the page */
-          #print-invoice {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-          }
-
-          @page {
-            size: A4;
-            margin: 12mm 14mm;
-          }
+          #print-invoice, #print-invoice * { visibility: visible; }
+          #print-invoice { position: fixed; top: 0; left: 0; width: 100%; }
+          @page { size: A4; margin: 12mm 14mm; }
         }
-
-        /* On screen: hide the print invoice entirely */
-        @media screen {
-          #print-invoice { display: none; }
-        }
+        @media screen { #print-invoice { display: none; } }
       `}</style>
-
-      {/* ── Invoice layout ── */}
       <div
         style={{
           fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
@@ -675,7 +615,6 @@ function PrintInvoice({
           margin: "0 auto",
         }}
       >
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -717,8 +656,6 @@ function PrintInvoice({
             </div>
           </div>
         </div>
-
-        {/* Delivery Address */}
         <div style={{ display: "flex", gap: "40px", marginBottom: "20px" }}>
           <div style={{ flex: 1 }}>
             <div
@@ -755,8 +692,6 @@ function PrintInvoice({
             </div>
           </div>
         </div>
-
-        {/* Items table */}
         <table
           style={{
             width: "100%",
@@ -771,78 +706,40 @@ function PrintInvoice({
                 borderBottom: "1px solid #ddd",
               }}
             >
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "6px 0",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#888",
-                }}
-              >
-                #
-              </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "6px 8px",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#888",
-                }}
-              >
-                Item
-              </th>
-              <th
-                style={{
-                  textAlign: "center",
-                  padding: "6px 8px",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#888",
-                }}
-              >
-                Qty
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "6px 8px",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#888",
-                }}
-              >
-                Unit Price
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "6px 0",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#888",
-                }}
-              >
-                Amount
-              </th>
+              {["#", "Item", "Qty", "Unit Price", "Amount"].map((h, i) => (
+                <th
+                  key={h}
+                  style={{
+                    textAlign:
+                      i === 0
+                        ? "left"
+                        : i <= 1
+                          ? "left"
+                          : i === 2
+                            ? "center"
+                            : "right",
+                    padding: "6px 8px",
+                    fontSize: "9px",
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "#888",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {items.map((item, idx) => (
               <tr key={idx} style={{ borderBottom: "1px solid #eee" }}>
                 <td
-                  style={{ padding: "8px 0", fontSize: "11px", color: "#888" }}
+                  style={{
+                    padding: "8px 8px",
+                    fontSize: "11px",
+                    color: "#888",
+                  }}
                 >
                   {idx + 1}
                 </td>
@@ -876,7 +773,7 @@ function PrintInvoice({
                 </td>
                 <td
                   style={{
-                    padding: "8px 0",
+                    padding: "8px 8px",
                     fontSize: "11px",
                     fontWeight: "600",
                     textAlign: "right",
@@ -888,8 +785,6 @@ function PrintInvoice({
             ))}
           </tbody>
         </table>
-
-        {/* Totals */}
         <div
           style={{
             marginLeft: "auto",
@@ -939,8 +834,6 @@ function PrintInvoice({
             <span>₹{totalAmount}</span>
           </div>
         </div>
-
-        {/* Footer */}
         <div
           style={{
             borderTop: "1px solid #ddd",
@@ -990,70 +883,56 @@ const OrderDetails = () => {
     setOrder(found || null);
   }, [orderId, orders]);
 
-  // Listen for real-time payment updates via socket
   useEffect(() => {
     if (!socket || !order?._id) return;
-
-    const handlePaymentUpdate = (updatedOrder) => {
-      if (String(updatedOrder._id) === String(order._id)) {
-        console.log("💳 Payment updated:", updatedOrder.paymentStatus);
+    const handle = (updatedOrder) => {
+      if (String(updatedOrder._id) === String(order._id))
         setOrder(updatedOrder);
-      }
     };
-
-    socket.on("payment-updated", handlePaymentUpdate);
-
-    return () => {
-      socket.off("payment-updated", handlePaymentUpdate);
-    };
+    socket.on("payment-updated", handle);
+    return () => socket.off("payment-updated", handle);
   }, [order?._id]);
 
   useEffect(() => {
     if (!socket || !order?._id) return;
-
-    const handleRiderLocationUpdate = (payload = {}) => {
-      const payloadOrderId = payload.orderId || payload?.order?._id;
+    const handle = (payload = {}) => {
+      const pid = payload.orderId || payload?.order?._id;
       if (
-        payloadOrderId &&
-        String(payloadOrderId) !== String(order._id) &&
-        String(payloadOrderId).slice(-6).toUpperCase() !==
+        pid &&
+        String(pid) !== String(order._id) &&
+        String(pid).slice(-6).toUpperCase() !==
           String(order._id).slice(-6).toUpperCase()
-      ) {
+      )
         return;
-      }
-
       const riderCoords = getRiderCoords(payload);
       const deliveryCoords = getDeliveryCoords(order);
       if (!riderCoords || !deliveryCoords) return;
-
       const distanceKm = getDistanceKm(riderCoords, deliveryCoords);
       const eta = buildEtaLabel(distanceKm, Number(payload.speedKmph));
-
-      if (eta) {
-        setLiveRiderEta(eta);
-      }
+      if (eta) setLiveRiderEta(eta);
     };
-
-    socket.on("rider-location-update", handleRiderLocationUpdate);
-    return () => {
-      socket.off("rider-location-update", handleRiderLocationUpdate);
-    };
+    socket.on("rider-location-update", handle);
+    return () => socket.off("rider-location-update", handle);
   }, [order]);
 
+  // ── Not found ──
   if (!order) {
     return (
-      <section className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-orange-50 to-orange-100 flex items-center justify-center">
-        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <UtensilsCrossed size={32} className="text-slate-900 mx-auto mb-4" />
-          <h1 className="text-lg font-semibold text-slate-800">
-            Order not found
+      <section className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#FFFBE9] to-orange-50 flex items-center justify-center">
+        <div className="mx-auto max-w-md px-6 py-16 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-5">
+            <UtensilsCrossed size={24} className="text-slate-400" />
+          </div>
+          <h1 className="text-lg font-bold text-slate-900">
+            Order Data not found
           </h1>
-          <p className="text-sm text-slate-500 mt-2 mb-6">
-            We couldn't locate this order in your account.
+          <p className="text-sm text-slate-500 mt-2 mb-7 leading-relaxed">
+            We couldn't locate this order in your account. It may have been
+            removed or the link is incorrect.
           </p>
           <button
             onClick={() => navigate("/account")}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
           >
             <ArrowLeft size={14} /> Back to Account
           </button>
@@ -1074,13 +953,29 @@ const OrderDetails = () => {
   const deliveryFee = Number(order.deliveryFee || 0);
   const discount = Number(order.discount || 0);
   const status = getDisplayStatus(order.status);
-  const meta = getStatusMeta(status);
-  const statusLabel = formatStatusLabel(status);
+  const {
+    label: statusLabel,
+    pill: pillClass,
+    dot: dotClass,
+  } = getStatusConfig(status);
+  const isCanceled = ["canceled", "cancelled", "rejected"].includes(status);
+  const isDelivered = status === "delivered";
+  const showRider = [
+    "accepted",
+    "assigned",
+    "out-for-delivery",
+    "delivered",
+  ].includes(status);
+  const paymentWatermark =
+    status === "rejected" ? "REJECTED" : isCanceled ? "CANCELLED" : null;
+
   const rider = order.rider || order.riderInfo || order.deliveryPartner || {};
   const riderWithLiveEta =
-    liveRiderEta && !["delivered", "canceled", "rejected"].includes(status)
+    liveRiderEta &&
+    !["delivered", "canceled", "cancelled", "rejected"].includes(status)
       ? { ...rider, eta: liveRiderEta }
       : rider;
+
   const invoiceNo = String(order._id || order.orderId || "")
     .slice(-6)
     .toUpperCase();
@@ -1095,8 +990,8 @@ const OrderDetails = () => {
   };
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
-      {/* ── Hidden print invoice (only appears on Ctrl+P) ── */}
+    <section className="min-h-screen bg-gradient-to-b from-[#FFFBE9] to-orange-50">
+      {/* Print invoice */}
       <PrintInvoice
         order={order}
         items={items}
@@ -1120,82 +1015,99 @@ const OrderDetails = () => {
 
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* ── Top bar ── */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-7">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5
+              text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300
+              transition-all shadow-sm shadow-slate-900/5"
           >
-            <ArrowLeft size={13} /> Back
+            <ArrowLeft size={14} /> Back
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {order.status === "placed" && (
               <button
                 onClick={handleCancelOrder}
-                className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5
+                  text-sm font-semibold text-red-600 hover:bg-red-100 transition-all shadow-sm shadow-red-900/5"
               >
-                <CircleOff size={13} /> Cancel Order
+                <CircleOff size={14} /> Cancel Order
               </button>
             )}
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5
+                text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300
+                transition-all shadow-sm shadow-slate-900/5"
             >
-              <Printer size={13} /> Print Invoice
+              <Printer size={14} /> Print Invoice
             </button>
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-          {/* ── Left ── */}
+        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+          {/* ══ LEFT COLUMN ══ */}
           <div className="space-y-4">
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-              <div className="bg-slate-900 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1">
-                    Tax Invoice
-                  </p>
-                  <h1 className="text-2xl font-bold text-white tracking-tight">
-                    #{invoiceNo}
-                  </h1>
-                  {dateTime && (
-                    <p className="text-xs text-slate-400 mt-1">
-                      {dateTime.date} at {dateTime.time}
+            {/* ── Hero card ── */}
+            <div className="rounded-3xl bg-white border border-slate-100 shadow-sm shadow-slate-900/5 overflow-hidden">
+              {/* Header */}
+              <div className="relative overflow-hidden bg-slate-900 px-6 py-6">
+                {/* Decorative circles */}
+                <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/[0.03]" />
+                <div className="pointer-events-none absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-white/[0.03]" />
+
+                <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-1.5">
+                      Tax Invoice
                     </p>
-                  )}
-                </div>
-                <div className="text-left sm:text-right">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-widest border ${meta.bg} ${meta.color} ${meta.border}`}
-                  >
+                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                      #{invoiceNo}
+                    </h1>
+                    {dateTime && (
+                      <p className="text-sm text-slate-400 mt-1.5 flex items-center gap-1.5">
+                        <Clock size={12} />
+                        {dateTime.date} · {dateTime.time}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col sm:items-end gap-2">
                     <span
-                      className={`w-1.5 h-1.5 rounded-full animate-pulse ${meta.dot}`}
-                    />
-                    {statusLabel}
-                  </span>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {itemCount} item{itemCount !== 1 ? "s" : ""}
-                  </p>
+                      className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold
+                      uppercase tracking-wider border backdrop-blur-sm ${pillClass}`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full animate-pulse ${dotClass}`}
+                      />
+                      {statusLabel}
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      {itemCount} item{itemCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {!["canceled", "rejected"].includes(status) && (
+              {/* Pipeline */}
+              {!isCanceled && (
                 <div className="px-6 py-5 border-b border-slate-100">
                   <StatusPipeline status={status} />
                 </div>
               )}
 
-              {["canceled", "rejected"].includes(status) && (
+              {/* Cancelled banner */}
+              {isCanceled && (
                 <div className="px-6 py-4 border-b border-slate-100">
                   <CanceledBanner status={status} />
                 </div>
               )}
 
+              {/* Delivery address */}
               <div className="px-6 py-5 border-b border-slate-100">
-                <div className="flex items-start gap-3">
-                  <MapPin
-                    size={15}
-                    className="text-slate-400 mt-0.5 flex-shrink-0"
-                  />
+                <div className="flex items-start gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MapPin size={15} className="text-slate-500" />
+                  </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
                       Delivery Address
@@ -1207,28 +1119,31 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-              {[
-                "accepted",
-                "assigned",
-                "out-for-delivery",
-                "delivered",
-              ].includes(status) && (
+              {/* Rider panel */}
+              {showRider && (
                 <div className="px-6 py-5">
                   <RiderPanel status={status} rider={riderWithLiveEta} />
                 </div>
               )}
             </div>
 
-            {/* Items table */}
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+            {/* ── Items card ── */}
+            <div className="rounded-3xl bg-white border border-slate-100 shadow-sm shadow-slate-900/5 overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">
-                  Order Items
-                </h2>
-                <span className="text-xs text-slate-400">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center">
+                    <ShoppingBag size={13} className="text-orange-500" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Order Items
+                  </h2>
+                </div>
+                <span className="text-xs text-slate-400 bg-slate-100 rounded-full px-2.5 py-1 font-semibold">
                   {itemCount} items
                 </span>
               </div>
+
+              {/* Table header */}
               <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-6 py-2.5 bg-slate-50 border-b border-slate-100">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Item
@@ -1240,11 +1155,12 @@ const OrderDetails = () => {
                   Amount
                 </p>
               </div>
-              <div className="divide-y divide-slate-100">
+
+              <div className="divide-y divide-slate-50">
                 {items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-[1fr_auto_auto] gap-4 px-6 py-3.5 items-center"
+                    className="grid grid-cols-[1fr_auto_auto] gap-4 px-6 py-4 items-center hover:bg-slate-50/60 transition-colors"
                   >
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
@@ -1254,43 +1170,78 @@ const OrderDetails = () => {
                         ₹{item.price || 0} per unit
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 text-center w-8">
-                      ×{item.quantity || 0}
-                    </p>
-                    <p className="text-sm font-bold text-slate-900 text-right">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
+                      {item.quantity || 0}
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 text-right min-w-[56px]">
                       ₹{(item.price || 0) * (item.quantity || 0)}
                     </p>
                   </div>
                 ))}
               </div>
+
               {order.notes && (
-                <div className="px-6 py-4 bg-amber-50 border-t border-amber-100">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
-                    Order Note
-                  </p>
-                  <p className="text-sm text-slate-700">{order.notes}</p>
+                <div className="px-6 py-4 bg-amber-50/60 border-t border-amber-100 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle size={12} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
+                      Order Note
+                    </p>
+                    <p className="text-sm text-slate-700">{order.notes}</p>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Right ── */}
+          {/* ══ RIGHT COLUMN ══ */}
           <div className="space-y-4">
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            {/* ── Payment summary ── */}
+            <div className="relative rounded-3xl bg-white border border-slate-100 shadow-sm shadow-slate-900/5 overflow-hidden">
+              {/* Watermark for cancelled/rejected */}
+              {paymentWatermark && (
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-red-50/50" />
+                  <span
+                    className="select-none rotate-[-12deg] border-[2.5px] border-red-700/20 rounded-xl
+                    px-5 py-2 text-2xl font-extrabold uppercase tracking-[0.25em] text-red-800/15"
+                  >
+                    {paymentWatermark}
+                  </span>
+                </div>
+              )}
+
+              <div className="relative z-20 px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <Zap size={12} className="text-emerald-500" />
+                </div>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   Payment Summary
                 </h2>
               </div>
-              <div className="px-5 py-4 space-y-3">
+
+              <div className="relative z-20 px-5 py-4 space-y-2.5">
                 {[
-                  { label: "Subtotal", value: `₹${subtotal}` },
+                  {
+                    label: "Subtotal",
+                    value: `₹${subtotal}`,
+                    highlight: false,
+                  },
                   {
                     label: "Delivery Fee",
                     value: deliveryFee > 0 ? `₹${deliveryFee}` : "Free",
+                    highlight: false,
                   },
                   ...(tax > 0
-                    ? [{ label: "Tax & Charges", value: `₹${tax}` }]
+                    ? [
+                        {
+                          label: "Tax & Charges",
+                          value: `₹${tax}`,
+                          highlight: false,
+                        },
+                      ]
                     : []),
                   ...(discount > 0
                     ? [
@@ -1314,64 +1265,75 @@ const OrderDetails = () => {
                     </span>
                   </div>
                 ))}
-                <div className="border-t border-slate-200 pt-3 mt-1 flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+
+                <div className="border-t border-slate-100 pt-3 mt-1 flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900">
                     Total
                   </span>
-                  <span className="text-lg font-bold text-slate-900">
+                  <span className="text-2xl font-bold text-slate-900 tracking-tight">
                     ₹{totalAmount}
                   </span>
                 </div>
               </div>
-              <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                    Payment Method
-                  </span>
-                  <span className="text-xs font-bold text-slate-800">
-                    {order.paymentMethod?.toUpperCase() || "N/A"}
-                  </span>
-                </div>
-                {order.paymentStatus && (
+
+              {!paymentWatermark && (
+                <div className="relative z-20 px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                      Payment Status
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Payment Method
                     </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-1 border inline-flex items-center gap-1.5
-                      ${
-                        order.paymentStatus.toLowerCase() === "paid"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-amber-50 text-amber-600 border-amber-300"
-                      }`}
-                    >
-                      {order.paymentStatus.toLowerCase() === "paid" && (
-                        <CheckCircle size={10} />
-                      )}
-                      {order.paymentStatus}
+                    <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1">
+                      {order.paymentMethod?.toUpperCase() || "N/A"}
                     </span>
                   </div>
-                )}
-              </div>
+                  {order.paymentStatus && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Payment Status
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest
+                        rounded-full px-2.5 py-1 border
+                        ${
+                          order.paymentStatus.toLowerCase() === "paid"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-600 border-amber-200"
+                        }`}
+                      >
+                        {order.paymentStatus.toLowerCase() === "paid" && (
+                          <CheckCircle size={10} />
+                        )}
+                        {order.paymentStatus}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Review panel — only for delivered orders */}
-            {orders && status === "delivered" && <ReviewPanel order={order} />}
+            {/* ── Review panel (delivered only) ── */}
+            {orders && isDelivered && <ReviewPanel order={order} />}
 
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={14} className="text-slate-400" />
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Need Help?
-                </p>
+            {/* ── Help card ── */}
+            <div className="rounded-3xl bg-white border border-slate-100 shadow-sm shadow-slate-900/5 p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle size={15} className="text-slate-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">
+                    Need Help?
+                  </p>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    For issues with this order, reach out to support with order
+                    number{" "}
+                    <span className="font-semibold text-slate-800">
+                      #{invoiceNo}
+                    </span>
+                    .
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                For issues with this order, contact us with order number{" "}
-                <span className="font-semibold text-slate-700">
-                  #{invoiceNo}
-                </span>
-                .
-              </p>
             </div>
           </div>
         </div>
