@@ -170,8 +170,9 @@ function StatusPipeline({ status }) {
   return (
     <div className="flex items-center gap-0 w-full">
       {PIPELINE.map((step, idx) => {
-        const done = currentIdx === 4 ? true : idx < currentIdx;
-        const active = currentIdx !== 4 && idx === currentIdx;
+        const done =
+          currentIdx === PIPELINE.length - 1 ? true : idx < currentIdx;
+        const active = currentIdx !== PIPELINE.length - 1 && idx === currentIdx;
         const Icon = step.icon;
         return (
           <div
@@ -269,31 +270,56 @@ function RiderPanel({ status, rider }) {
       </div>
     );
   }
-  if (norm === "out-for-delivery") {
+  if (norm === "assigned" || norm === "out-for-delivery") {
+    const isAssigned = norm === "assigned";
+    const colorClass = isAssigned ? "cyan" : "purple";
+    const borderColor = isAssigned ? "border-cyan-200" : "border-purple-200";
+    const bgColor = isAssigned ? "bg-cyan-50" : "bg-purple-50";
+    const statusText = isAssigned ? "Rider Assigned" : "On the way to you";
+    const badgeColorClass = isAssigned
+      ? "text-cyan-700 bg-cyan-100 border-cyan-200"
+      : "text-purple-700 bg-purple-100 border-purple-200";
+    const textColorClass = isAssigned ? "text-cyan-600" : "text-purple-600";
+    const borderVariant = isAssigned ? "border-cyan-300" : "border-purple-300";
+    const borderTopColor = isAssigned ? "border-cyan-100" : "border-purple-100";
+
     return (
-      <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+      <div className={`rounded-xl border p-4 ${borderColor} ${bgColor}`}>
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center">
-              <Bike size={16} className="text-purple-600" />
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center border ${isAssigned ? "bg-cyan-100 border-cyan-200" : "bg-purple-100 border-purple-200"}`}
+            >
+              <Bike
+                size={16}
+                className={isAssigned ? "text-cyan-600" : "text-purple-600"}
+              />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-purple-600">
+              <p
+                className={`text-xs font-semibold uppercase tracking-widest ${textColorClass}`}
+              >
                 Delivery Partner
               </p>
               <p className="text-sm font-semibold text-slate-800 mt-0.5">
-                On the way to you
+                {statusText}
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-purple-700 bg-purple-100 border border-purple-200 rounded-full px-2.5 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />{" "}
-            Live
+          <span
+            className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ${badgeColorClass} rounded-full px-2.5 py-1 border`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${isAssigned ? "bg-cyan-500" : "bg-purple-500"} animate-pulse`}
+            />
+            {isAssigned ? "Assigned" : "Live"}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-2 border-t border-purple-100 pt-4">
+        <div
+          className={`grid grid-cols-2 gap-2 border-t ${borderTopColor} pt-4`}
+        >
           {riderName && (
-            <div className="rounded-lg bg-white border border-purple-300 p-3">
+            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
                 <User size={10} /> Rider
               </div>
@@ -303,20 +329,20 @@ function RiderPanel({ status, rider }) {
             </div>
           )}
           {riderPhone && (
-            <div className="rounded-lg bg-white border border-purple-300 p-3">
+            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
                 <Phone size={10} /> Contact
               </div>
               <a
                 href={`tel:${riderPhone}`}
-                className="text-sm font-semibold text-purple-700 hover:underline"
+                className={`text-sm font-semibold hover:underline ${isAssigned ? "text-cyan-700" : "text-purple-700"}`}
               >
                 {riderPhone}
               </a>
             </div>
           )}
           {riderVehicle && (
-            <div className="rounded-lg bg-white border border-purple-300 p-3">
+            <div className={`rounded-lg bg-white border ${borderVariant} p-3`}>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
                 <Bike size={10} /> Vehicle
               </div>
@@ -337,6 +363,7 @@ function RiderPanel({ status, rider }) {
       </div>
     );
   }
+
   if (norm === "delivered" && riderName) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
