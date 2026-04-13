@@ -22,6 +22,7 @@ import {
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
 import { socket } from "../socket";
+import { getDistanceKm } from "../components/Direction";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function capitalizeWords(text) {
@@ -65,6 +66,63 @@ function normalizeStatus(raw) {
     .trim()
     .toLowerCase()
     .replace(/[\s_]+/g, "-");
+}
+
+function toLatLng(input) {
+  if (!input) return null;
+
+  if (Array.isArray(input) && input.length >= 2) {
+    const a = Number(input[0]);
+    const b = Number(input[1]);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+
+    // Most app snapshots use [lat, lng].
+    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return [a, b];
+    // Fallback for [lng, lat].
+    if (Math.abs(a) <= 180 && Math.abs(b) <= 90) return [b, a];
+    return null;
+  }
+
+  if (typeof input === "object") {
+    const lat = Number(input.lat ?? input.latitude);
+    const lng = Number(input.lng ?? input.lon ?? input.long ?? input.longitude);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+
+    if (Array.isArray(input.coordinates)) return toLatLng(input.coordinates);
+  }
+
+  return null;
+}
+
+function getDeliveryCoords(order) {
+  const rawAddress =
+    order?.deliveryAddress?.[0] || order?.deliveryAddress || {};
+  return (
+    toLatLng(rawAddress?.coordinates) ||
+    toLatLng(rawAddress?.location) ||
+    toLatLng(rawAddress)
+  );
+}
+
+function getRiderCoords(payload = {}) {
+  return (
+    toLatLng(payload?.location) ||
+    toLatLng(payload?.riderLocation) ||
+    toLatLng(payload?.coordinates) ||
+    toLatLng(payload?.rider?.location) ||
+    null
+  );
+}
+
+function buildEtaLabel(distanceKm, speedKmph) {
+  if (!Number.isFinite(distanceKm) || distanceKm < 0) return null;
+  const effectiveSpeed =
+    Number.isFinite(speedKmph) && speedKmph >= 5 ? speedKmph : 20;
+  const etaMinutes = Math.max(
+    1,
+    Math.round((distanceKm / effectiveSpeed) * 60),
+  );
+  return etaMinutes <= 1 ? "1 min" : `${etaMinutes} mins`;
 }
 
 const PIPELINE = [
@@ -911,6 +969,7 @@ const OrderDetails = () => {
   const [order, setOrder] = useState(null);
   const dispatch = useDispatch();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [liveRiderEta, setLiveRiderEta] = useState(null);
 
   useEffect(() => {
     if (!orderId) return;
@@ -929,17 +988,51 @@ const OrderDetails = () => {
   useEffect(() => {
     if (!socket || !order?._id) return;
 
-    socket.on("payment-updated", (updatedOrder) => {
+    const handlePaymentUpdate = (updatedOrder) => {
       if (String(updatedOrder._id) === String(order._id)) {
         console.log("💳 Payment updated:", updatedOrder.paymentStatus);
         setOrder(updatedOrder);
       }
-    });
+    };
+
+    socket.on("payment-updated", handlePaymentUpdate);
 
     return () => {
-      socket.off("payment-updated");
+      socket.off("payment-updated", handlePaymentUpdate);
     };
   }, [order?._id]);
+
+  useEffect(() => {
+    if (!socket || !order?._id) return;
+
+    const handleRiderLocationUpdate = (payload = {}) => {
+      const payloadOrderId = payload.orderId || payload?.order?._id;
+      if (
+        payloadOrderId &&
+        String(payloadOrderId) !== String(order._id) &&
+        String(payloadOrderId).slice(-6).toUpperCase() !==
+          String(order._id).slice(-6).toUpperCase()
+      ) {
+        return;
+      }
+
+      const riderCoords = getRiderCoords(payload);
+      const deliveryCoords = getDeliveryCoords(order);
+      if (!riderCoords || !deliveryCoords) return;
+
+      const distanceKm = getDistanceKm(riderCoords, deliveryCoords);
+      const eta = buildEtaLabel(distanceKm, Number(payload.speedKmph));
+
+      if (eta) {
+        setLiveRiderEta(eta);
+      }
+    };
+
+    socket.on("rider-location-update", handleRiderLocationUpdate);
+    return () => {
+      socket.off("rider-location-update", handleRiderLocationUpdate);
+    };
+  }, [order]);
 
   if (!order) {
     return (
@@ -978,6 +1071,10 @@ const OrderDetails = () => {
   const meta = getStatusMeta(status);
   const statusLabel = formatStatusLabel(status);
   const rider = order.rider || order.riderInfo || order.deliveryPartner || {};
+  const riderWithLiveEta =
+    liveRiderEta && !["delivered", "canceled", "rejected"].includes(status)
+      ? { ...rider, eta: liveRiderEta }
+      : rider;
   const invoiceNo = String(order._id || order.orderId || "")
     .slice(-6)
     .toUpperCase();
@@ -1108,7 +1205,7 @@ const OrderDetails = () => {
                 status,
               ) && (
                 <div className="px-6 py-5">
-                  <RiderPanel status={status} rider={rider} />
+                  <RiderPanel status={status} rider={riderWithLiveEta} />
                 </div>
               )}
             </div>
