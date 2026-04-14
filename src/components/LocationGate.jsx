@@ -53,7 +53,11 @@ export default function LocationGate({ children }) {
   const dispatch = useDispatch();
   const { user, isAuthenticated, tempAddress } = useSelector((s) => s.auth);
 
-  const { deliveryShop, shopsData } = useSelector((state) => state.shop);
+  const {
+    deliveryShop,
+    shopsData,
+    loading: shopsLoading,
+  } = useSelector((state) => state.shop);
   // UI state
   const [view, setView] = useState("picker"); // "picker" | "map" | "saved"
   const [showModal, setShowModal] = useState(false);
@@ -76,6 +80,7 @@ export default function LocationGate({ children }) {
 
   // Prevent double-save on login
   const savedOnLoginRef = useRef(false);
+  const validatedSavedLocationRef = useRef(false);
   const gpsWatchRef = useRef(null);
   const gpsFallbackRef = useRef(false);
 
@@ -83,13 +88,13 @@ export default function LocationGate({ children }) {
   useEffect(() => {
     const handleShopDeleted = (deletedShop) => {
       console.log(deliveryShop, deletedShop);
+
+      // Always remove deleted shop from markers (not just if selected)
+      const remaining = shopMarkers.filter((s) => s._id !== deletedShop._id);
+      setShopMarkers(remaining);
+
+      // If the deleted shop was the selected one, handle delivery logic
       if (deliveryShop?._id == deletedShop._id) {
-        const remaining = shopMarkers.filter((s) => s._id !== deletedShop._id);
-
-        // Optimistic update: immediately remove deleted shop from markers UI
-        // This will be replaced by authoritative shopsData when backend syncs
-        setShopMarkers(remaining);
-
         if (remaining.length === 0) {
           dispatch(setDeliveryShop(null));
           setIsDeliverable(false);
@@ -120,6 +125,13 @@ export default function LocationGate({ children }) {
             );
             setShowAlert(true);
           }
+        }
+      } else {
+        // Deleted shop was not selected, but trigger validation if user has saved location
+        const saved = sessionStorage.getItem("locationChoice");
+        if (saved) {
+          // Reset validation ref to trigger re-validation
+          validatedSavedLocationRef.current = false;
         }
       }
     };
@@ -181,6 +193,23 @@ export default function LocationGate({ children }) {
       .filter(Boolean);
     setShopMarkers(markers);
   }, [shopsData]);
+
+  // ─── Validate deliveryShop still exists ─────────────────────────────────────
+  useEffect(() => {
+    if (!deliveryShop || shopMarkers.length === 0) return;
+
+    // Check if the currently selected delivery shop still exists in the updated markers
+    const shopExists = shopMarkers.some((m) => m._id === deliveryShop._id);
+
+    if (!shopExists) {
+      // Selected shop was deleted - clear it and notify user
+      dispatch(setDeliveryShop(null));
+      setAlertMessage(
+        "The restaurant you selected is no longer available. Please choose another location.",
+      );
+      setShowAlert(true);
+    }
+  }, [shopMarkers, deliveryShop, dispatch]);
 
   // ─── Map bounds ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -245,7 +274,8 @@ export default function LocationGate({ children }) {
           saved: true,
         }),
       );
-      setChecking(false);
+      // DON'T close modal yet - wait for validation below
+      // setChecking(false);
 
       // If no cached address text, reverse geocode and update
       if (!cachedAddress) {
@@ -267,6 +297,63 @@ export default function LocationGate({ children }) {
       setChecking(false);
     }
   }, []);
+
+  // ─── Validate saved location against fresh shop data ─────────────────────
+  useEffect(() => {
+    // Skip if still loading shops
+    if (shopsLoading) return;
+
+    // Skip if already validated
+    if (validatedSavedLocationRef.current) return;
+
+    const saved = sessionStorage.getItem("locationChoice");
+    if (!saved) {
+      return;
+    }
+
+    // Wait for shops to load
+    if (!shopMarkers || shopMarkers.length === 0) return;
+
+    // Mark as validated to prevent re-running
+    validatedSavedLocationRef.current = true;
+
+    const coords = JSON.parse(sessionStorage.getItem("userCoords"));
+
+    // Check if there's a shop near the saved location
+    const nearest = shopMarkers.reduce((closest, shop) => {
+      const distance = getDistanceKm(coords, shop.position);
+      return distance < (closest.distance || Infinity)
+        ? { shop, distance }
+        : closest;
+    }, {});
+
+    if (!nearest.shop) {
+      // No shops available - show alert and keep modal open for re-selection
+      setAlertMessage(
+        "No restaurants available at this location. Please choose a different location.",
+      );
+      setShowAlert(true);
+      setShowModal(true);
+      setChecking(false);
+      return;
+    }
+
+    const shopRange = nearest.shop.shopDeliveryRange || DELIVERY_RANGE_KM;
+    if (nearest.distance > shopRange) {
+      // No shops in delivery range - show alert and keep modal open for re-selection
+      setAlertMessage(
+        "No restaurants available in your delivery range at this saved location. Please choose a different location.",
+      );
+      setShowAlert(true);
+      setShowModal(true);
+      setChecking(false);
+      return;
+    }
+
+    // Saved location is valid with a nearby shop - proceed
+    dispatch(setDeliveryShop(nearest.shop));
+    setChecking(false);
+  }, [shopsLoading, shopMarkers, dispatch]);
 
   // ─── Listen for external open event ───────────────────────────────────────
   useEffect(() => {
@@ -453,6 +540,13 @@ export default function LocationGate({ children }) {
   }
 
   function selectSavedAddress(addr) {
+    // Block if shops are still loading (might have stale data)
+    if (shopsLoading) {
+      setAlertMessage("Loading available restaurants. Please wait a moment.");
+      setShowAlert(true);
+      return;
+    }
+
     // Verify that there's a nearby shop that can deliver to this saved address
     if (shopMarkers.length === 0) {
       setAlertMessage("No restaurants available. Please try another location.");
@@ -524,52 +618,69 @@ export default function LocationGate({ children }) {
               {alertMessage}
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowAlert(false);
-                  setAlertMessage(null);
-                  setGpsErrorCode(null);
-                }}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
-              >
-                Dismiss
-              </button>
               {alertMessage.includes("is now nearest") ? (
                 <button
                   onClick={() => {
                     setShowAlert(false);
                     setAlertMessage(null);
                   }}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
                 >
                   Ok
                 </button>
-              ) : (
+              ) : alertMessage.includes("available") ||
+                alertMessage.includes("no restaurants") ||
+                alertMessage.includes("No Delivery") ? (
+                // Validation errors - no dismiss button, force user to choose location
                 <button
                   onClick={() => {
                     setShowAlert(false);
                     setAlertMessage(null);
-                    if (gpsErrorCode === 1) {
-                      // Permission denied - show instructions then retry
-                      setView("picker");
-                      setShowModal(true);
-                    } else if (gpsErrorCode === 3 || gpsErrorCode === 2) {
-                      // Timeout or unavailable - try again with map picker as fallback
-                      startGPS();
-                    } else {
-                      setView("picker");
-                      setShowModal(true);
-                    }
-                    setGpsErrorCode(null);
+                    setView("picker");
+                    setShowModal(true);
                   }}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
                 >
-                  {alertMessage.includes("in your current delivery range")
-                    ? "Change Location"
-                    : gpsErrorCode === 1
-                      ? "Try Again"
-                      : "Retry"}
+                  Choose Location
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowAlert(false);
+                      setAlertMessage(null);
+                      setGpsErrorCode(null);
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAlert(false);
+                      setAlertMessage(null);
+                      if (gpsErrorCode === 1) {
+                        // Permission denied - show instructions then retry
+                        setView("picker");
+                        setShowModal(true);
+                      } else if (gpsErrorCode === 3 || gpsErrorCode === 2) {
+                        // Timeout or unavailable - try again with map picker as fallback
+                        startGPS();
+                      } else {
+                        setView("picker");
+                        setShowModal(true);
+                      }
+                      setGpsErrorCode(null);
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                  >
+                    {alertMessage.includes("in your current delivery range")
+                      ? "Change Location"
+                      : gpsErrorCode === 1
+                        ? "Try Again"
+                        : "Retry"}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -722,20 +833,31 @@ export default function LocationGate({ children }) {
                       bounds={mapBounds}
                     />
 
-                    {shopMarkers.map((m) => (
-                      <Marker
-                        key={m.id}
-                        position={m.position}
-                        icon={SHOP_PIN}
-                        zIndexOffset={1000}
-                      >
-                        <Popup>
-                          <p className="text-sm font-semibold text-orange-600 text-center">
-                            {m.name}
-                          </p>
-                        </Popup>
-                      </Marker>
-                    ))}
+                    {shopsLoading ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg z-50">
+                        <div className="bg-white p-4 rounded-lg shadow-lg">
+                          <Loader
+                            className="animate-spin text-orange-500"
+                            size={32}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      shopMarkers.map((m) => (
+                        <Marker
+                          key={m.id}
+                          position={m.position}
+                          icon={SHOP_PIN}
+                          zIndexOffset={1000}
+                        >
+                          <Popup>
+                            <p className="text-sm font-semibold text-orange-600 text-center">
+                              {m.name}
+                            </p>
+                          </Popup>
+                        </Marker>
+                      ))
+                    )}
 
                     <Marker
                       position={markerPos}
