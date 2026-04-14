@@ -1,10 +1,10 @@
 import { Copyright, Loader, X, AlertCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapPin, Store } from "lucide-react";
-import { MapController } from "./Map";
+import Map, { MapController } from "./Map";
 import { getDistanceKm } from "./Direction";
 import {
   setTempAddress,
@@ -34,6 +34,35 @@ const makeIcon = (Component, color, size) =>
 
 const USER_PIN = makeIcon(MapPin, "#2563eb", 28);
 const SHOP_PIN = makeIcon(Store, "#f97316", 24);
+
+// ─── Click Handler Component ───────────────────────────────────────────────────
+function MapClickHandler({ setMarkerPos }) {
+  const map = useMap();
+
+  useEffect(() => {
+    console.log("MapClickHandler mounted, map instance:", map);
+
+    const handleClick = (e) => {
+      console.log("🎯 MAP CLICK DETECTED:", e);
+      setMarkerPos([e.latlng.lat, e.latlng.lng]);
+    };
+
+    if (!map) {
+      console.error("❌ Map instance is not available!");
+      return;
+    }
+
+    map.on("click", handleClick);
+    console.log("✅ Click listener attached to map");
+
+    return () => {
+      map.off("click", handleClick);
+      console.log("✅ Click listener removed");
+    };
+  }, [map, setMarkerPos]);
+
+  return null;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const coordsMatch = (a, b) =>
@@ -83,6 +112,22 @@ export default function LocationGate({ children }) {
   const validatedSavedLocationRef = useRef(false);
   const gpsWatchRef = useRef(null);
   const gpsFallbackRef = useRef(false);
+
+  // ─── Prevent scroll when modal is open ─────────────────────────────────────
+  useEffect(() => {
+    if (showModal || showAlert) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      document.documentElement.style.overflow = "auto";
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.documentElement.style.overflow = "auto";
+      document.body.style.overflow = "auto";
+    };
+  }, [showModal, showAlert]);
 
   // Listen for logout (tempAddress becomes null)
   useEffect(() => {
@@ -605,9 +650,9 @@ export default function LocationGate({ children }) {
       {/* Alert Modal */}
       {showAlert && alertMessage && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-[90vw] max-w-[420px] bg-white rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
+          <div className="w-[95vw] sm:w-[90vw] max-w-[400px] bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
+            <div className="flex items-start gap-2 sm:gap-4 mb-2 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center flex-shrink-0 border border-red-200">
                 <AlertCircle size={24} className="text-red-500" />
               </div>
               <div className="flex-1 pt-1">
@@ -623,17 +668,17 @@ export default function LocationGate({ children }) {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed whitespace-pre-line">
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6 leading-relaxed whitespace-pre-line">
               {alertMessage}
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               {alertMessage.includes("is now nearest") ? (
                 <button
                   onClick={() => {
                     setShowAlert(false);
                     setAlertMessage(null);
                   }}
-                  className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg text-sm sm:text-base"
                 >
                   Ok
                 </button>
@@ -648,7 +693,7 @@ export default function LocationGate({ children }) {
                     setView("picker");
                     setShowModal(true);
                   }}
-                  className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg text-sm sm:text-base"
                 >
                   Choose Location
                 </button>
@@ -660,7 +705,7 @@ export default function LocationGate({ children }) {
                       setAlertMessage(null);
                       setGpsErrorCode(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
+                    className="flex-1 px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all text-sm sm:text-base"
                   >
                     Dismiss
                   </button>
@@ -681,7 +726,7 @@ export default function LocationGate({ children }) {
                       }
                       setGpsErrorCode(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg"
+                    className="flex-1 px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all shadow-lg text-sm sm:text-base"
                   >
                     {alertMessage.includes("in your current delivery range")
                       ? "Change Location"
@@ -699,50 +744,50 @@ export default function LocationGate({ children }) {
       {children}
 
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-[90vw] max-w-[500px] bg-white rounded-2xl p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-3 sm:px-0">
+          <div className="w-full sm:w-[90vw] max-w-[500px] bg-white rounded-2xl p-4 sm:p-6 py-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* ── View: Picker ── */}
             {view === "picker" && (
               <>
-                <div className="mb-6 text-center">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin size={32} className="text-orange-500" />
+                <div className="mb-4 sm:mb-6 text-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <MapPin size={28} className="text-orange-500" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                    Select your location
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2">
+                    Select Your Location
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     We need your location to show delivery options in your area
                   </p>
                   {gpsErrorCode === 1 && (
-                    <p className="text-xs text-blue-600 mt-2 p-2 bg-blue-50 rounded-lg">
+                    <p className="text-[11px] sm:text-xs text-blue-600 mt-2 p-2 bg-blue-50 rounded-lg">
                       💡 Make sure location permission is enabled in your
                       browser settings
                     </p>
                   )}
                   {gpsErrorCode === 2 && (
-                    <p className="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded-lg">
+                    <p className="text-[11px] sm:text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded-lg">
                       💡 GPS is not available. Make sure GPS is enabled on your
                       device, or use the map to pin your location
                     </p>
                   )}
                   {gpsErrorCode === 3 && (
-                    <p className="text-xs text-amber-600 mt-2 p-2 bg-amber-50 rounded-lg">
+                    <p className="text-[11px] sm:text-xs text-amber-600 mt-2 p-2 bg-amber-50 rounded-lg">
                       💡 Location took too long. Try again or use the map to pin
                       your location
                     </p>
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <button
                     onClick={startGPS}
-                    className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-4 rounded-xl shadow-lg transition-all"
+                    className="w-full flex items-center justify-center gap-2 sm:gap-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-3 sm:py-4 rounded-xl shadow-lg transition-all text-sm sm:text-base"
                   >
-                    <MapPin size={20} /> Use my current location
+                    <MapPin size={16} /> Use GPS location
                   </button>
 
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-gray-400">
                     <div className="flex-1 h-px bg-gray-200" />
                     OR
                     <div className="flex-1 h-px bg-gray-200" />
@@ -753,15 +798,15 @@ export default function LocationGate({ children }) {
                       setView("map");
                       setMapLoading(true);
                     }}
-                    className="w-full flex items-center justify-center gap-3 border border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium py-4 rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium py-3 sm:py-4 rounded-xl transition-all text-sm sm:text-base"
                   >
-                    <MapPin size={20} /> Pin location on map
+                    <MapPin size={16} /> Pin location on map
                   </button>
 
                   {isAuthenticated && user?.addresses?.length > 0 && (
                     <button
                       onClick={() => setView("saved")}
-                      className="w-full flex items-center justify-center gap-3 border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-4 rounded-xl transition-all"
+                      className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 sm:py-4 rounded-xl transition-all text-sm sm:text-base"
                     >
                       <Store size={20} /> Choose from saved addresses
                     </button>
@@ -772,15 +817,15 @@ export default function LocationGate({ children }) {
 
             {/* ── View: Map ── */}
             {view === "map" && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                       {gettingGPS
                         ? "📍 Finding your location..."
                         : "🗺️ Pin your location"}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {gettingGPS
                         ? "Please wait..."
                         : "Drag the pin to set your delivery address"}
@@ -795,21 +840,24 @@ export default function LocationGate({ children }) {
                             setMarkerPos(DEFAULT_COORDS);
                           }
                     }
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all"
+                    className="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all flex-shrink-0"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
                 {/* Map */}
-                <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow">
+                <div
+                  className="relative rounded-xl overflow-hidden border border-gray-200 shadow"
+                  style={{ zIndex: 1 }}
+                >
                   {(mapLoading || gettingGPS) && (
-                    <div className="absolute inset-0 z-50 bg-white/90 flex flex-col items-center justify-center gap-3 rounded-xl">
+                    <div className="absolute inset-0 z-50 bg-white/90 flex flex-col items-center justify-center gap-2 sm:gap-3 rounded-xl pointer-events-none">
                       <Loader
                         className="animate-spin text-orange-500"
                         size={36}
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500 text-center px-2">
                         {gettingGPS
                           ? "Getting your location...\n(Keep GPS enabled)"
                           : "Loading map..."}
@@ -817,7 +865,7 @@ export default function LocationGate({ children }) {
                       {gettingGPS && (
                         <button
                           onClick={cancelGPS}
-                          className="text-xs text-gray-400 underline"
+                          className="text-[11px] sm:text-xs text-gray-400 underline"
                         >
                           Cancel
                         </button>
@@ -827,10 +875,21 @@ export default function LocationGate({ children }) {
                   <MapContainer
                     center={markerPos}
                     zoom={14}
-                    scrollWheelZoom
+                    draggable={true}
+                    scrollWheelZoom={true}
                     attributionControl={false}
-                    style={{ width: "100%", height: "300px" }}
-                    whenCreated={() => setMapLoading(false)}
+                    style={{ width: "100%", height: "36vh" }}
+                    whenCreated={(mapInstance) => {
+                      console.log(
+                        "🗺️ Map created with container:",
+                        mapInstance.getContainer(),
+                      );
+                      console.log(
+                        "🗺️ Map is interactive:",
+                        mapInstance.dragging.enabled(),
+                      );
+                      setMapLoading(false);
+                    }}
                   >
                     <TileLayer
                       url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -841,6 +900,7 @@ export default function LocationGate({ children }) {
                       zoom={14}
                       bounds={mapBounds}
                     />
+                    <MapClickHandler setMarkerPos={setMarkerPos} />
 
                     {shopsLoading ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg z-50">
@@ -860,7 +920,7 @@ export default function LocationGate({ children }) {
                           zIndexOffset={1000}
                         >
                           <Popup>
-                            <p className="text-sm font-semibold text-orange-600 text-center">
+                            <p className="text-xs sm:text-sm font-semibold text-orange-600 text-center">
                               {m.name}
                             </p>
                           </Popup>
@@ -873,6 +933,7 @@ export default function LocationGate({ children }) {
                       icon={USER_PIN}
                       draggable
                       eventHandlers={{
+                        click: (e) => console.log("📍 MARKER CLICK:", e),
                         dragend: (e) => {
                           const { lat, lng } = e.target.getLatLng();
                           setMarkerPos([lat, lng]);
@@ -880,7 +941,7 @@ export default function LocationGate({ children }) {
                       }}
                     >
                       <Popup>
-                        <p className="text-sm font-semibold text-blue-600 text-center">
+                        <p className="text-xs sm:text-sm font-semibold text-blue-600 text-center">
                           📍 Delivery Here
                         </p>
                       </Popup>
@@ -888,13 +949,13 @@ export default function LocationGate({ children }) {
                   </MapContainer>
                 </div>
 
-                <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
+                <p className="text-[10px] sm:text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
                   <Copyright size={11} /> OpenStreetMap contributors
                 </p>
 
                 {/* Address input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Edit your address
                   </label>
                   <textarea
@@ -905,10 +966,12 @@ export default function LocationGate({ children }) {
                     }}
                     placeholder="Add house number, landmark, floor etc."
                     rows={2}
-                    className={`w-full px-4 py-3 text-sm border rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none ${addressError ? "border-red-400" : "border-gray-300"}`}
+                    className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm border rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none ${addressError ? "border-red-400" : "border-gray-300"}`}
                   />
                   {addressError && (
-                    <p className="text-xs text-red-500 mt-1">{addressError}</p>
+                    <p className="text-[11px] sm:text-xs text-red-500 mt-1">
+                      {addressError}
+                    </p>
                   )}
                 </div>
 
@@ -916,7 +979,7 @@ export default function LocationGate({ children }) {
                 <button
                   onClick={confirmLocation}
                   disabled={!isDeliverable || gettingGPS || confirming}
-                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-medium text-white transition-all shadow-lg min-h-[56px]
+                  className={`w-full flex items-center justify-center gap-2 py-3 sm:py-4 rounded-xl font-medium text-white text-xs sm:text-sm transition-all shadow-lg min-h-[48px] sm:min-h-[56px]
                     ${
                       gettingGPS
                         ? "bg-gray-400 cursor-not-allowed"
@@ -931,7 +994,7 @@ export default function LocationGate({ children }) {
                         className="animate-spin flex-shrink-0"
                         size={18}
                       />
-                      <span className="text-sm font-semibold">
+                      <span className="text-xs sm:text-sm font-semibold">
                         Getting location...
                       </span>
                     </>
@@ -942,18 +1005,18 @@ export default function LocationGate({ children }) {
                         className="animate-spin flex-shrink-0"
                         size={18}
                       />
-                      <span className="text-sm font-semibold">
+                      <span className="text-xs sm:text-sm font-semibold">
                         Confirming...
                       </span>
                     </>
                   )}
                   {!gettingGPS && !confirming && isDeliverable && (
-                    <span className="text-sm font-semibold">
+                    <span className="text-xs sm:text-sm font-semibold">
                       ✓ Confirm Location
                     </span>
                   )}
                   {!gettingGPS && !confirming && !isDeliverable && (
-                    <span className="text-sm font-semibold">
+                    <span className="text-xs sm:text-sm font-semibold">
                       Not in delivery range
                     </span>
                   )}
@@ -964,46 +1027,46 @@ export default function LocationGate({ children }) {
             {/* ── View: Saved Addresses ── */}
             {view === "saved" && (
               <div>
-                <div className="flex items-start justify-between mb-5">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">
+                <div className="flex items-start justify-between gap-2 mb-4 sm:mb-5">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-base sm:text-xl font-bold text-gray-800">
                       Saved Addresses
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                       Choose from your saved locations
                     </p>
                   </div>
                   <button
                     onClick={() => setView("picker")}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all"
+                    className="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all flex-shrink-0"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-64 sm:max-h-80 overflow-y-auto pr-1">
                   {user?.addresses && user.addresses.length > 0 ? (
                     user.addresses.map((addr, i) => (
                       <button
                         key={i}
                         onClick={() => selectSavedAddress(addr)}
-                        className="w-full text-left flex items-start gap-3 border border-gray-200 rounded-xl px-4 py-3 hover:border-orange-300 hover:bg-orange-50 transition-all"
+                        className="w-full text-left flex items-start gap-2 sm:gap-3 border border-gray-200 rounded-xl px-3 py-2 sm:px-4 sm:py-3 hover:border-orange-300 hover:bg-orange-50 transition-all"
                       >
-                        <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <MapPin size={16} className="text-orange-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-gray-900">
+                          <p className="font-semibold text-xs sm:text-sm text-gray-900">
                             {addr.label || `Address ${i + 1}`}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                          <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 line-clamp-2">
                             {addr.formattedAddress}
                           </p>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-500 py-6 sm:py-8 text-sm">
                       No saved addresses
                     </p>
                   )}

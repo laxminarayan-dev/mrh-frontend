@@ -3,7 +3,8 @@ export default {
     theme: {
         extend: {
             screens: {
-                xs: '426px', // > 425px
+                xs: '376px',   // Small phones (iPhone SE)
+                sm: '426px',   // Medium phones (previously xs)
             },
         },
     },
