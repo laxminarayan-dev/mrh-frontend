@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
 
 const CART_STORAGE_KEY = "cartData";
 
@@ -12,15 +11,6 @@ const readCartStorage = () => {
         if (raw) {
             const parsed = JSON.parse(raw);
             return Array.isArray(parsed) ? parsed : [];
-        }
-        const cookieData = Cookies.get(CART_STORAGE_KEY);
-        if (cookieData) {
-            const parsed = JSON.parse(cookieData);
-            if (Array.isArray(parsed)) {
-                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsed));
-                Cookies.remove(CART_STORAGE_KEY);
-                return parsed;
-            }
         }
     } catch (error) {
         return [];
@@ -42,7 +32,6 @@ const clearCartStorage = () => {
     } catch (error) {
         return;
     }
-    Cookies.remove(CART_STORAGE_KEY);
 };
 
 
@@ -50,11 +39,11 @@ export const fetchCartItems = createAsyncThunk(
     "cart/fetchCartItems",
     async (_, thunkAPI) => {
         try {
-            const isLoggedIn = Cookies.get("token") ? true : false;
+            const isLoggedIn = localStorage.getItem("token") ? true : false;
             if (!isLoggedIn) {
                 return readCartStorage();
             } else {
-                const token = Cookies.get("token");
+                const token = localStorage.getItem("token");
 
                 const response = await fetch(
                     `${import.meta.env.VITE_BACKEND_API}/api/user/cart`,
@@ -84,7 +73,7 @@ export const updateCartData = createAsyncThunk(
     "cart/updateCartData",
     async (_, thunkAPI) => {
         try {
-            const token = Cookies.get("token");
+            const token = localStorage.getItem("token");
             if (!token) {
                 return thunkAPI.rejectWithValue({ message: "Missing auth token" });
             }
@@ -119,7 +108,7 @@ export const fetchOrders = createAsyncThunk(
     "cart/fetchOrders",
     async (_, thunkAPI) => {
         try {
-            const token = Cookies.get("token");
+            const token = localStorage.getItem("token");
             if (!token) {
                 return thunkAPI.rejectWithValue({ message: "Missing auth token" });
             }
@@ -149,7 +138,7 @@ export const placeOrder = createAsyncThunk(
     "auth/placeOrder",
     async (orderDetail, thunkAPI) => {
         try {
-            const token = Cookies.get("token");
+            const token = localStorage.getItem("token");
             if (!token) {
                 return thunkAPI.rejectWithValue({ message: "Missing auth token" });
             }
@@ -184,7 +173,7 @@ export const placeOrder = createAsyncThunk(
 
 export const cancelOrder = createAsyncThunk("cart/cancelOrder", async (order, thunkAPI) => {
     try {
-        const token = Cookies.get("token");
+        const token = localStorage.getItem("token");
         if (!token) {
             return thunkAPI.rejectWithValue({ message: "Missing auth token" });
         }
@@ -212,7 +201,7 @@ export const cancelOrder = createAsyncThunk("cart/cancelOrder", async (order, th
 
 export const addReview = createAsyncThunk("cart/addReview", async (order, thunkAPI) => {
     try {
-        const token = Cookies.get("token");
+        const token = localStorage.getItem("token");
         if (!token) {
             return thunkAPI.rejectWithValue({ message: "Missing auth token" });
         }

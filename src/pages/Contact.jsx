@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 import {
   Mail,
   Phone,
@@ -42,8 +41,8 @@ function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Get auth token from cookies
-      const token = Cookies.get("token");
+      // Get auth token from Token
+      const token = localStorage.getItem("token");
 
       if (!token) {
         setErrorType("no-token");

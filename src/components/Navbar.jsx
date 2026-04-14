@@ -1,4 +1,12 @@
-import { Logs, X, ChefHat, UserRound, ShoppingBasket, ChevronDown, MapPin } from "lucide-react";
+import {
+  Logs,
+  X,
+  ChefHat,
+  UserRound,
+  ShoppingBasket,
+  ChevronDown,
+  MapPin,
+} from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -12,9 +20,14 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
   const [showLocationGate, setShowLocationGate] = useState(true);
   const displayAddress = address || "Set delivery location";
 
-
   useEffect(() => {
-    if (location.pathname === "/cart" || location.pathname === "/checkout" || location.pathname.startsWith("/orders/") || location.pathname === "/account") {
+    if (
+      location.pathname === "/cart" ||
+      location.pathname.startsWith("/auth") ||
+      location.pathname === "/checkout" ||
+      location.pathname.startsWith("/orders/") ||
+      location.pathname === "/account"
+    ) {
       setShowLocationGate(false);
     } else {
       setShowLocationGate(true);
@@ -33,8 +46,10 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
   useEffect(() => {
     if (tempAddress) {
       setAddress(tempAddress.formattedAddress);
+    } else {
+      setAddress(null); // Clear address when tempAddress is null (on logout)
     }
-  }, [tempAddress])
+  }, [tempAddress]);
 
   return (
     <>
@@ -115,27 +130,30 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
           </div>
         </div>
       </nav>
-      {showLocationGate && (<div className=" mt-2 flex flex-col gap-1 md:w-[90vw] max-w-[1100px] mx-6 md:mx-auto pb-2">
-        <div className="flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <MapPin size={16} className="text-orange-500 flex-shrink-0" />
-            <span className="truncate">{displayAddress}</span>
-          </div>
-          <div className="relative flex items-center flex-shrink-0">
-            <select
-              aria-label="Change delivery location"
-              defaultValue="keep"
-              onChange={handleLocationChange}
-              className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-5"
-            >
-              <option value="keep">Current</option>
-              <option value="change">Change location</option>
-            </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-1 text-orange-600" />
+      {showLocationGate && (
+        <div className=" mt-2 flex flex-col gap-1 md:w-[90vw] max-w-[1100px] mx-6 md:mx-auto pb-2">
+          <div className="flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <MapPin size={16} className="text-orange-500 flex-shrink-0" />
+              <span className="truncate">{displayAddress}</span>
+            </div>
+            <div className="relative flex items-center flex-shrink-0">
+              <select
+                aria-label="Change delivery location"
+                defaultValue="keep"
+                onChange={handleLocationChange}
+                className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-5"
+              >
+                <option value="keep">Current</option>
+                <option value="change">Change location</option>
+              </select>
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-1 text-orange-600"
+              />
+            </div>
           </div>
         </div>
-
-      </div>
       )}
     </>
   );

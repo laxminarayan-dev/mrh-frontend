@@ -1,5 +1,55 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
+
+// Helper functions for localStorage
+const setTokenStorage = (token, rememberMe) => {
+    try {
+        localStorage.setItem("token", token);
+        if (rememberMe) {
+            localStorage.setItem("rememberMe", "true");
+        } else {
+            localStorage.removeItem("rememberMe");
+        }
+        console.log("✅ Token saved to localStorage");
+        return true;
+    } catch (error) {
+        console.error("❌ Failed to save token:", error);
+        return false;
+    }
+};
+
+const getToken = () => {
+    try {
+        const token = localStorage.getItem("token");
+        if (token) {
+            console.log("✅ Token retrieved from localStorage");
+            return token;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error retrieving token:", error);
+        return null;
+    }
+};
+
+const clearTokenStorage = () => {
+    try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("rememberMe");
+        console.log("✅ Token cleared from storage");
+    } catch (error) {
+        console.error("Error clearing token:", error);
+    }
+};
+
+// Separate function to clear session storage on logout
+const clearSessionStorage = () => {
+    try {
+        sessionStorage.clear();
+        console.log("✅ Session storage cleared");
+    } catch (error) {
+        console.error("Error clearing session storage:", error);
+    }
+};
 
 const scheduleErrorClear = (thunkAPI) => {
     setTimeout(() => {
@@ -17,7 +67,7 @@ export const startInitialAuth = createAsyncThunk(
     async (_, thunkAPI) => {
 
         try {
-            const token = Cookies.get("token");
+            const token = getToken();
 
             if (!token) {
                 return { isAuthenticated: false, user: null, token: null };
@@ -33,7 +83,7 @@ export const startInitialAuth = createAsyncThunk(
             );
 
             if (!response.ok) {
-                Cookies.remove("token");
+                clearTokenStorage();
                 return { isAuthenticated: false, user: null, token: null };
             }
 
@@ -74,6 +124,10 @@ export const authLogin = createAsyncThunk(
                 return thunkAPI.rejectWithValue(err);
             }
             const data = await response.json();
+
+            // Set token to localStorage
+            const rememberMe = thunkAPI.getState().auth.rememberMe;
+            setTokenStorage(data.token, rememberMe);
 
             return {
                 isAuthenticated: true,
@@ -140,10 +194,8 @@ export const verifySignupOtp = createAsyncThunk(
             }
 
             const data = await response.json();
-            const cookieOptions = thunkAPI.getState().auth.rememberMe
-                ? { expires: 7 }
-                : undefined;
-            Cookies.set("token", data.token, cookieOptions);
+            const rememberMe = thunkAPI.getState().auth.rememberMe;
+            setTokenStorage(data.token, rememberMe);
 
             return {
                 isAuthenticated: true,
@@ -203,10 +255,8 @@ export const verifyLoginOtp = createAsyncThunk(
                 return thunkAPI.rejectWithValue(err);
             }
             const data = await response.json();
-            const cookieOptions = thunkAPI.getState().auth.rememberMe
-                ? { expires: 7 }
-                : undefined;
-            Cookies.set("token", data.token, cookieOptions);
+            const rememberMe = thunkAPI.getState().auth.rememberMe;
+            setTokenStorage(data.token, rememberMe);
             return {
                 isAuthenticated: true,
                 user: data.user,
@@ -313,7 +363,7 @@ export const saveAddress = createAsyncThunk(
     "auth/saveAddress",
     async (addressData, thunkAPI) => {
         try {
-            const token = Cookies.get("token");
+            const token = localStorage.getItem("token");
             const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_API}/api/user/save-address`,
                 {
@@ -387,10 +437,12 @@ const authSlice = createSlice({
             state.rememberMe = action.payload;
         },
         logout: (state) => {
-            Cookies.remove("token");
+            clearTokenStorage();
+            clearSessionStorage(); // Clear session storage on logout
             state.user = null;
             state.token = null;
             state.isLoggedIn = false;
+            state.tempAddress = null
             state.isAuthenticated = false;
             state.otpSent = false;
             state.forgetOtpSent = false;
@@ -429,8 +481,6 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 state.otpSent = false;
-                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
-                Cookies.set("token", action.payload.token, cookieOptions);
             })
             .addCase(authLogin.rejected, (state, action) => {
                 state.loading = false;
@@ -462,8 +512,6 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 state.otpSent = false;
-                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
-                Cookies.set("token", action.payload.token, cookieOptions);
             })
             .addCase(verifyLoginOtp.rejected, (state, action) => {
                 state.loading = false;
@@ -497,8 +545,6 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 state.otpSent = false; // reset OTP sent state after successful verification
-                const cookieOptions = state.rememberMe ? { expires: 7 } : undefined;
-                Cookies.set("token", action.payload.token, cookieOptions);
             })
             .addCase(verifySignupOtp.rejected, (state, action) => {
                 state.loading = false;

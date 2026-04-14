@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Cookies from "js-cookie";
 import { socket } from "../socket";
 import {
   Mail,
@@ -74,7 +73,7 @@ const InquiryDetail = () => {
     try {
       setLoading(true);
       setError(null);
-      const token = Cookies.get("token");
+      const token = localStorage.getItem("token");
 
       // Fetch all user inquiries and find the one matching the ID
       const response = await fetch(

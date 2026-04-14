@@ -18,7 +18,6 @@ import {
 } from "./store/shopSlice";
 import { loadItems } from "./store/itemsSlice";
 
-import Cookies from "js-cookie";
 import { socket } from "./socket";
 import LoaderComp from "./components/Loader";
 import { Outlet, useLocation } from "react-router-dom";
@@ -125,9 +124,9 @@ function App() {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-  // Setting Unsaved Cookies when login or signup
+  // Setting Unsaved Token when login or signup
   useEffect(() => {
-    const token = Cookies.get("token");
+    const token = localStorage.getItem("token");
     if (!token) return; // ❌ not logged in
     if (synced) return; // ❌ already synced
 

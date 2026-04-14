@@ -84,6 +84,15 @@ export default function LocationGate({ children }) {
   const gpsWatchRef = useRef(null);
   const gpsFallbackRef = useRef(false);
 
+  // Listen for logout (tempAddress becomes null)
+  useEffect(() => {
+    if (tempAddress === null) {
+      setShowModal(true);
+      setView("picker");
+      validatedSavedLocationRef.current = false; // Reset validation flag
+    }
+  }, [tempAddress]);
+
   // ─── Shop deletion listener ───────────────────────────────────────────
   useEffect(() => {
     const handleShopDeleted = (deletedShop) => {

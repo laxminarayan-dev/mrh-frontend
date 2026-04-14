@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 import { socket } from "../socket";
 import {
   Mail,
@@ -246,7 +245,7 @@ const Inquiries = () => {
   const fetchMyInquiries = async () => {
     try {
       setLoadingInquiries(true);
-      const token = Cookies.get("token");
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_API}/api/inquiry/my-inquiries`,
         {

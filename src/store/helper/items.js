@@ -1,14 +1,16 @@
-import Cookies from 'js-cookie'
 import { createSelector } from "@reduxjs/toolkit";
 
-// Helper function to read items from cookie
-export const getItemsFromCookie = () => {
-    let cookies = Cookies.get('items')
-    if (cookies && cookies.length > 0) {
-        return cookies
-    } else {
-        return []
+// Helper function to read items from storage
+export const getItemsFromStorage = () => {
+    try {
+        const items = localStorage.getItem('items');
+        if (items && items.length > 0) {
+            return JSON.parse(items);
+        }
+    } catch (error) {
+        console.error("Error reading items from storage:", error);
     }
+    return [];
 };
 
 // Helper function to extract unique categories from items
@@ -186,10 +188,10 @@ export const staticData = [
 ];
 
 
-// Initialize items from cookie or use empty array
+// Initialize items from storage or use static data
 export const fetchItems = () => {
     return new Promise((resolve) => {
-        const cookieItems = getItemsFromCookie()
-        resolve(cookieItems.length > 0 ? cookieItems : staticData)
-    })
-}
+        const storageItems = getItemsFromStorage();
+        resolve(storageItems.length > 0 ? storageItems : staticData);
+    });
+};
