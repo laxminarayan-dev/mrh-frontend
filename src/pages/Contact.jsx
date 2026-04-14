@@ -166,59 +166,73 @@ function Contact() {
         </div>
       )}
 
-      <section className="relative max-w-6xl mx-auto px-6 py-12 md:py-16 z-20">
-        <div className="grid md:grid-cols-2 gap-8">
+      <section className="relative max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-12 md:py-16 z-20">
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-orange-500">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-orange-500">
               Contact Us
             </p>
-            <h1 className="mt-2 text-3xl md:text-4xl font-bold text-slate-900">
+            <h1 className="mt-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900">
               We’d love to hear from you
             </h1>
-            <p className="mt-4 text-slate-600 leading-relaxed">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
               Have a question about our menu, catering, or bulk orders? Send us
               a message and our team will get back to you shortly.
             </p>
 
-            <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                  <Mail size={18} />
+            <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-4">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <span className="mt-1 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 flex-shrink-0">
+                  <Mail size={16} className="sm:block hidden" />
+                  <Mail size={14} className="sm:hidden block" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Email</p>
-                  <p className="text-sm text-slate-600">support@mrhalwai.in</p>
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900">
+                    Email
+                  </p>
+                  <p className="text-[11px] sm:text-sm text-slate-600">
+                    support@mrhalwai.in
+                  </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                  <Phone size={18} />
+              <div className="flex items-start gap-2 sm:gap-3">
+                <span className="mt-1 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 flex-shrink-0">
+                  <Phone size={16} className="sm:block hidden" />
+                  <Phone size={14} className="sm:hidden block" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Phone</p>
-                  <p className="text-sm text-slate-600">+91 73105 07638</p>
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900">
+                    Phone
+                  </p>
+                  <p className="text-[11px] sm:text-sm text-slate-600">
+                    +91 73105 07638
+                  </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                  <MapPin size={18} />
+              <div className="flex items-start gap-2 sm:gap-3">
+                <span className="mt-1 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 flex-shrink-0">
+                  <MapPin size={16} className="sm:block hidden" />
+                  <MapPin size={14} className="sm:hidden block" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900">
                     Address
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-[11px] sm:text-sm text-slate-600">
                     Shop No. 57, KIC Market, Dibai, Uttar Pradesh 203393
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                  <Clock size={18} />
+              <div className="flex items-start gap-2 sm:gap-3">
+                <span className="mt-1 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 flex-shrink-0">
+                  <Clock size={16} className="sm:block hidden" />
+                  <Clock size={14} className="sm:hidden block" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Hours</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900">
+                    Hours
+                  </p>
+                  <p className="text-[11px] sm:text-sm text-slate-600">
                     Mon - Sun: 10:00 AM to 10:00 PM
                   </p>
                 </div>
@@ -226,42 +240,52 @@ function Contact() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-orange-200 bg-white p-6 shadow-lg">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl sm:rounded-3xl border border-orange-200 bg-white p-4 sm:p-6 shadow-lg">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900">
               Send an inquiry
             </h2>
 
             {!isAuthenticated ? (
               <div className="mt-4 rounded-2xl border-2 border-orange-200 bg-orange-50 p-6 text-center">
-                <div className="mx-auto w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <LogIn size={28} className="text-orange-600" />
+                <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 bg-orange-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <LogIn
+                    size={24}
+                    className="sm:block hidden text-orange-600"
+                  />
+                  <LogIn
+                    size={20}
+                    className="sm:hidden block text-orange-600"
+                  />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-2">
                   Login Required
                 </h3>
-                <p className="text-slate-600 text-sm mb-5 leading-relaxed">
+                <p className="text-slate-600 text-xs sm:text-sm mb-4 sm:mb-5 leading-relaxed">
                   Please login or register to send us an inquiry. This helps us
                   respond to you more efficiently.
                 </p>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={() => navigate("/auth/login")}
-                    className="flex-1 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700"
+                    className="flex-1 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700"
                   >
                     Login
                   </button>
                   <button
                     onClick={() => navigate("/auth/register")}
-                    className="flex-1 rounded-lg border-2 border-orange-500 bg-white px-4 py-2.5 text-sm font-semibold text-orange-600 transition-all hover:bg-orange-50"
+                    className="flex-1 rounded-lg border-2 border-orange-500 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm font-semibold text-orange-600 transition-all hover:bg-orange-50"
                   >
                     Register
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                className="mt-4 space-y-3 sm:space-y-4"
+              >
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="text-xs sm:text-sm font-medium text-slate-700">
                     Full Name
                   </label>
                   <input
@@ -269,11 +293,11 @@ function Contact() {
                     placeholder="Your name"
                     value={user?.fullName}
                     readOnly
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
+                    className="mt-1.5 sm:mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="text-xs sm:text-sm font-medium text-slate-700">
                     Email
                   </label>
                   <input
@@ -281,27 +305,27 @@ function Contact() {
                     placeholder="you@example.com"
                     value={user?.email}
                     readOnly
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400"
+                    className="mt-1.5 sm:mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="text-xs sm:text-sm font-medium text-slate-700">
                     Inquiry
                   </label>
                   <textarea
                     rows="4"
                     placeholder="Share your inquiry about our menu, catering services, or bulk orders..."
                     value={inquiry}
-                    className={`mt-2 w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-orange-400 transition-colors ${
+                    className={`mt-1.5 sm:mt-2 w-full rounded-lg border bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-orange-400 transition-colors ${
                       inquiry.trim().length < 10 && inquiry.trim().length > 0
                         ? "border-yellow-300 focus:ring-2 focus:ring-yellow-200"
                         : "border-slate-200"
                     }`}
                     onChange={(e) => setInquiry(e.target.value)}
                   ></textarea>
-                  <div className="mt-2 flex items-center justify-between">
+                  <div className="mt-1.5 sm:mt-2 flex items-center justify-between">
                     <p
-                      className={`text-xs font-medium ${
+                      className={`text-[10px] sm:text-xs font-medium ${
                         inquiry.trim().length < 10 && inquiry.trim().length > 0
                           ? "text-yellow-600"
                           : inquiry.trim().length >= 10
@@ -320,7 +344,7 @@ function Contact() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md transition-all hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>

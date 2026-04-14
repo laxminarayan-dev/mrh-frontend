@@ -127,21 +127,21 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {loading && <LoaderComp />}
 
       {!forgetOtpSent && (
         <Link
           to={"/auth/login"}
-          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4"
+          className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 hover:text-slate-900 mb-3 sm:mb-4"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} className="sm:w-4 md:w-4" />
           Back to login
         </Link>
       )}
 
       {/* Progress Indicator */}
-      <div className="flex items-center justify-center gap-2 mb-6">
+      <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6">
         <div
           className={`h-2 w-16 rounded-full ${!forgetOtpSent ? "bg-orange-500" : "bg-slate-200"}`}
         ></div>
@@ -157,28 +157,31 @@ const ForgotPasswordForm = () => {
       {!forgetOtpSent && (
         <>
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight px-2">
               Reset Password
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
               Enter your email to receive an OTP
             </p>
             {error?.message && (
-              <p className="mt-3 text-sm font-medium text-red-600">
+              <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
                 {error.message}
               </p>
             )}
           </div>
 
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
+          <form
+            onSubmit={handleEmailSubmit}
+            className="space-y-2 sm:space-y-3 md:space-y-4"
+          >
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <Mail
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={18}
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
                 />
                 <input
                   type="email"
@@ -186,11 +189,11 @@ const ForgotPasswordForm = () => {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+                  className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
                 />
               </div>
               {validationErrors.email && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                   {validationErrors.email}
                 </p>
               )}
@@ -198,7 +201,7 @@ const ForgotPasswordForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
             >
               Send OTP
             </button>
@@ -210,21 +213,26 @@ const ForgotPasswordForm = () => {
       {forgetOtpSent && !forgetOtpVerified && (
         <>
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-slate-900">Verify OTP</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight px-2">
+              Verify OTP
+            </h2>
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
               Enter the 6-digit code sent to{" "}
               <span className="font-semibold">{formData.email}</span>
             </p>
             {error?.message && (
-              <p className="mt-3 text-sm font-medium text-red-600">
+              <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
                 {error.message}
               </p>
             )}
           </div>
 
-          <form onSubmit={handleOtpSubmit} className="space-y-4">
+          <form
+            onSubmit={handleOtpSubmit}
+            className="space-y-2 sm:space-y-3 md:space-y-4"
+          >
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
                 OTP Code
               </label>
               <input
@@ -234,10 +242,10 @@ const ForgotPasswordForm = () => {
                 value={formData.otp}
                 onChange={handleInputChange}
                 maxLength={6}
-                className={`w-full px-4 py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all text-center text-2xl tracking-widest`}
+                className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm sm:text-base md:text-lg text-slate-700 outline-none focus:ring-2 transition-all text-center tracking-widest`}
               />
               {validationErrors.otp && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                   {validationErrors.otp}
                 </p>
               )}
@@ -245,7 +253,7 @@ const ForgotPasswordForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
             >
               Verify OTP
             </button>
@@ -256,7 +264,7 @@ const ForgotPasswordForm = () => {
                 dispatch(sendForgetOtp(formData.email));
                 setResendSecondsLeft(30);
               }}
-              className={`w-full text-sm font-medium ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
+              className={`w-full text-xs sm:text-sm font-medium py-2 ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
               disabled={resendSecondsLeft > 0}
             >
               {resendSecondsLeft > 0
@@ -276,7 +284,7 @@ const ForgotPasswordForm = () => {
                   confirmPassword: "",
                 });
               }}
-              className="w-full py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-all"
+              className="w-full py-2 sm:py-3 border border-slate-300 text-slate-700 font-semibold text-sm sm:text-base rounded-lg hover:bg-slate-50 transition-all"
             >
               Cancel Process
             </button>
@@ -288,28 +296,31 @@ const ForgotPasswordForm = () => {
       {forgetOtpVerified && !forgetPasswordSuccess && (
         <>
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight px-2">
               Create New Password
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
               Enter a strong password for your account
             </p>
             {error?.message && (
-              <p className="mt-3 text-sm font-medium text-red-600">
+              <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
                 {error.message}
               </p>
             )}
           </div>
 
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <form
+            onSubmit={handlePasswordSubmit}
+            className="space-y-2 sm:space-y-3 md:space-y-4"
+          >
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
                 New Password
               </label>
               <div className="relative">
                 <Lock
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={18}
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
                 />
                 <input
                   type={showPassword ? "text" : "password"}
@@ -317,31 +328,35 @@ const ForgotPasswordForm = () => {
                   placeholder="Enter new password"
                   value={formData.newPassword}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${validationErrors.newPassword ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+                  className={`w-full pl-10 pr-11 sm:pr-12 py-2 sm:py-3 rounded-lg border ${validationErrors.newPassword ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? (
+                    <EyeOff size={16} className="sm:w-5 md:w-5" />
+                  ) : (
+                    <Eye size={16} className="sm:w-5 md:w-5" />
+                  )}
                 </button>
               </div>
               {validationErrors.newPassword && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                   {validationErrors.newPassword}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
                 Confirm Password
               </label>
               <div className="relative">
                 <Lock
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={18}
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
                 />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -349,7 +364,7 @@ const ForgotPasswordForm = () => {
                   placeholder="Confirm new password"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${validationErrors.confirmPassword ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+                  className={`w-full pl-10 pr-11 sm:pr-12 py-2 sm:py-3 rounded-lg border ${validationErrors.confirmPassword ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
                 />
                 <button
                   type="button"
@@ -357,14 +372,14 @@ const ForgotPasswordForm = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={18} />
+                    <EyeOff size={16} className="sm:w-5 md:w-5" />
                   ) : (
-                    <Eye size={18} />
+                    <Eye size={16} className="sm:w-5 md:w-5" />
                   )}
                 </button>
               </div>
               {validationErrors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                   {validationErrors.confirmPassword}
                 </p>
               )}
@@ -372,7 +387,7 @@ const ForgotPasswordForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
             >
               Reset Password
             </button>
@@ -389,7 +404,7 @@ const ForgotPasswordForm = () => {
                   confirmPassword: "",
                 });
               }}
-              className="w-full py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-all"
+              className="w-full py-2 sm:py-3 border border-slate-300 text-slate-700 font-semibold text-sm sm:text-base rounded-lg hover:bg-slate-50 transition-all"
             >
               Cancel Process
             </button>
@@ -400,19 +415,19 @@ const ForgotPasswordForm = () => {
       {/* Step 4: Success */}
       {forgetPasswordSuccess && (
         <>
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-3 sm:space-y-4 md:space-y-5">
             <div className="flex justify-center">
-              <CheckCircle className="text-green-500" size={64} />
+              <CheckCircle className="text-green-500 size-16 sm:size-20 md:size-24" />
             </div>
-            <h2 className="text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight px-2">
               Password Reset Successful!
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-xs sm:text-sm text-slate-600 px-2">
               Your password has been successfully reset.
             </p>
             <Link
               to="/auth/login"
-              className="inline-block w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="inline-block w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
             >
               Go to Login
             </Link>
@@ -422,7 +437,7 @@ const ForgotPasswordForm = () => {
 
       {!forgetOtpSent && (
         <div className="text-center">
-          <p className="text-sm text-slate-600">
+          <p className="text-xs sm:text-sm text-slate-600 px-2">
             Remember your password?{" "}
             <Link
               to={"/auth/login"}

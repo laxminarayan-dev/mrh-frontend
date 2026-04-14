@@ -30,16 +30,18 @@ const LoginForm = () => {
   }, [dispatch]);
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {loading && <Loader />}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-900">Welcome Back</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+          Welcome Back
+        </h2>
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
           Sign in to your account to continue
         </p>
 
         {error?.message && (
-          <p className="mt-3 text-sm font-medium text-red-600">
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
             {error.message}
           </p>
         )}
@@ -70,16 +72,16 @@ const LoginForm = () => {
             setValidationErrors({});
           }, 2000);
         }}
-        className="space-y-4"
+        className="space-y-3 sm:space-y-4 md:space-y-5"
       >
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">
+          <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
             Email Address
           </label>
           <div className="relative">
             <Mail
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
+              size={16}
             />
             <input
               type="email"
@@ -96,11 +98,11 @@ const LoginForm = () => {
                   "login",
                 )
               }
-              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+              className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
             />
           </div>
           {validationErrors.email && (
-            <p className="text-red-500 text-xs mt-1">
+            <p className="text-red-500 text-[10px] sm:text-xs mt-1">
               {validationErrors.email}
             </p>
           )}
@@ -109,7 +111,7 @@ const LoginForm = () => {
         {loginOption === "OTP" && (
           <>
             <p
-              className={`text-sm ${otpSent ? "text-green-600" : "text-slate-600"} mb-2`}
+              className={`text-xs sm:text-sm ${otpSent ? "text-green-600" : "text-slate-600"} mb-2 sm:mb-3`}
             >
               {otpSent
                 ? "OTP sent to your email. Please enter it below."
@@ -118,7 +120,7 @@ const LoginForm = () => {
             <div className="relative">
               <ShieldCheck
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
+                size={16}
               />
               <input
                 type="text"
@@ -135,21 +137,26 @@ const LoginForm = () => {
                     "login",
                   )
                 }
-                className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+                className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
               />
             </div>
+            {validationErrors.otp && (
+              <p className="text-red-500 text-[10px] sm:text-xs mt-1">
+                {validationErrors.otp}
+              </p>
+            )}
           </>
         )}
 
         {loginOption === "Password" && (
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
               Password
             </label>
             <div className="relative">
               <Lock
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
+                size={16}
               />
               <input
                 type={showPassword ? "text" : "password"}
@@ -165,26 +172,30 @@ const LoginForm = () => {
                     "login",
                   )
                 }
-                className={`w-full pl-10 pr-12 py-3 rounded-lg border ${validationErrors.password ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+                className={`w-full pl-10 pr-11 sm:pr-12 py-2 sm:py-3 rounded-lg border ${validationErrors.password ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? (
+                  <EyeOff size={16} className="sm:w-5 md:w-5" />
+                ) : (
+                  <Eye size={16} className="sm:w-5 md:w-5" />
+                )}
               </button>
             </div>
             {validationErrors.password && (
-              <p className="text-red-500 text-xs mt-1">
+              <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                 {validationErrors.password}
               </p>
             )}
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          <label className="flex items-center min-w-0">
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
@@ -192,12 +203,14 @@ const LoginForm = () => {
                 dispatch(setRememberMe(e.target.checked));
               }}
             />
-            <span className="ml-2 text-sm text-slate-600">Remember me</span>
+            <span className="ml-2 text-xs sm:text-sm text-slate-600 truncate">
+              Remember me
+            </span>
           </label>
           {loginOption === "Password" && (
             <Link
               to="/auth/forgot-password"
-              className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              className="text-xs sm:text-sm text-orange-600 hover:text-orange-700 font-medium flex-shrink-0"
             >
               Forgot password?
             </Link>
@@ -208,7 +221,7 @@ const LoginForm = () => {
           <>
             <button
               type="button"
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
               onClick={() => {
                 // Dispatch an action to verify the OTP
                 dispatch(verifyLoginOtp({ ...formData }));
@@ -221,13 +234,13 @@ const LoginForm = () => {
           <>
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+              className="w-full py-3  bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-xs sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
             >
               Continue with {loginOption}
             </button>
             <button
               type="button"
-              className="w-full py-3 bg-orange-50 border-2 border-orange-300 text-orange-600 font-semibold rounded-lg shadow-md hover:bg-orange-100   transition-all"
+              className="w-full py-3  bg-orange-50 border-2 border-orange-300 text-orange-600 font-semibold text-xs sm:text-base rounded-lg shadow-md hover:bg-orange-100 transition-all"
               onClick={() =>
                 setLoginOption(loginOption === "OTP" ? "Password" : "OTP")
               }
@@ -238,8 +251,8 @@ const LoginForm = () => {
         )}
       </form>
 
-      <div className="text-center z-10">
-        <p className="text-sm text-slate-600">
+      <div className="text-center z-10 px-2">
+        <p className="text-xs sm:text-sm text-slate-600">
           Don't have an account?{" "}
           <Link
             to="/auth/signup"

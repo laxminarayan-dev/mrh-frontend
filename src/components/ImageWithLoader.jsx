@@ -18,13 +18,13 @@ const ImageWithLoader = ({ src, alt, className }) => {
     <div className="relative w-full h-full flex justify-center items-center overflow-hidden">
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+          <div className="h-5 w-5 sm:h-6 md:w-7 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
         </div>
       )}
 
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-red-500">
-          Image failed
+          <span className="text-xs sm:text-sm">Image failed</span>
         </div>
       )}
 

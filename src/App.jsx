@@ -103,12 +103,12 @@ function App() {
       } catch (error) {
         storedCartItems = [];
       }
-      dispatch(addBulkItems(storedCartItems));
-      dispatch(updateCartData())
-        .unwrap()
-        .then(() => {
-          dispatch(fetchCartItems());
-        });
+      // dispatch(addBulkItems(storedCartItems));
+      // dispatch(updateCartData())
+      // .unwrap()
+      // .then(() => {
+      // dispatch(fetchCartItems());
+      // });
     }
   }, [isAuthenticated, user, dispatch]);
 
@@ -136,9 +136,9 @@ function App() {
     }
 
     // debounce 3s
-    timerRef.current = setTimeout(() => {
-      dispatch(updateCartData());
-    }, 3000);
+    // timerRef.current = setTimeout(() => {
+    //   dispatch(updateCartData());
+    // }, 3000);
 
     return () => clearTimeout(timerRef.current);
   }, [items, synced, dispatch]);

@@ -53,15 +53,19 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
 
   return (
     <>
-      <nav className=" w-full max-w-6xl mx-auto bg-[#FFFBE9] flex justify-between items-center px-8 py-2 h-16 relative z-100 ">
-        <div className="flex justify-center items-center">
-          <ChefHat color="#F67401" size={32} />
-          <Link to="/" className="text-2xl font-semibold text-[#F67401] ml-2 ">
+      <nav className="w-full max-w-6xl mx-auto bg-[#FFFBE9] flex justify-between items-center px-3 sm:px-6 md:px-8 py-1 sm:py-2 h-14 sm:h-16 relative z-100">
+        <div className="flex justify-center items-center gap-1 sm:gap-2 min-w-0">
+          <ChefHat color="#F67401" size={24} className="sm:block hidden" />
+          <ChefHat color="#F67401" size={20} className="sm:hidden block" />
+          <Link
+            to="/"
+            className="text-lg sm:text-xl md:text-2xl font-semibold text-[#F67401] truncate"
+          >
             Mr Halwai
           </Link>
         </div>
-        <div className="flex items-center gap-4">
-          <ul className="hidden md:flex gap-6 text-[#F67401] font-medium">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <ul className="hidden md:flex gap-4 lg:gap-6 text-[#F67401] font-medium text-sm lg:text-base">
             {links.map((link) => {
               if (link.name === "Account" && !isLoggedIn) {
                 return (
@@ -71,7 +75,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
                         navigate("/auth");
                       }}
                       aria-label="Login button"
-                      className="bg-orange-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-orange-600 transition-colors cursor-pointer"
+                      className="bg-orange-500 text-white px-4 lg:px-6 py-1.5 lg:py-2 rounded-lg shadow-md hover:bg-orange-600 transition-colors cursor-pointer text-sm lg:text-base"
                     >
                       Login
                     </button>
@@ -89,14 +93,15 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
               );
             })}
           </ul>
-          <div className="flex items-center gap-8 ">
+          <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             <button
               aria-label="Cart Button"
               onClick={() => navigate("/cart")}
               className="cursor-pointer text-[#FF7407] relative hover:text-[#FF7407] transition-colors"
             >
-              <ShoppingBasket size={26} />
-              <span className="absolute -top-1 -right-3 bg-[#FF7407] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center ">
+              <ShoppingBasket size={20} className="sm:block hidden" />
+              <ShoppingBasket size={18} className="sm:hidden block" />
+              <span className="absolute -top-2 -right-2 sm:-right-3 bg-[#FF7407] text-white text-[10px] sm:text-xs w-4 h-4 rounded-full flex items-center justify-center ">
                 {items.length}
               </span>
             </button>
@@ -105,9 +110,10 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
               <button
                 aria-label="Account Button"
                 onClick={() => navigate("/account")}
-                className="cursor-pointer text-[#FF7407] relative border border-[#FF7407] rounded-full p-1 hover:bg-[#FF7407] hover:text-white transition-colors"
+                className="cursor-pointer text-[#FF7407] relative border border-[#FF7407] rounded-full p-0.5 sm:p-1 hover:bg-[#FF7407] hover:text-white transition-colors ml-2"
               >
-                <UserRound size={20} />
+                <UserRound size={18} className="sm:block hidden" />
+                <UserRound size={16} className="sm:hidden block" />
               </button>
             ) : (
               <button
@@ -115,7 +121,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
                   navigate("/auth");
                   setIsSidebarOpen(false);
                 }}
-                className="hidden md:block w-full text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-sm mt-2"
+                className="hidden md:block text-left bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 lg:px-6 py-2 lg:py-3 rounded-lg shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 cursor-pointer font-medium text-xs lg:text-sm ml-2"
               >
                 Login
               </button>
@@ -123,7 +129,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
             <button
               aria-label="Toggle Sidebar"
               onClick={() => setIsSidebarOpen((prev) => !prev)}
-              className="md:hidden text-[#FF7407] relative"
+              className="md:hidden text-[#FF7407] relative pl-2"
             >
               {isSidebarOpen ? <X /> : <Logs />}
             </button>
@@ -131,25 +137,38 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
         </div>
       </nav>
       {showLocationGate && (
-        <div className=" mt-2 flex flex-col gap-1 md:w-[90vw] max-w-[1100px] mx-6 md:mx-auto pb-2">
-          <div className="flex items-center justify-between gap-6 rounded-full border border-orange-200 bg-[#FFF7DC] px-4 py-2 text-sm text-slate-700 shadow-sm">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <MapPin size={16} className="text-orange-500 flex-shrink-0" />
-              <span className="truncate">{displayAddress}</span>
+        <div className="mt-1 sm:mt-2 flex flex-col gap-0.5 sm:gap-1 md:w-[90vw] max-w-[1100px] mx-3 sm:mx-6 md:mx-auto pb-1 sm:pb-2">
+          <div className="flex items-center justify-between gap-3 sm:gap-6 rounded-2xl sm:rounded-full border border-orange-200 bg-[#FFF7DC] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-700 shadow-sm">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+              <MapPin
+                size={14}
+                className="text-orange-500 flex-shrink-0 sm:block hidden"
+              />
+              <MapPin
+                size={12}
+                className="text-orange-500 flex-shrink-0 sm:hidden block"
+              />
+              <span className="truncate text-[11px] sm:text-sm">
+                {displayAddress}
+              </span>
             </div>
             <div className="relative flex items-center flex-shrink-0">
               <select
                 aria-label="Change delivery location"
                 defaultValue="keep"
                 onChange={handleLocationChange}
-                className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-5"
+                className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-4 sm:pr-5 text-[11px] sm:text-sm"
               >
                 <option value="keep">Current</option>
                 <option value="change">Change location</option>
               </select>
               <ChevronDown
-                size={14}
-                className="pointer-events-none absolute right-1 text-orange-600"
+                size={12}
+                className="pointer-events-none absolute right-1 text-orange-600 sm:block hidden"
+              />
+              <ChevronDown
+                size={10}
+                className="pointer-events-none absolute right-1 text-orange-600 sm:hidden block"
               />
             </div>
           </div>

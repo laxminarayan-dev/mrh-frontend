@@ -131,7 +131,8 @@ export default function LocationGate({ children }) {
 
   // Listen for logout (tempAddress becomes null)
   useEffect(() => {
-    if (tempAddress === null) {
+    const time = Number(sessionStorage.getItem("locationChoiceTime"));
+    if (!time && tempAddress === null) {
       setShowModal(true);
       setView("picker");
       validatedSavedLocationRef.current = false; // Reset validation flag

@@ -97,32 +97,37 @@ const SignupForm = () => {
   // OTP Verification Screen
   if (otpSent) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         {loading && <Loader />}
         <button
           onClick={handleBackToForm}
-          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4"
+          className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 hover:text-slate-900 mb-3 sm:mb-4"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} className="sm:w-4 md:w-4" />
           Back
         </button>
 
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-900">Verify Email</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+            Verify Email
+          </h2>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
             Enter the 6-digit code sent to
-            <span className="font-semibold">{formData.email}</span>
+            <span className="font-semibold"> {formData.email}</span>
           </p>
           {error?.message && (
-            <p className="mt-3 text-sm font-medium text-red-600">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
               {error.message}
             </p>
           )}
         </div>
 
-        <form onSubmit={handleOtpSubmit} className="space-y-4">
+        <form
+          onSubmit={handleOtpSubmit}
+          className="space-y-3 sm:space-y-4 md:space-y-5"
+        >
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
               OTP Code
             </label>
             <input
@@ -132,11 +137,11 @@ const SignupForm = () => {
               value={formData.otp}
               onChange={handleOtpInputChange}
               maxLength={6}
-              className={`w-full px-4 py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all text-center text-2xl tracking-widest`}
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border ${validationErrors.otp ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm sm:text-base md:text-lg text-slate-700 outline-none focus:ring-2 transition-all text-center tracking-widest`}
               required
             />
             {validationErrors.otp && (
-              <p className="text-red-500 text-xs mt-1">
+              <p className="text-red-500 text-[10px] sm:text-xs mt-1">
                 {validationErrors.otp}
               </p>
             )}
@@ -144,7 +149,7 @@ const SignupForm = () => {
 
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+            className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
           >
             Verify & Create Account
           </button>
@@ -155,7 +160,7 @@ const SignupForm = () => {
               dispatch(sendSignupOtp(formData.email));
               setResendSecondsLeft(30);
             }}
-            className={`w-full text-sm font-medium ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
+            className={`w-full text-xs sm:text-sm font-medium py-2 ${resendSecondsLeft > 0 ? "text-slate-400 cursor-not-allowed" : "text-orange-600 hover:text-orange-700"}`}
             disabled={resendSecondsLeft > 0}
           >
             {resendSecondsLeft > 0
@@ -169,29 +174,34 @@ const SignupForm = () => {
 
   // Signup Form Screen
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {loading && <Loader />}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-900">Create Account</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight px-2">
+          Create Account
+        </h2>
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-600 px-2">
           Join us and start ordering delicious food
         </p>
         {error?.message && (
-          <p className="mt-3 text-sm font-medium text-red-600">
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-red-600 px-2">
             {error.message}
           </p>
         )}
       </div>
 
-      <form onSubmit={handleSignupSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSignupSubmit}
+        className="space-y-2 sm:space-y-3 md:space-y-4"
+      >
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">
+          <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
             Full Name
           </label>
           <div className="relative">
             <User
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
             />
             <input
               type="text"
@@ -207,22 +217,24 @@ const SignupForm = () => {
                   "signup",
                 )
               }
-              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.name ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+              className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.name ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
             />
           </div>
           {validationErrors.name && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+            <p className="text-red-500 text-[10px] sm:text-xs mt-1">
+              {validationErrors.name}
+            </p>
           )}
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">
+          <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
             Email Address
           </label>
           <div className="relative">
             <Mail
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
             />
             <input
               type="email"
@@ -238,23 +250,23 @@ const SignupForm = () => {
                   "signup",
                 )
               }
-              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+              className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
             />
           </div>
           {validationErrors.email && (
-            <p className="text-red-500 text-xs mt-1">
+            <p className="text-red-500 text-[10px] sm:text-xs mt-1">
               {validationErrors.email}
             </p>
           )}
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">
+          <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
             Phone Number
           </label>
           <div className="relative">
             <Phone
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
             />
             <input
               type="tel"
@@ -273,24 +285,24 @@ const SignupForm = () => {
                   "signup",
                 )
               }
-              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${validationErrors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+              className={`w-full pl-10 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg border ${validationErrors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
             />
           </div>
           {validationErrors.phone && (
-            <p className="text-red-500 text-xs mt-1">
+            <p className="text-red-500 text-[10px] sm:text-xs mt-1">
               {validationErrors.phone}
             </p>
           )}
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">
+          <label className="text-xs sm:text-sm font-medium text-slate-700 block mb-1.5 sm:mb-2">
             Password
           </label>
           <div className="relative">
             <Lock
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:w-5 md:w-5"
             />
             <input
               type={showPassword ? "text" : "password"}
@@ -306,18 +318,22 @@ const SignupForm = () => {
                   "signup",
                 )
               }
-              className={`w-full pl-10 pr-12 py-3 rounded-lg border ${validationErrors.password ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
+              className={`w-full pl-10 pr-11 sm:pr-12 py-2 sm:py-3 rounded-lg border ${validationErrors.password ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-500 focus:ring-orange-100"} bg-white text-xs sm:text-sm text-slate-700 outline-none focus:ring-2 transition-all`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? (
+                <EyeOff size={16} className="sm:w-5 md:w-5" />
+              ) : (
+                <Eye size={16} className="sm:w-5 md:w-5" />
+              )}
             </button>
           </div>
           {validationErrors.password && (
-            <p className="text-red-500 text-xs mt-1">
+            <p className="text-red-500 text-[10px] sm:text-xs mt-1">
               {validationErrors.password}
             </p>
           )}
@@ -325,14 +341,14 @@ const SignupForm = () => {
 
         <button
           type="submit"
-          className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
+          className="w-full py-2 sm:py-3 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold text-sm sm:text-base rounded-lg shadow-md hover:from-orange-600 hover:to-orange-700 transition-all"
         >
           Continue with OTP
         </button>
       </form>
 
       <div className="text-center">
-        <p className="text-sm text-slate-600">
+        <p className="text-xs sm:text-sm text-slate-600 px-2">
           Already have an account?{" "}
           <Link
             to="/auth/login"
