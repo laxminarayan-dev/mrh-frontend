@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchCartItems } from "../store/cartSlice";
+import { fetchOrders } from "../store/cartSlice";
 import {
   ShoppingBag,
   Calendar,
@@ -213,7 +213,7 @@ const OrdersHistory = () => {
       return;
     }
     if (orders.length === 0 && !loadingOrders) {
-      dispatch(fetchCartItems());
+      dispatch(fetchOrders());
     }
   }, [user, dispatch]);
 

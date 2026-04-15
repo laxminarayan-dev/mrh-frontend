@@ -16,7 +16,7 @@ import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 store.dispatch(startInitialAuth());
 store.dispatch(fetchReviews());
 store.dispatch(loadItems());
-store.dispatch(fetchCartItems());
+// store.dispatch(fetchCartItems());
 store.dispatch(fetchOrders());
 store.dispatch(getShopData()); // Fetching data for the first shop by default
 

@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout, setTempAddress } from "../store/authSlice";
 import { useEffect, useState } from "react";
-import { fetchCartItems } from "../store/cartSlice";
+import { fetchOrders } from "../store/cartSlice";
 import { setDeliveryShop } from "../store/shopSlice";
 import {
   UtensilsCrossed,
@@ -135,7 +135,7 @@ const Account = () => {
   useEffect(() => {
     if (!user) return;
     if (!orders.length && !loadingOrders) {
-      dispatch(fetchCartItems());
+      dispatch(fetchOrders());
     }
   }, [user, dispatch]);
 

@@ -10,6 +10,7 @@ import {
   fetchCartItems,
   addBulkItems,
   updateOrderInStore,
+  fetchOrders,
 } from "./store/cartSlice";
 import {
   setInRange,
@@ -145,7 +146,8 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      dispatch(fetchCartItems());
+      dispatch(fetchOrders());
+      // dispatch(fetchCartItems());
     }
   }, [isAuthenticated, user, dispatch]);
 
