@@ -157,7 +157,7 @@ function Navbar({ isSidebarOpen, setIsSidebarOpen, links }) {
                 aria-label="Change delivery location"
                 defaultValue="keep"
                 onChange={handleLocationChange}
-                className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-4 sm:pr-5 text-[11px] sm:text-sm"
+                className="appearance-none bg-transparent text-orange-600 font-medium focus:outline-none pl-2 pr-4 sm:pr-5 text-[11px] sm:text-sm max-w-[70px] md:max-w-[85px] lg:max-w-[100px]"
               >
                 <option value="keep">Current</option>
                 <option value="change">Change location</option>
