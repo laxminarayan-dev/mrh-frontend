@@ -302,10 +302,10 @@ function Map() {
           </p>
         </div>
         <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative flex-1" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="px-3 py-2 sm:px-4 sm:py-2.5 border border-slate-200 bg-white rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1 transition-all flex items-center gap-2 min-w-max sm:min-w-[180px]"
+              className="px-3 py-2 sm:px-4 sm:py-2.5 border border-slate-200 bg-white rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1 transition-all flex items-center gap-2 min-w-[100%] sm:min-w-[180px] truncate"
             >
               <Store size={16} className="text-orange-600" />
               {shops.find((m) => m.id === selectedShop)?.name || "Select"}
@@ -347,7 +347,7 @@ function Map() {
                 window.open(gmapsUrl, "_blank");
               }
             }}
-            className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold text-orange-600 hover:bg-orange-100 whitespace-nowrap transition-colors"
+            className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold text-orange-600 hover:bg-orange-100 whitespace-nowrap transition-colors flex-1"
           >
             Open in Google Maps
           </button>

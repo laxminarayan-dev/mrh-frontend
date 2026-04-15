@@ -16,7 +16,7 @@ function CardGrid({ children }) {
                   }
                 }
               `}</style>
-      <div className="grid-best-sellers grid mx-auto w-full gap-2 sm:gap-3 md:gap-4 mt-4 sm:mt-6 md:mt-8 justify-center">
+      <div className="grid-best-sellers grid mx-auto w-full gap-1 sm:gap-3 md:gap-4 mt-4 sm:mt-6 md:mt-8 justify-center">
         {children}
       </div>
     </div>

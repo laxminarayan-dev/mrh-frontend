@@ -21,7 +21,7 @@ function CardOne({ item }) {
         w-full max-w-[150px] min-[440px]:mx-auto min-[440px]:min-w-[180px] min-[440px]:max-w-[200px] md:min-w-[210px] md:max-w-[210px]
         group relative bg-white rounded-2xl sm:rounded-3xl px-3 sm:px-5 py-1.5 sm:py-2 m-0.5 sm:m-1 flex flex-col items-center 
         shadow-sm border border-orange-100 text-xs sm:text-sm
-        transition-all duration-300
+        transition-all duration-300 box-border
         ${isDisabled ? "pointer-events-none" : "hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2"}
       `}
     >

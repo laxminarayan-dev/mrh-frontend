@@ -96,7 +96,7 @@ function Index({}) {
       </header>
       {/* best seller */}
 
-      <section className="max-w-6xl mx-auto py-4 sm:py-6 md:py-8 px-2 sm:px-6 text-center">
+      <section className="max-w-6xl mx-auto py-4 sm:py-6 md:py-8 px-0 sm:px-3 text-center">
         <h1 className="font-semibold text-2xl sm:text-3xl md:text-4xl border-b-4 border-[#FF7407] inline">
           Best Sellers
         </h1>

@@ -255,7 +255,7 @@ const Account = () => {
       <div className="mx-auto max-w-4xl px-2 sm:px-3 md:px-4 lg:px-6 py-6 sm:py-7 md:py-8 lg:py-10">
         {/* ── Header ── */}
         <div className="mb-5 sm:mb-6 md:mb-7 lg:mb-8 rounded-lg sm:rounded-xl bg-white border border-orange-100 shadow-sm p-3 sm:p-4 md:p-5 lg:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex flex-flex-row justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
               {/* Avatar */}
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl tracking-[2px] bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-base sm:text-lg md:text-xl font-bold shadow-md flex-shrink-0">
@@ -280,7 +280,7 @@ const Account = () => {
                 dispatch(logout());
                 navigate("/auth/login", { replace: true });
               }}
-              className="self-start sm:self-auto inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 sm:px-4 md:px-4 py-1.5 sm:py-2 md:py-2 text-xs sm:text-sm md:text-sm font-semibold text-rose-600 transition-all flex-shrink-0"
+              className="self-start sm:self-auto inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 sm:px-4 md:px-4 py-1.5 sm:py-2 md:py-2 text-[9px] sm:text-sm md:text-sm font-semibold text-rose-600 transition-all flex-shrink-0"
             >
               <LogOut size={12} className="sm:w-3.5 md:w-4 sm:h-3.5 md:h-4" />{" "}
               Logout
