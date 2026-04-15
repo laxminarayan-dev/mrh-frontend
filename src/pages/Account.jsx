@@ -255,7 +255,7 @@ const Account = () => {
       <div className="mx-auto max-w-4xl px-2 sm:px-3 md:px-4 lg:px-6 py-6 sm:py-7 md:py-8 lg:py-10">
         {/* ── Header ── */}
         <div className="mb-5 sm:mb-6 md:mb-7 lg:mb-8 rounded-lg sm:rounded-xl bg-white border border-orange-100 shadow-sm p-3 sm:p-4 md:p-5 lg:p-6">
-          <div className="flex flex-flex-row justify-between gap-3 sm:gap-4">
+          <div className="flex flex-flex-row justify-between gap-3 sm:gap-4 items-start">
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
               {/* Avatar */}
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl tracking-[2px] bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white text-base sm:text-lg md:text-xl font-bold shadow-md flex-shrink-0">
@@ -515,10 +515,10 @@ const Account = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-2 sm:space-y-2.5 md:space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
                 {[...orders]
                   .reverse()
-                  .slice(0, 5)
+                  .slice(0, 4)
                   .map((order) => {
                     const id = order?._id || order?.orderId || "";
                     const shortId =
