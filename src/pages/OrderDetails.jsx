@@ -23,6 +23,7 @@ import {
   Zap,
   MessageCircle,
   Store,
+  Route,
 } from "lucide-react";
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
@@ -464,7 +465,12 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               val: riderPhone,
               link: `tel:${riderPhone}`,
             },
-            { icon: Bike, label: "Vehicle", val: riderVehicle, link: null },
+            {
+              icon: Route,
+              label: "Distance",
+              val: `${(route?.distance / 1000).toFixed(2)} Km`,
+              link: null,
+            },
             {
               icon: Clock,
               label: "ETA",
@@ -1082,6 +1088,27 @@ const OrderDetails = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [liveRiderEta, setLiveRiderEta] = useState(null);
   const [liveRiderCoords, setLiveRiderCoords] = useState(null);
+
+  useEffect(() => {
+    if (!order?.riderInfo) return;
+    if (order.status == "assigned" || order.status == "out_for_delivery") {
+      fetch(
+        `${import.meta.env.VITE_BACKEND_API}/api/rider/rider-location/${order?.riderInfo?._id}`,
+      )
+        .then((res) => {
+          return res.json();
+        })
+        .then((data) => {
+          setLiveRiderCoords({
+            lat: data.payload.latitude,
+            lng: data.payload.longitude,
+          });
+        })
+        .catch((err) => {
+          console.error("error calling rider-location API", error);
+        });
+    }
+  }, [order]);
 
   useEffect(() => {
     if (!orderId) return;
