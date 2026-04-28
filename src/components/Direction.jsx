@@ -11,11 +11,11 @@ export const getDistanceKm = (a, b) => {
   const x =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((a[0] * Math.PI) / 180) *
-    Math.cos((b[0] * Math.PI) / 180) *
-    Math.sin(dLng / 2) ** 2;
+      Math.cos((b[0] * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
 
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
+};
 
 export default function Direction({
   userPos,

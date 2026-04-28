@@ -1,4 +1,5 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useRef } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -21,11 +22,22 @@ import {
   ChevronRight,
   Zap,
   MessageCircle,
+  Store,
 } from "lucide-react";
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
 import { socket } from "../socket";
 import { getDistanceKm } from "../components/Direction";
+import {
+  MapContainer,
+  TileLayer,
+  Polyline,
+  Marker,
+  Popup,
+} from "react-leaflet";
+import { MapController } from "../components/Map";
+import L from "leaflet";
+import { MapClickHandler } from "../components/Map";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function capitalizeWords(text) {
@@ -133,6 +145,22 @@ const PIPELINE = [
   { key: "out-for-delivery", label: "Out for Delivery", icon: Bike },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
+
+// ─── Map Icons ────────────────────────────────────────────────────────────────
+const makeIcon = (Component, color, size) =>
+  L.divIcon({
+    html: renderToStaticMarkup(
+      <Component size={size} color="white" fill={color} strokeWidth={1.5} />,
+    ),
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
+
+const SHOP_PIN = makeIcon(Store, "#ea580c", 24);
+const RIDER_PIN = makeIcon(Bike, "#2563eb", 36);
+const DELIVERY_PIN = makeIcon(MapPin, "#dc2626", 32);
 
 // ─── STATUS CONFIG ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -245,13 +273,116 @@ function StatusPipeline({ status }) {
 }
 
 // ─── RiderPanel ──────────────────────────────────────────────────────────────
-function RiderPanel({ status, rider }) {
+function RiderPanel({ status, rider, order, riderCoords }) {
   const norm = normalizeStatus(status);
   const riderName = rider?.name || rider?.fullName || "Rajesh Kumar";
   const riderPhone = rider?.phone || rider?.mobile || "9876543210";
   const riderVehicle =
     rider?.vehicleNumber || rider?.vehicle || "DL 5S BC 9234";
-  const riderEta = rider?.eta || rider?.estimatedArrival || "10 mins";
+  const [route, setRoute] = useState(null);
+  const riderEta = `${route?.eta + 2} min` || "Calculating";
+  const mapRef = useRef(null);
+  const { shopsData } = useSelector((state) => state.shop);
+  const shopDetail = shopsData.find((shop) => shop._id === order.shopId);
+  const shopCoords = shopDetail?.shopLocation?.coordinates;
+  const from = [shopCoords[1], shopCoords[0]];
+  const to = order?.deliveryAddress[0]?.coordinates;
+
+  const getRoute = async (from, to) => {
+    try {
+      const res = await fetch(
+        "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_ORS_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            coordinates: [
+              [from[1], from[0]],
+              [to[1], to[0]],
+            ],
+          }),
+        },
+      );
+      return await res.json();
+    } catch (error) {
+      console.error("Route fetch error:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    let savedRoute = localStorage.getItem(`route-${order?._id}`);
+    const findRoute = async () => {
+      if (savedRoute == null) {
+        console.log("no route saved");
+        let res = await getRoute(from, to);
+        let { distance, duration } = res.features[0].properties.summary;
+        let routeCoordinates = res.features[0].geometry.coordinates.map((c) => [
+          c[1],
+          c[0],
+        ]);
+
+        // Find the closest point to delivery address and slice there
+        if (routeCoordinates.length > 0 && to && to.length === 2) {
+          let minDistance = Infinity;
+          let closestIndex = routeCoordinates.length - 1;
+
+          // Find the coordinate closest to the delivery point
+          routeCoordinates.forEach((coord, idx) => {
+            const dist = Math.sqrt(
+              Math.pow(coord[0] - to[0], 2) + Math.pow(coord[1] - to[1], 2),
+            );
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestIndex = idx;
+            }
+          });
+
+          // Slice route up to delivery point and add the exact delivery coordinate
+          routeCoordinates = routeCoordinates.slice(0, closestIndex + 1);
+          routeCoordinates[routeCoordinates.length - 1] = [...to];
+        }
+
+        console.log("route coords: ", routeCoordinates);
+        console.log("distance: ", distance, "duration: ", duration);
+
+        // Store as JSON string with distance and duration
+        const routeData = {
+          coordinates: routeCoordinates,
+          distance: distance,
+          duration: duration,
+          eta: Math.round(duration / 60),
+        };
+        localStorage.setItem(`route-${order?._id}`, JSON.stringify(routeData));
+        setRoute(routeData);
+      } else if (savedRoute) {
+        console.log("trying to retrive saved route");
+        // Parse stored route data
+        try {
+          const parsedRoute = JSON.parse(savedRoute);
+          setRoute(parsedRoute);
+        } catch (error) {
+          console.error("Failed to parse saved route:", error);
+        }
+      }
+    };
+    findRoute();
+  }, []);
+
+  // Update map view when route changes
+  useEffect(() => {
+    if (route?.coordinates && mapRef.current && route.coordinates.length > 0) {
+      const firstCoord = route.coordinates[0];
+      const lastCoord = route.coordinates[route.coordinates.length - 1];
+
+      // Fit map bounds to show entire route
+      const bounds = L.latLngBounds([firstCoord, lastCoord]);
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [route]);
 
   if (norm === "accepted") {
     return (
@@ -370,6 +501,84 @@ function RiderPanel({ status, rider }) {
             </div>
           ))}
         </div>
+
+        {isOFD && (
+          <div className="my-4 rounded-md overflow-hidden">
+            <MapContainer
+              ref={mapRef}
+              center={route?.coordinates?.[0] || [28.203326, 78.267783]}
+              zoom={18}
+              scrollWheelZoom={true}
+              dragging={true}
+              doubleClickZoom={false}
+              touchZoom={true}
+              boxZoom={true}
+              keyboard={false}
+              zoomControl={true}
+              attributionControl={false}
+              style={{ width: "100%", height: "36vh" }}
+              whenCreated={(mapInstance) => {
+                mapRef.current = mapInstance;
+                console.log("🗺️ Map created with container:");
+              }}
+            >
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                attribution="© Esri"
+              />
+
+              {/* Draw route polyline */}
+              {route?.coordinates && route.coordinates.length > 0 && (
+                <Polyline
+                  positions={route.coordinates}
+                  color="#fff"
+                  weight={4}
+                  opacity={0.8}
+                  dashArray="0, 0"
+                />
+              )}
+
+              {/* Shop Market */}
+              {from && (
+                <Marker position={[from[0], from[1]]} icon={SHOP_PIN}>
+                  <Popup>
+                    <div className="text-xs font-semibold flex items-center gap-1.5">
+                      <Store size={14} className="text-orange-600" />
+                      Shop Location
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Rider marker */}
+              {riderCoords && (
+                <Marker
+                  position={[riderCoords.lat, riderCoords.lng]}
+                  icon={RIDER_PIN}
+                >
+                  <Popup>
+                    <div className="text-xs font-semibold flex items-center gap-1.5">
+                      <Bike size={14} className="text-blue-600" />
+                      Rider Location
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Delivery location marker */}
+              {to && (
+                <Marker position={[to[0], to[1]]} icon={DELIVERY_PIN}>
+                  <Popup>
+                    <div className="text-xs font-semibold flex items-center gap-1.5">
+                      <MapPin size={14} className="text-red-600" />
+                      Delivery Address
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+            </MapContainer>
+          </div>
+        )}
       </div>
     );
   }
@@ -872,6 +1081,7 @@ const OrderDetails = () => {
   const dispatch = useDispatch();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [liveRiderEta, setLiveRiderEta] = useState(null);
+  const [liveRiderCoords, setLiveRiderCoords] = useState(null);
 
   useEffect(() => {
     if (!orderId) return;
@@ -899,19 +1109,20 @@ const OrderDetails = () => {
   useEffect(() => {
     if (!socket || !order?._id) return;
     const handle = (payload = {}) => {
-      const pid = payload.orderId || payload?.order?._id;
-      if (
-        pid &&
-        String(pid) !== String(order._id) &&
-        String(pid).slice(-6).toUpperCase() !==
-          String(order._id).slice(-6).toUpperCase()
-      )
-        return;
-      const riderCoords = getRiderCoords(payload);
+      if (payload.longitude && payload.latitude) {
+        setLiveRiderCoords({
+          lat: payload["latitude"],
+          lng: payload["longitude"],
+        });
+      }
       const deliveryCoords = getDeliveryCoords(order);
-      if (!riderCoords || !deliveryCoords) return;
-      const distanceKm = getDistanceKm(riderCoords, deliveryCoords);
-      const eta = buildEtaLabel(distanceKm, Number(payload.speedKmph));
+      const distanceKm = getDistanceKm(
+        [payload.latitude, payload.longitude],
+        deliveryCoords,
+      );
+
+      const eta = buildEtaLabel(distanceKm, Number(payload.speed));
+
       if (eta) setLiveRiderEta(eta);
     };
     socket.on("rider-location-update", handle);
@@ -1133,7 +1344,12 @@ const OrderDetails = () => {
               {/* Rider panel */}
               {showRider && (
                 <div className="px-3 sm:px-4 md:px-5 lg:px-6 py-3 sm:py-4 md:py-5">
-                  <RiderPanel status={status} rider={riderWithLiveEta} />
+                  <RiderPanel
+                    status={status}
+                    rider={riderWithLiveEta}
+                    order={order}
+                    riderCoords={liveRiderCoords}
+                  />
                 </div>
               )}
             </div>
