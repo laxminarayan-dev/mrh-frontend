@@ -24,6 +24,10 @@ import {
   MessageCircle,
   Store,
   Route,
+  MapPinHouse,
+  MapPinCheck,
+  Home,
+  Waypoints,
 } from "lucide-react";
 import ConfirmOrderCancel from "../components/ConfirmOrderCancel";
 import { cancelOrder, addReview } from "../store/cartSlice";
@@ -143,6 +147,7 @@ const PIPELINE = [
   { key: "placed", label: "Placed", icon: ShoppingBag },
   { key: "accepted", label: "Accepted", icon: CheckCircle },
   { key: "assigned", label: "Rider Assigned", icon: Bike },
+  { key: "picked", label: "Picked Up", icon: Package },
   { key: "out-for-delivery", label: "Out for Delivery", icon: Bike },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
@@ -159,9 +164,10 @@ const makeIcon = (Component, color, size) =>
     popupAnchor: [0, -size],
   });
 
-const SHOP_PIN = makeIcon(Store, "#fff", 24);
+const END_PIN = makeIcon(MapPinHouse, "#fff", 32);
 const RIDER_PIN = makeIcon(Bike, "#fff", 36);
-const DELIVERY_PIN = makeIcon(MapPin, "#fff", 32);
+const START_PIN = makeIcon(MapPin, "#fff", 32);
+const CHECK_PIN = makeIcon(MapPinCheck, "#fff", 26);
 
 // ─── STATUS CONFIG ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -175,10 +181,16 @@ const STATUS_CONFIG = {
     pill: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
     dot: "bg-emerald-500",
   },
+
   assigned: {
     label: "Rider Assigned",
     pill: "bg-violet-500/10 text-violet-600 border-violet-200",
     dot: "bg-violet-500",
+  },
+  picked: {
+    label: "Picked Up",
+    pill: "bg-cyan-500/10 text-cyan-600 border-cyan-200",
+    dot: "bg-cyan-500",
   },
   "out-for-delivery": {
     label: "Out for Delivery",
@@ -289,89 +301,51 @@ function RiderPanel({ status, rider, order, riderCoords }) {
   const from = [shopCoords[1], shopCoords[0]];
   const to = order?.deliveryAddress[0]?.coordinates;
 
-  const getRoute = async (from, to) => {
-    try {
-      const res = await fetch(
-        "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_ORS_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            coordinates: [
-              [from[1], from[0]],
-              [to[1], to[0]],
-            ],
-          }),
-        },
-      );
-      return await res.json();
-    } catch (error) {
-      console.error("Route fetch error:", error);
-      return null;
-    }
-  };
-
   useEffect(() => {
-    let savedRoute = localStorage.getItem(`route-${order?._id}`);
-    const findRoute = async () => {
-      if (savedRoute == null) {
-        console.log("no route saved");
-        let res = await getRoute(from, to);
-        let { distance, duration } = res.features[0].properties.summary;
-        let routeCoordinates = res.features[0].geometry.coordinates.map((c) => [
-          c[1],
-          c[0],
-        ]);
+    if (
+      status != "out_for_delivery" &&
+      status != "out-for-delivery" &&
+      status != "out for delivery"
+    )
+      return;
 
-        // Find the closest point to delivery address and slice there
-        if (routeCoordinates.length > 0 && to && to.length === 2) {
-          let minDistance = Infinity;
-          let closestIndex = routeCoordinates.length - 1;
+    const getRoute = async (from, to) => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_API}/api/geocode/get-route/${rider?._id}`,
+        );
 
-          // Find the coordinate closest to the delivery point
-          routeCoordinates.forEach((coord, idx) => {
-            const dist = Math.sqrt(
-              Math.pow(coord[0] - to[0], 2) + Math.pow(coord[1] - to[1], 2),
-            );
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestIndex = idx;
-            }
-          });
+        let data = await res.json();
 
-          // Slice route up to delivery point and add the exact delivery coordinate
-          routeCoordinates = routeCoordinates.slice(0, closestIndex + 1);
-          routeCoordinates[routeCoordinates.length - 1] = [...to];
-        }
+        const endInd = data.stops.indexOf(
+          data.stops.find((stop) => stop.orderId == order?._id),
+        );
 
-        console.log("route coords: ", routeCoordinates);
-        console.log("distance: ", distance, "duration: ", duration);
+        const { distFromStart, etaFromStart } = data.payload.waypoints.find(
+          (wp) => wp.orderId === order?._id,
+        );
 
-        // Store as JSON string with distance and duration
-        const routeData = {
-          coordinates: routeCoordinates,
-          distance: distance,
-          duration: duration,
-          eta: Math.round(duration / 60),
-        };
-        localStorage.setItem(`route-${order?._id}`, JSON.stringify(routeData));
-        setRoute(routeData);
-      } else if (savedRoute) {
-        console.log("trying to retrive saved route");
-        // Parse stored route data
-        try {
-          const parsedRoute = JSON.parse(savedRoute);
-          setRoute(parsedRoute);
-        } catch (error) {
-          console.error("Failed to parse saved route:", error);
-        }
+        const startInd = endInd - 1;
+
+        const startOfCoords = data.payload.wayPointIndices[startInd];
+        const endOfCoords = data.payload.wayPointIndices[endInd];
+
+        const coords = data.payload.coordinates.splice(0, endOfCoords + 1);
+        const reversedData = coords.map((coord) => coord.toReversed());
+        setRoute({
+          coordinates: reversedData,
+          wayPointIndices: data.payload.wayPointIndices,
+          endWayPoint: endOfCoords,
+          distance: distFromStart,
+          eta: parseInt(etaFromStart / 60),
+        });
+      } catch (error) {
+        console.error("Route fetch error:", error);
+        return null;
       }
     };
-    findRoute();
-  }, []);
+    getRoute();
+  }, [status]);
 
   // Update map view when route changes
   useEffect(() => {
@@ -414,8 +388,9 @@ function RiderPanel({ status, rider, order, riderCoords }) {
     );
   }
 
-  if (norm === "assigned" || norm === "out-for-delivery") {
+  if (norm === "assigned" || norm === "picked" || norm === "out-for-delivery") {
     const isOFD = norm === "out-for-delivery";
+    const isPicked = norm == "picked";
     return (
       <div
         className={`rounded-2xl border p-4 ${isOFD ? "border-orange-200 bg-orange-50/40" : "border-violet-200 bg-violet-50/40"}`}
@@ -438,18 +413,22 @@ function RiderPanel({ status, rider, order, riderCoords }) {
                 Delivery Partner
               </p>
               <p className="text-xs sm:text-sm md:text-sm font-semibold text-slate-900 mt-0.5 truncate">
-                {isOFD ? "On the way to you" : "Rider Assigned"}
+                {isOFD
+                  ? "On the way to you"
+                  : isPicked
+                    ? "Rider Picked Your Order"
+                    : "Rider Assigned"}
               </p>
             </div>
           </div>
           <span
             className={`inline-flex items-center gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-widest rounded-full px-2 sm:px-2.5 md:px-3 py-0.75 sm:py-1 border flex-shrink-0 whitespace-nowrap
-            ${isOFD ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-violet-100 text-violet-700 border-violet-200"}`}
+            ${isOFD ? "bg-orange-100 text-orange-700 border-orange-200" : isPicked ? "bg-emerald-100 border-emerald-200 text-emerald-700" : "bg-violet-100 text-violet-700 border-violet-200"}`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOFD ? "bg-orange-500" : "bg-violet-500"}`}
+              className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOFD ? "bg-orange-500" : isPicked ? "bg-emerald-500" : "bg-violet-500"}`}
             />
-            {isOFD ? "Live" : "Assigned"}
+            {isOFD ? "Live" : isPicked ? "Picked" : "Assigned"}
           </span>
         </div>
 
@@ -478,34 +457,41 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               link: null,
               isEta: true,
             },
-          ].map(({ icon: Icon, label, val, link, isEta }) => (
-            <div
-              key={label}
-              className={`rounded-xl bg-white border p-2 sm:p-2.5 md:p-3
-              ${isEta ? "border-amber-200" : isOFD ? "border-orange-100" : "border-violet-100"}`}
-            >
+          ].map(({ icon: Icon, label, val, link, isEta }) => {
+            let lab = label;
+            if ((lab == "Distance" || lab == "ETA") && !isOFD) {
+              return <></>;
+            }
+
+            return (
               <div
-                className={`flex items-center gap-0.75 sm:gap-1 text-[8px] sm:text-[9px] md:text-[10px] font-semibold uppercase tracking-widest mb-0.5 sm:mb-1
-                ${isEta ? "text-amber-500" : "text-slate-400"}`}
+                key={label}
+                className={`rounded-xl bg-white border p-2 sm:p-2.5 md:p-3
+              ${isEta ? "border-amber-200" : isOFD ? "border-orange-100" : "border-violet-100"}`}
               >
-                <Icon size={9} className="sm:w-2.5 md:w-3" /> {label}
+                <div
+                  className={`flex items-center gap-0.75 sm:gap-1 text-[8px] sm:text-[9px] md:text-[10px] font-semibold uppercase tracking-widest mb-0.5 sm:mb-1
+                ${isEta ? "text-amber-500" : "text-slate-400"}`}
+                >
+                  <Icon size={9} className="sm:w-2.5 md:w-3" /> {label}
+                </div>
+                {link ? (
+                  <a
+                    href={link}
+                    className={`text-xs sm:text-sm md:text-sm font-semibold hover:underline truncate ${isOFD ? "text-orange-700" : "text-violet-700"}`}
+                  >
+                    {val}
+                  </a>
+                ) : (
+                  <p
+                    className={`text-xs sm:text-sm md:text-sm font-semibold truncate ${isEta ? "text-amber-700" : "text-slate-900"}`}
+                  >
+                    {val}
+                  </p>
+                )}
               </div>
-              {link ? (
-                <a
-                  href={link}
-                  className={`text-xs sm:text-sm md:text-sm font-semibold hover:underline truncate ${isOFD ? "text-orange-700" : "text-violet-700"}`}
-                >
-                  {val}
-                </a>
-              ) : (
-                <p
-                  className={`text-xs sm:text-sm md:text-sm font-semibold truncate ${isEta ? "text-amber-700" : "text-slate-900"}`}
-                >
-                  {val}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {isOFD && (
@@ -522,10 +508,9 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               keyboard={false}
               zoomControl={true}
               attributionControl={false}
-              style={{ width: "100%", height: "36vh" }}
+              style={{ width: "100%", height: "48vh" }}
               whenCreated={(mapInstance) => {
                 mapRef.current = mapInstance;
-                console.log("🗺️ Map created with container:");
               }}
             >
               <TileLayer
@@ -547,8 +532,11 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               )}
 
               {/* Shop Market */}
-              {from && (
-                <Marker position={[from[0], from[1]]} icon={SHOP_PIN}>
+              {route?.coordinates && route.coordinates.length > 0 && (
+                <Marker
+                  position={[route.coordinates[0][0], route.coordinates[0][1]]}
+                  icon={START_PIN}
+                >
                   <Popup>
                     <div className="text-xs font-semibold flex items-center gap-1.5">
                       <Store size={14} className="text-orange-600" />
@@ -557,6 +545,33 @@ function RiderPanel({ status, rider, order, riderCoords }) {
                   </Popup>
                 </Marker>
               )}
+
+              {route?.coordinates &&
+                route.coordinates.length > 0 &&
+                route.wayPointIndices
+                  .slice(0, route.wayPointIndices.indexOf(route.endWayPoint))
+                  .map((wp, ind) => {
+                    if (wp === 0 || wp === route.endWayPoint) {
+                      return;
+                    }
+                    return (
+                      <Marker
+                        key={wp}
+                        position={[
+                          route.coordinates[wp][0],
+                          route.coordinates[wp][1],
+                        ]}
+                        icon={CHECK_PIN}
+                      >
+                        <Popup>
+                          <div className="text-xs font-semibold flex items-center gap-1.5">
+                            <Waypoints size={14} className="text-orange-600" />
+                            Waypoint {ind}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
 
               {/* Rider marker */}
               {riderCoords && (
@@ -574,12 +589,18 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               )}
 
               {/* Delivery location marker */}
-              {to && (
-                <Marker position={[to[0], to[1]]} icon={DELIVERY_PIN}>
+              {route?.coordinates && route.coordinates.length > 0 && (
+                <Marker
+                  position={[
+                    route.coordinates.at(-1)[0],
+                    route.coordinates.at(-1)[1],
+                  ]}
+                  icon={END_PIN}
+                >
                   <Popup>
                     <div className="text-xs font-semibold flex items-center gap-1.5">
-                      <MapPin size={14} className="text-red-600" />
-                      Delivery Address
+                      <Home size={14} className="text-orange-600" />
+                      Delivery Location
                     </div>
                   </Popup>
                 </Marker>
@@ -1209,6 +1230,7 @@ const OrderDetails = () => {
   const showRider = [
     "accepted",
     "assigned",
+    "picked",
     "out-for-delivery",
     "delivered",
   ].includes(status);

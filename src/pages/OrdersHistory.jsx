@@ -33,11 +33,11 @@ const STATUS_CONFIG = {
     color: "bg-cyan-100 text-cyan-700 border-cyan-300",
     label: "Assigned",
   },
-  // ready: {
-  //   icon: Package,
-  //   color: "bg-amber-100 text-amber-700 border-amber-300",
-  //   label: "Ready",
-  // },
+  picked: {
+    icon: Package,
+    color: "bg-amber-100 text-amber-700 border-amber-300",
+    label: "Picked",
+  },
   out_for_delivery: {
     icon: Truck,
     color: "bg-purple-100 text-purple-700 border-purple-300",

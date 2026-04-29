@@ -19,6 +19,7 @@ import {
   AlertCircle,
   ChevronDown,
   HelpCircle,
+  Cross,
 } from "lucide-react";
 import { getDistanceKm } from "../components/Direction";
 
@@ -40,10 +41,10 @@ const STATUS_STYLES = {
     cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
     icon: Package,
   },
-  // ready: {
-  //   cls: "bg-amber-100 text-amber-700 border border-amber-500",
-  //   icon: Package,
-  // },
+  picked: {
+    icon: Package,
+    cls: "bg-amber-100 text-amber-700 border border-red-300",
+  },
   delivered: {
     cls: "bg-emerald-100 text-emerald-700 border border-emerald-500",
     icon: CheckCircle2,
@@ -58,11 +59,11 @@ const STATUS_STYLES = {
   },
   cancelled: {
     cls: "bg-red-100 text-red-600 border border-red-500",
-    icon: Clock,
+    icon: Cross,
   },
   rejected: {
     cls: "bg-red-100 text-red-600 border border-red-500",
-    icon: Clock,
+    icon: Cross,
   },
 };
 
