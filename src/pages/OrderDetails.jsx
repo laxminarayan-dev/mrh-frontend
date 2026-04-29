@@ -151,7 +151,7 @@ const PIPELINE = [
 const makeIcon = (Component, color, size) =>
   L.divIcon({
     html: renderToStaticMarkup(
-      <Component size={size} color="white" fill={color} strokeWidth={1.5} />,
+      <Component size={size} color="#1e293b" fill={color} strokeWidth={1} />,
     ),
     className: "",
     iconSize: [size, size],
@@ -159,9 +159,9 @@ const makeIcon = (Component, color, size) =>
     popupAnchor: [0, -size],
   });
 
-const SHOP_PIN = makeIcon(Store, "#ea580c", 24);
-const RIDER_PIN = makeIcon(Bike, "#2563eb", 36);
-const DELIVERY_PIN = makeIcon(MapPin, "#dc2626", 32);
+const SHOP_PIN = makeIcon(Store, "#fff", 24);
+const RIDER_PIN = makeIcon(Bike, "#fff", 36);
+const DELIVERY_PIN = makeIcon(MapPin, "#fff", 32);
 
 // ─── STATUS CONFIG ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -529,18 +529,20 @@ function RiderPanel({ status, rider, order, riderCoords }) {
               }}
             >
               <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                attribution="© Esri"
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
               />
 
               {/* Draw route polyline */}
               {route?.coordinates && route.coordinates.length > 0 && (
                 <Polyline
                   positions={route.coordinates}
-                  color="#fff"
-                  weight={4}
-                  opacity={0.8}
+                  color="#1e293b"
+                  weight={2}
+                  opacity={0.85}
                   dashArray="0, 0"
+                  lineCap="round"
+                  lineJoin="round"
                 />
               )}
 
